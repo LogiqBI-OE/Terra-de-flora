@@ -5,9 +5,9 @@ Workspace web para gestión de coberturas de Oleolab. Login diferenciado para Cl
 ## Stack
 
 - **Frontend:** React 18 + Vite + TypeScript + Tailwind CSS
-- **Backend:** Python 3.12 + FastAPI + SQLAlchemy + JWT
-- **DB:** PostgreSQL 16
-- **Dev:** Docker Compose (todo corre en contenedores — no requiere instalar Python ni Node localmente)
+- **Backend:** Python 3 + FastAPI + SQLAlchemy + JWT
+- **DB local:** SQLite (archivo `backend/oleolab.db`, cero instalación)
+- **DB prod:** PostgreSQL (Railway)
 - **Hosting:** Railway
 
 ## Estructura
@@ -17,59 +17,101 @@ Workspace web para gestión de coberturas de Oleolab. Login diferenciado para Cl
 ├── backend/             # FastAPI app
 ├── frontend/            # React + Vite app
 ├── Logos/               # Brand assets
-├── 03. Prototipo/       # Static HTML prototypes
-├── docker-compose.yml
-├── .env.example
+├── 03. Prototipo/       # HTML prototypes
+├── .vscode/             # Tasks, settings y extensiones recomendadas
+├── dev.ps1              # Arranca backend + frontend con 1 comando
 └── README.md
 ```
 
-## Arrancar el proyecto
+## Cómo arrancar (cada vez)
 
-### Requisitos
-- Docker Desktop instalado (o GitHub Codespaces — todo el código corre en contenedores)
-- VS Code con extensiones recomendadas
+### 🟢 Opción 1 — VS Code (recomendado, 1 click)
 
-### Primer arranque
+1. Abre la carpeta del proyecto en VS Code.
+2. `Ctrl+Shift+P` → `Tasks: Run Task` → **`Dev: Start All`**
+3. Se abren 2 paneles de terminal (backend + frontend).
+4. Abre http://localhost:5173
 
-```bash
-cp .env.example .env       # ajusta variables si quieres
-docker compose up --build  # primera vez compila imágenes (puede tardar 3–5 min)
+### 🟢 Opción 2 — Un solo comando
+
+Desde la raíz del proyecto, en PowerShell:
+```powershell
+.\dev.ps1
+```
+Abre 2 ventanas de PowerShell (una por servicio). Abre http://localhost:5173
+
+### 🟢 Opción 3 — Manual (2 terminales)
+
+**Terminal 1 — Backend:**
+```powershell
+cd backend
+python -m uvicorn app.main:app --reload
 ```
 
-Una vez listo:
-- Frontend: http://localhost:5173
-- Backend (Swagger): http://localhost:8000/docs
-- Postgres: `localhost:5432` (usuario y db en `.env`)
+**Terminal 2 — Frontend:**
+```powershell
+cd frontend
+npm run dev
+```
 
-### Usuarios sembrados (seed)
+## Usuarios sembrados (seed)
 
 | Email                       | Rol     | Contraseña       |
 | --------------------------- | ------- | ---------------- |
 | `orlando@logiqbi.com`       | admin   | `Oleolab2026!`   |
 | `cliente.demo@oleolab.com`  | cliente | `Oleolab2026!`   |
 
-⚠️ **Cambia las contraseñas tras el primer login en producción.**
+Para re-correr el seed: `Ctrl+Shift+P → Tasks: Run Task → Backend: seed DB`
 
-### Comandos útiles
+## Setup inicial (solo una vez)
 
-```bash
-docker compose up              # arranca todo
-docker compose down            # detiene todo
-docker compose logs -f backend # logs del backend
-docker compose exec backend python -m app.seed  # re-correr el seed
-docker compose exec db psql -U oleolab -d oleolab_coberturas
-```
+Si esto es una clonada fresca del repo:
+
+1. **Instala Scoop** (gestor de paquetes sin admin):
+   ```powershell
+   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+   iwr -useb get.scoop.sh | iex
+   ```
+2. **Instala Python y Node:**
+   ```powershell
+   scoop install python nodejs-lts
+   ```
+3. **Instala deps:**
+   - VS Code: `Ctrl+Shift+P → Tasks: Run Task → Install: backend deps` y luego `Install: frontend deps`
+   - O manualmente:
+     ```powershell
+     cd backend; python -m pip install -r requirements.txt
+     cd ..\frontend; npm install
+     ```
+4. **Crea el seed inicial:**
+   ```powershell
+   cd backend
+   python -m app.seed
+   ```
+
+## Endpoints útiles
+
+| URL | Descripción |
+|---|---|
+| http://localhost:5173 | Frontend (login) |
+| http://127.0.0.1:8000 | Backend (API root) |
+| http://127.0.0.1:8000/docs | Swagger / OpenAPI |
+| http://127.0.0.1:8000/health | Healthcheck |
 
 ## Deploy a Railway
 
-1. Push del repo a GitHub.
+1. Push del repo a GitHub (ya hecho).
 2. En Railway: New Project → Deploy from GitHub repo.
-3. Añadir el plugin **PostgreSQL** — Railway inyecta `DATABASE_URL`.
+3. Añadir plugin **PostgreSQL** — Railway inyecta `DATABASE_URL`.
 4. Crear dos servicios desde el mismo repo:
-   - `backend` (root: `/backend`)
+   - `backend` (root: `/backend`, install: `pip install -r requirements-prod.txt`)
    - `frontend` (root: `/frontend`)
-5. Configurar variables de entorno en cada servicio según `.env.example`.
-6. Apuntar `VITE_API_URL` en `frontend` al dominio público del `backend`.
+5. Variables de entorno del backend en Railway:
+   - `DATABASE_URL` (lo inyecta el plugin de Postgres)
+   - `JWT_SECRET` (genera uno largo y aleatorio)
+   - `CORS_ORIGINS` (URL pública del frontend)
+   - `SEED_ADMIN_EMAIL`, `SEED_CLIENT_EMAIL`, `SEED_PASSWORD`
+6. Apuntar `VITE_API_URL` en el servicio del frontend al dominio público del backend.
 
 ## Roadmap
 

@@ -38,3 +38,7 @@ yarn-debug.log*
 
 # Postgres data
 postgres-data/
+
+# SQLite local dev DB
+*.db
+*.db-journal

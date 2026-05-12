@@ -4,7 +4,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    DATABASE_URL: str = "postgresql+psycopg://oleolab:oleolab_dev@db:5432/oleolab_coberturas"
+    # Por defecto SQLite local (sin instalar nada). En Railway/prod inyectar DATABASE_URL real (postgres).
+    DATABASE_URL: str = "sqlite:///./oleolab.db"
     JWT_SECRET: str = "change-me-in-production-please-32chars+"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60

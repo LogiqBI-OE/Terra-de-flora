@@ -1,0 +1,18 @@
+{
+  "python.terminal.activateEnvironment": false,
+  "terminal.integrated.env.windows": {
+    "PYTHONIOENCODING": "utf-8"
+  },
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "**/node_modules": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/oleolab.db": true
+  },
+  "[python]": { "editor.defaultFormatter": "ms-python.python" },
+  "[typescript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[typescriptreact]": { "editor.defaultFormatter": "esbenp.prettier-vscode" }
+}
