@@ -1,0 +1,56 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-oleolab}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-oleolab_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-oleolab_coberturas}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-oleolab}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-oleolab}:${POSTGRES_PASSWORD:-oleolab_dev}@db:5432/${POSTGRES_DB:-oleolab_coberturas}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-please-32chars+}
+      JWT_ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 60
+      CORS_ORIGINS: http://localhost:5173
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-orlando@logiqbi.com}
+      SEED_CLIENT_EMAIL: ${SEED_CLIENT_EMAIL:-cliente.demo@oleolab.com}
+      SEED_PASSWORD: ${SEED_PASSWORD:-Oleolab2026!}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    command: >
+      sh -c "python -m app.seed && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:8000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev -- --host 0.0.0.0
+
+volumes:
+  postgres-data:

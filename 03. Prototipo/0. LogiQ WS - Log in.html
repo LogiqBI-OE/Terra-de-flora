@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oleolab Workspace — Iniciar Sesión</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --oleo-green: #A8D060;
+    --oleo-green-dark: #8AB348;
+    --oleo-bg: #0B0F08;
+    --oleo-bg-2: #131A0F;
+  }
+  body { font-family: 'Inter', sans-serif; }
+  .bg-hero {
+    background:
+      radial-gradient(900px 500px at 85% 15%, rgba(168,208,96,0.10), transparent 60%),
+      radial-gradient(700px 500px at 10% 90%, rgba(168,208,96,0.06), transparent 60%),
+      linear-gradient(180deg, #0B0F08 0%, #131A0F 100%);
+  }
+  .text-oleo { color: var(--oleo-green); }
+  .bg-oleo { background-color: var(--oleo-green); }
+  .ring-oleo:focus { --tw-ring-color: var(--oleo-green); }
+  .accent-oleo { accent-color: var(--oleo-green); }
+  .btn-oleo {
+    background: var(--oleo-green);
+    color: #0B0F08;
+    transition: all .2s ease;
+  }
+  .btn-oleo:hover { background: var(--oleo-green-dark); }
+
+  /* Sprout logo */
+  .sprout { color: var(--oleo-green); }
+
+  /* Toggle pill */
+  .role-toggle { position: relative; }
+  .role-toggle .indicator {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    width: calc(50% - 4px);
+    background: var(--oleo-green);
+    border-radius: 9999px;
+    transition: transform .25s ease;
+    box-shadow: 0 4px 12px rgba(168,208,96,0.35);
+  }
+  .role-toggle[data-role="admin"] .indicator { transform: translateX(100%); }
+  .role-toggle button { position: relative; z-index: 1; transition: color .2s ease; }
+  .role-toggle[data-role="cliente"] .btn-cliente { color: #0B0F08; }
+  .role-toggle[data-role="cliente"] .btn-admin   { color: #94a3b8; }
+  .role-toggle[data-role="admin"]   .btn-admin   { color: #0B0F08; }
+  .role-toggle[data-role="admin"]   .btn-cliente { color: #94a3b8; }
+
+  input[type="email"], input[type="password"] {
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(255,255,255,0.08);
+    color: #E8EFE0;
+  }
+  input[type="email"]::placeholder, input[type="password"]::placeholder { color: #5d6b51; }
+  input[type="email"]:focus, input[type="password"]:focus {
+    outline: none;
+    border-color: var(--oleo-green);
+    box-shadow: 0 0 0 3px rgba(168,208,96,0.18);
+  }
+</style>
+</head>
+<body class="bg-hero min-h-screen flex items-center justify-center p-4">
+
+<div class="w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2 border border-white/5"
+     style="background: rgba(11,15,8,0.6); backdrop-filter: blur(20px);">
+
+  <!-- LEFT: FORM PANEL -->
+  <div class="p-10 md:p-14 flex flex-col justify-center" style="background: rgba(19,26,15,0.92);">
+
+    <!-- Logo header -->
+    <div class="flex items-center gap-3 mb-10">
+      <!-- Sprout SVG -->
+      <svg class="sprout" width="34" height="34" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M32 56 V34" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M32 36 C 22 36, 14 28, 14 16 C 26 16, 32 22, 32 34 Z" fill="currentColor"/>
+        <path d="M32 36 C 42 36, 50 28, 50 16 C 38 16, 32 22, 32 34 Z" fill="currentColor" opacity="0.85"/>
+      </svg>
+      <span class="text-3xl font-semibold tracking-tight text-oleo lowercase">oleolab</span>
+    </div>
+
+    <h1 class="text-4xl font-bold text-white mb-2 tracking-tight">Bienvenido</h1>
+    <p class="text-sm text-slate-400 mb-6">Ingresa tus credenciales para continuar.</p>
+
+    <!-- ROLE TOGGLE -->
+    <div id="roleToggle" data-role="cliente"
+         class="role-toggle rounded-full p-1 grid grid-cols-2 mb-6 text-sm font-semibold"
+         style="background: rgba(255,255,255,0.06);">
+      <div class="indicator"></div>
+      <button type="button" class="btn-cliente py-2 rounded-full">Cliente</button>
+      <button type="button" class="btn-admin py-2 rounded-full">Administrador</button>
+    </div>
+
+    <form class="space-y-4" onsubmit="event.preventDefault();">
+      <div>
+        <label class="text-[11px] font-semibold tracking-widest uppercase" style="color:#94a3b8;">Correo</label>
+        <input type="email" placeholder="usuario@oleolab.com" class="mt-1 w-full px-4 py-3 border rounded-lg" />
+      </div>
+
+      <div>
+        <label class="text-[11px] font-semibold tracking-widest uppercase" style="color:#94a3b8;">Contraseña</label>
+        <div class="relative mt-1">
+          <input type="password" placeholder="••••••••" class="w-full px-4 py-3 border rounded-lg" />
+          <svg class="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <label class="flex items-center gap-2 text-sm text-slate-400">
+          <input type="checkbox" checked class="w-4 h-4 accent-oleo">
+          Recuérdame
+        </label>
+        <a href="#" class="text-sm text-oleo font-semibold hover:underline">¿Olvidaste tu contraseña?</a>
+      </div>
+
+      <button type="submit" class="btn-oleo w-full font-semibold py-3 rounded-lg shadow-lg shadow-black/30 mt-2">
+        INICIAR SESIÓN
+      </button>
+
+      <p class="text-center text-sm text-slate-500 pt-2">
+        ¿Necesitas ayuda?
+        <a href="#" class="text-oleo font-semibold hover:underline">Contacta a soporte</a>
+      </p>
+    </form>
+
+    <div class="mt-8 pt-5 border-t border-white/5 flex items-center justify-between text-[11px]">
+      <span class="text-slate-500">Powered by</span>
+      <span class="font-bold tracking-wider text-slate-300">LOGIQ <span class="font-normal text-slate-500">· Business Intelligence</span></span>
+    </div>
+  </div>
+
+  <!-- RIGHT: BRAND PANEL -->
+  <div class="hidden md:flex relative p-10 flex-col justify-between overflow-hidden"
+       style="background: linear-gradient(135deg, #0B0F08 0%, #131A0F 60%, #0B0F08 100%);">
+
+    <div class="absolute -top-24 -right-24 w-96 h-96 rounded-full blur-3xl" style="background: rgba(168,208,96,0.18);"></div>
+    <div class="absolute -bottom-24 -left-24 w-96 h-96 rounded-full blur-3xl" style="background: rgba(168,208,96,0.08);"></div>
+
+    <!-- Top badge -->
+    <div class="relative flex items-center gap-2 text-xs font-bold tracking-[0.3em]">
+      <span class="w-8 h-px bg-slate-600"></span>
+      <span class="text-slate-300">OLEOLAB</span>
+      <span class="text-oleo">WORKSPACE</span>
+    </div>
+
+    <!-- BIG BRAND CENTER -->
+    <div class="relative flex flex-col items-center justify-center text-center">
+      <svg class="sprout mb-3" width="90" height="90" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M32 56 V34" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M32 36 C 22 36, 14 28, 14 16 C 26 16, 32 22, 32 34 Z" fill="currentColor"/>
+        <path d="M32 36 C 42 36, 50 28, 50 16 C 38 16, 32 22, 32 34 Z" fill="currentColor" opacity="0.85"/>
+      </svg>
+      <div class="text-6xl md:text-7xl font-semibold tracking-tight text-oleo lowercase leading-none">oleolab</div>
+      <div class="mt-6 flex items-center gap-3">
+        <div class="h-px w-10 bg-slate-700"></div>
+        <div class="text-slate-400 tracking-[0.3em] text-xs font-semibold">COBERTURAS</div>
+        <div class="h-px w-10 bg-slate-700"></div>
+      </div>
+      <p class="text-slate-500 text-xs mt-3 italic max-w-xs">Identidad operativa para gestión industrial.</p>
+    </div>
+
+    <div class="relative text-slate-400 text-sm">
+      <div class="border-l-2 pl-4" style="border-color: rgba(168,208,96,0.7);">
+        "Visibilidad total de tus coberturas, en un solo lugar."
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const toggle = document.getElementById('roleToggle');
+  const [btnCliente, btnAdmin] = toggle.querySelectorAll('button');
+  btnCliente.addEventListener('click', () => toggle.dataset.role = 'cliente');
+  btnAdmin.addEventListener('click',   () => toggle.dataset.role = 'admin');
+</script>
+
+</body>
+</html>
