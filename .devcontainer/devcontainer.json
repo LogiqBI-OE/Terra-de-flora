@@ -1,12 +1,6 @@
 {
   "name": "Oleolab Coberturas",
-  "image": "mcr.microsoft.com/devcontainers/universal:2-linux",
-  "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {
-      "version": "latest",
-      "moby": true
-    }
-  },
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
   "forwardPorts": [5173, 8000, 5432],
   "portsAttributes": {
     "5173": { "label": "Frontend (Vite)", "onAutoForward": "openBrowser" },
@@ -21,10 +15,8 @@
         "ms-python.vscode-pylance",
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
-        "bradlc.vscode-tailwindcss",
-        "ms-azuretools.vscode-docker"
+        "bradlc.vscode-tailwindcss"
       ]
     }
-  },
-  "remoteUser": "codespace"
+  }
 }
