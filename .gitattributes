@@ -1,0 +1,3 @@
+# Scripts shell siempre con LF (aunque Windows quiera CRLF) — Linux los necesita.
+*.sh text eol=lf
+backend/start.sh text eol=lf
