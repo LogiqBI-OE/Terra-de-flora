@@ -6,7 +6,7 @@ from app.models.user import UserRole
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
-    role: UserRole
+    role: UserRole | None = None  # opcional — el toggle del frontend se quita
 
 
 class TokenResponse(BaseModel):
@@ -15,6 +15,9 @@ class TokenResponse(BaseModel):
     role: UserRole
     email: EmailStr
     full_name: str | None = None
+    level: int
+    level_label: str
+    permissions: list[str]
 
 
 class UserOut(BaseModel):
@@ -22,6 +25,8 @@ class UserOut(BaseModel):
     email: EmailStr
     full_name: str | None
     role: UserRole
+    level: int
+    permissions: list[str]
     is_active: bool
 
     model_config = {"from_attributes": True}

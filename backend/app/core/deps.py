@@ -39,3 +39,10 @@ def require_admin(user: User = Depends(get_current_user)) -> User:
     if user.role != UserRole.admin:
         raise HTTPException(status_code=403, detail="Requiere rol administrador")
     return user
+
+
+def require_level_9(user: User = Depends(get_current_user)) -> User:
+    """System Admin only — gestión de usuarios y configuración de sistema."""
+    if user.level < 9:
+        raise HTTPException(status_code=403, detail="Requiere nivel 9 (System Admin)")
+    return user

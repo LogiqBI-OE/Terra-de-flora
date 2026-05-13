@@ -1,28 +1,48 @@
-"""Seed idempotente: crea usuarios iniciales + datos base (plantas, customers, productos)."""
+"""Seed idempotente: usuarios iniciales (con nivel + permisos) + datos base."""
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.security import hash_password
 from app.db import Base, SessionLocal, engine
 from app.models import Customer, Planta, Producto, User, UserRole
+from app.models.user import role_for_level
 
 
-def upsert_user(db: Session, email: str, role: UserRole, full_name: str, password: str) -> None:
+def upsert_user(
+    db: Session,
+    *,
+    email: str,
+    full_name: str,
+    password: str,
+    level: int,
+    permissions: list[str] | None = None,
+    customer_id: int | None = None,
+) -> None:
     existing = db.query(User).filter(User.email == email).first()
     if existing:
-        print(f"  · usuario ya existe: {email} ({existing.role.value})")
+        # Sincroniza nivel/permisos del seed por si cambiaron en código
+        existing.level = level
+        existing.permissions = permissions or []
+        existing.role = role_for_level(level)
+        if customer_id is not None:
+            existing.customer_id = customer_id
+        db.commit()
+        print(f"  · usuario sincronizado: {email} (level {level})")
         return
     db.add(
         User(
             email=email.lower(),
             hashed_password=hash_password(password),
             full_name=full_name,
-            role=role,
+            level=level,
+            permissions=permissions or [],
+            role=role_for_level(level),
+            customer_id=customer_id,
             is_active=True,
         )
     )
     db.commit()
-    print(f"  ✓ usuario creado: {email} ({role.value})")
+    print(f"  ✓ usuario creado: {email} (level {level})")
 
 
 def upsert_planta(db: Session, codigo: str, nombre: str) -> None:
@@ -55,10 +75,6 @@ def run() -> None:
 
     db = SessionLocal()
     try:
-        print("→ Usuarios...")
-        upsert_user(db, settings.SEED_ADMIN_EMAIL, UserRole.admin, "Orlando (Admin)", settings.SEED_PASSWORD)
-        upsert_user(db, settings.SEED_CLIENT_EMAIL, UserRole.cliente, "Cliente Demo", settings.SEED_PASSWORD)
-
         print("→ Plantas...")
         upsert_planta(db, "MTY", "Monterrey")
         upsert_planta(db, "GDL", "Guadalajara")
@@ -67,6 +83,28 @@ def run() -> None:
         upsert_customer(db, "WALMART", "Walmart")
         upsert_customer(db, "CHEDRAUI", "Chedraui")
         upsert_customer(db, "SORIANA", "Soriana")
+
+        # Customer al que está atado el usuario "cliente" demo
+        walmart = db.query(Customer).filter(Customer.codigo == "WALMART").first()
+
+        print("→ Usuarios...")
+        upsert_user(
+            db,
+            email=settings.SEED_ADMIN_EMAIL,
+            full_name="Orlando (System Admin)",
+            password=settings.SEED_PASSWORD,
+            level=9,  # System Admin: todos los permisos default
+            permissions=[],
+        )
+        upsert_user(
+            db,
+            email=settings.SEED_CLIENT_EMAIL,
+            full_name="Cliente Demo",
+            password=settings.SEED_PASSWORD,
+            level=1,  # Outsource
+            permissions=[],
+            customer_id=walmart.id if walmart else None,
+        )
 
         print("→ Productos...")
         upsert_producto(db, "AGU-001", "Aguacate Hass A", "kg")
