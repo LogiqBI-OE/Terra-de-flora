@@ -1,16 +1,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app import models  # registra todos los modelos en SQLAlchemy
 from app.core.config import settings
 from app.db import Base, engine
-from app.routers import auth
+from app.routers import auth, catalog, cobertura, snapshots, templates, uploads
 
-# Crea tablas si no existen (sin Alembic por ahora — agregar migraciones cuando haya cambios reales)
+# Crea tablas si no existen (sin Alembic por ahora)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Oleolab Coberturas API",
-    version="0.1.0",
+    version="0.2.0",
     description="API del workspace de coberturas de Oleolab.",
 )
 
@@ -23,6 +24,13 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(catalog.router)
+app.include_router(templates.router)
+app.include_router(snapshots.router)
+app.include_router(uploads.router)
+app.include_router(cobertura.router)
+
+_ = models  # silenciar "imported but unused"
 
 
 @app.get("/health", tags=["meta"])

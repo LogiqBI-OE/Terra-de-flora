@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import SproutIcon from '../components/SproutIcon'
-import { ApiError, type Role } from '../lib/api'
+import { ApiError, type Role } from '../lib/api/index'
 import { useAuth } from '../lib/auth'
 
 export default function Login() {

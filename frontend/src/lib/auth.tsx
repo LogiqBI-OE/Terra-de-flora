@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { api, type LoginPayload, type Role } from './api'
+import { authApi, type LoginPayload, type Role } from './api'
 
 interface AuthUser {
   email: string
@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (payload: LoginPayload) => {
     setLoading(true)
     try {
-      const res = await api.login(payload)
+      const res = await authApi.login(payload)
       const u: AuthUser = { email: res.email, full_name: res.full_name, role: res.role }
       setToken(res.access_token)
       setUser(u)
