@@ -15,6 +15,7 @@ class LevelOut(BaseModel):
 class LevelUpdate(BaseModel):
     label: str | None = None
     description: str | None = None
+    is_reserved: bool | None = None
 
 
 class LevelsPayload(BaseModel):

@@ -52,7 +52,11 @@ def actualizar_meta(
         raise HTTPException(400, f"Nivel inválido. Válidos: {sorted(LEVELS.keys())}")
     try:
         row = svc.update_level_meta(
-            db, level, label=payload.label, description=payload.description
+            db,
+            level,
+            label=payload.label,
+            description=payload.description,
+            is_reserved=payload.is_reserved,
         )
     except ValueError as e:
         raise HTTPException(404, str(e))

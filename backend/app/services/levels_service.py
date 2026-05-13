@@ -59,7 +59,12 @@ def all_levels(db: Session) -> list[Level]:
 
 
 def update_level_meta(
-    db: Session, level: int, *, label: str | None = None, description: str | None = None
+    db: Session,
+    level: int,
+    *,
+    label: str | None = None,
+    description: str | None = None,
+    is_reserved: bool | None = None,
 ) -> Level:
     row = db.get(Level, level)
     if not row:
@@ -68,6 +73,8 @@ def update_level_meta(
         row.label = label
     if description is not None:
         row.description = description
+    if is_reserved is not None:
+        row.is_reserved = is_reserved
     db.commit()
     db.refresh(row)
     return row

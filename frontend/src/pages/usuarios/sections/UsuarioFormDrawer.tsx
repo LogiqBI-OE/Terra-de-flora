@@ -131,9 +131,10 @@ function DatosTab({
           className="w-full px-3 py-2 rounded-lg border text-sm"
           style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
         >
-          {catalog.levels.map((l) => (
-            <option key={l.level} value={l.level} disabled={l.reserved}>
-              L{l.level} · {l.label}{l.reserved ? ' (reservado)' : ''}
+          {/* Niveles ocultos (reserved=true) NO se muestran como opción */}
+          {catalog.levels.filter((l) => !l.reserved).map((l) => (
+            <option key={l.level} value={l.level}>
+              L{l.level} · {l.label}
             </option>
           ))}
         </select>

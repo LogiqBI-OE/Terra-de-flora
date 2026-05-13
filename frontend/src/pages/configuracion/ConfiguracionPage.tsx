@@ -1,8 +1,8 @@
 // System Settings — solo nivel 9.
-// Página contenedora con horizontal tabs.
-// Tabs:
-//   · Generales         — claves del SystemConfig (standard_password, etc.)
-//   · Niveles de usuarios — descripciones + matriz de permisos
+// 3 horizontal tabs (sin scroll vertical):
+//   · Generales — claves del SystemConfig (standard_password, etc.)
+//   · Niveles   — tabla de descripciones + columna Visible (toggle ocultar)
+//   · Permisos  — matriz de permisos por nivel
 
 import { useState } from 'react'
 import AppShell from '../../components/layout/AppShell'
@@ -10,15 +10,17 @@ import Card from '../../components/ui/Card'
 import Tabs from '../../components/ui/Tabs'
 import GeneralesTab from './sections/GeneralesTab'
 import NivelesTab from './sections/NivelesTab'
+import PermisosTab from './sections/PermisosTab'
 
-type TabKey = 'generales' | 'niveles'
+type TabKey = 'generales' | 'niveles' | 'permisos'
 
 export default function ConfiguracionPage() {
   const [tab, setTab] = useState<TabKey>('generales')
 
   const tabs: { key: TabKey; label: string }[] = [
     { key: 'generales', label: 'Generales' },
-    { key: 'niveles', label: 'Niveles de usuarios' },
+    { key: 'niveles', label: 'Niveles' },
+    { key: 'permisos', label: 'Permisos' },
   ]
 
   return (
@@ -38,6 +40,7 @@ export default function ConfiguracionPage() {
           <div className="p-5">
             {tab === 'generales' && <GeneralesTab />}
             {tab === 'niveles' && <NivelesTab />}
+            {tab === 'permisos' && <PermisosTab />}
           </div>
         </Card>
       </div>

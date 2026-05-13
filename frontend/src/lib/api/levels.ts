@@ -17,7 +17,10 @@ export interface LevelsPayload {
 
 export const levelsApi = {
   list: () => request<LevelsPayload>('/system/levels'),
-  updateMeta: (level: number, body: { label?: string; description?: string }) =>
+  updateMeta: (
+    level: number,
+    body: { label?: string; description?: string; is_reserved?: boolean },
+  ) =>
     request<LevelDetail>(`/system/levels/${level}`, {
       method: 'PATCH',
       body: JSON.stringify(body),
