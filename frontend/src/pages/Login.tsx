@@ -20,8 +20,8 @@ export default function Login() {
     setError(null)
     try {
       await login({ email: email.trim().toLowerCase(), password, role })
-      // Después del login, todos van a Cobertura (la app principal).
-      navigate('/cobertura', { replace: true })
+      // Después del login todos van a Hallazgos (home).
+      navigate('/hallazgos', { replace: true })
     } catch (err) {
       if (err instanceof ApiError) setError(err.message)
       else setError('Error inesperado. Intenta de nuevo.')

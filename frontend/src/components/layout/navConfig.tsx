@@ -1,15 +1,9 @@
 // Configuración del menú lateral.
 // Edita aquí para añadir/quitar páginas o secciones.
-//
-// Cada item:
-//   to:       ruta (react-router)
-//   label:    texto del link
-//   icon:     componente de icono
-//   roles:    qué roles ven el link
-//   disabled: si está en true, se renderiza apagado y sin navegación
 
 import type { ReactNode } from 'react'
 import {
+  IconAlerta,
   IconCatalog,
   IconCobertura,
   IconDemanda,
@@ -37,6 +31,12 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     title: 'Monitores',
     items: [
+      {
+        to: '/hallazgos',
+        label: 'Hallazgos',
+        icon: <IconAlerta />,
+        roles: ['admin', 'cliente'],
+      },
       {
         to: '/cobertura',
         label: 'Coberturas',
@@ -67,8 +67,6 @@ export const NAV_SECTIONS: NavSection[] = [
         label: 'Catálogos',
         icon: <IconCatalog />,
         roles: ['admin', 'cliente'],
-        disabled: true,
-        hint: 'Próximamente',
       },
     ],
   },
@@ -80,8 +78,6 @@ export const NAV_SECTIONS: NavSection[] = [
         label: 'Usuarios',
         icon: <IconUsers />,
         roles: ['admin'],
-        disabled: true,
-        hint: 'Próximamente',
       },
       {
         to: '/manual',

@@ -21,10 +21,7 @@ const STATUS_LABEL: Record<Snapshot['status'], string> = {
 
 export default function SnapshotsTable({ rows }: { rows: Snapshot[] }) {
   return (
-    <div
-      className="overflow-x-auto rounded-xl border"
-      style={{ background: 'var(--bg-card-soft)', borderColor: 'var(--border-soft)' }}
-    >
+    <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="text-left text-[11px] uppercase tracking-widest text-app-muted border-b" style={{ borderColor: 'var(--border-soft)' }}>
