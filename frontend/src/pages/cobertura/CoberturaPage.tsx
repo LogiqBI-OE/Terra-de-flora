@@ -77,7 +77,7 @@ export default function CoberturaPage() {
           {loading ? (
             <CardBody><div className="text-app-secondary text-sm">Calculando...</div></CardBody>
           ) : error ? (
-            <CardBody><div className="text-sm" style={{ color: '#dc2626' }}>{error}</div></CardBody>
+            <CardBody><div className="text-sm text-danger">{error}</div></CardBody>
           ) : !matrix || matrix.filas.length === 0 ? (
             <CardBody>
               <div className="text-app-secondary text-sm">

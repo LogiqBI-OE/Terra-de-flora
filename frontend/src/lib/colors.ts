@@ -1,20 +1,21 @@
-// Mapping de los colores semánticos del backend → hex / clases Tailwind.
-// Para cambiar la paleta de coloreo, edita este archivo.
+// Mapping de los colores semánticos del backend → CSS variables.
+// Los colores reales viven en index.css como --cobertura-*.
+// Edita ahí si quieres cambiar la paleta. NO pongas hex aquí.
 
 export type ColorCobertura = 'white' | 'green' | 'yellow' | 'red'
 
 export const COLOR_HEX: Record<ColorCobertura, string> = {
-  white: '#FFFFFF',
-  green: '#BBE07A',   // verde claro (cubierto con producción)
-  yellow: '#F5D26B',  // amarillo (cubierto con compras)
-  red: '#E16B6B',     // rojo (negativo)
+  white: 'var(--cobertura-white)',
+  green: 'var(--cobertura-green)',
+  yellow: 'var(--cobertura-yellow)',
+  red: 'var(--cobertura-red)',
 }
 
 export const COLOR_TEXTO: Record<ColorCobertura, string> = {
-  white: '#0B0F08',
-  green: '#0B0F08',
-  yellow: '#0B0F08',
-  red: '#0B0F08',
+  white: 'var(--cobertura-text)',
+  green: 'var(--cobertura-text)',
+  yellow: 'var(--cobertura-text)',
+  red: 'var(--cobertura-text)',
 }
 
 export const COLOR_LABEL: Record<ColorCobertura, string> = {

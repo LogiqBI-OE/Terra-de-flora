@@ -15,7 +15,7 @@ export default function Button({ variant = 'primary', className = '', children, 
     primary: { background: 'var(--accent)', color: 'var(--text-on-accent)' },
     secondary: { background: 'var(--bg-toggle)', color: 'var(--text-primary)', border: '1px solid var(--border)' },
     ghost: { background: 'transparent', color: 'var(--accent-text)' },
-    danger: { background: '#dc2626', color: '#ffffff' },
+    danger: { background: 'var(--danger)', color: 'var(--on-danger)' },
   }
   return (
     <button

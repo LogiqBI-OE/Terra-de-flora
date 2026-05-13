@@ -56,7 +56,7 @@ export default function Login() {
                 width: 'calc(50% - 4px)',
                 left: 4,
                 background: 'var(--accent)',
-                boxShadow: '0 4px 12px rgba(168,208,96,0.35)',
+                boxShadow: '0 4px 12px var(--accent-shadow)',
                 transform: role === 'admin' ? 'translateX(100%)' : 'translateX(0)',
               }}
             />
@@ -133,7 +133,7 @@ export default function Login() {
             {error && (
               <div
                 className="rounded-lg border px-4 py-3 text-sm"
-                style={{ borderColor: 'rgba(220,38,38,0.3)', background: 'rgba(220,38,38,0.08)', color: '#dc2626' }}
+                style={{ borderColor: 'var(--danger-border)', background: 'var(--danger-bg)', color: 'var(--danger)' }}
               >
                 {error}
               </div>
@@ -157,33 +157,54 @@ export default function Login() {
           </div>
         </div>
 
-        {/* RIGHT — BRAND */}
+        {/* RIGHT — BRAND HERO (fijo en oscuro, tokens --brand-hero-*) */}
         <div
           className="hidden md:flex relative p-10 flex-col justify-between overflow-hidden"
-          style={{ background: 'linear-gradient(135deg, #0B0F08 0%, #131A0F 60%, #0B0F08 100%)' }}
+          style={{ background: 'var(--brand-hero-bg)' }}
         >
-          <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full blur-3xl" style={{ background: 'rgba(168,208,96,0.18)' }} />
-          <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full blur-3xl" style={{ background: 'rgba(168,208,96,0.08)' }} />
+          <div
+            className="absolute -top-24 -right-24 w-96 h-96 rounded-full blur-3xl"
+            style={{ background: 'var(--brand-hero-accent-bg)' }}
+          />
+          <div
+            className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full blur-3xl"
+            style={{ background: 'var(--brand-hero-accent-bg-soft)' }}
+          />
 
           <div className="relative flex items-center gap-2 text-xs font-bold tracking-[0.3em]">
-            <span className="w-8 h-px bg-slate-600" />
-            <span className="text-slate-300">OLEOLAB</span>
-            <span style={{ color: '#A8D060' }}>WORKSPACE</span>
+            <span className="w-8 h-px" style={{ background: 'var(--brand-hero-divider)' }} />
+            <span style={{ color: 'var(--brand-hero-text-secondary)' }}>OLEOLAB</span>
+            <span style={{ color: 'var(--brand-hero-accent)' }}>WORKSPACE</span>
           </div>
 
           <div className="relative flex flex-col items-center justify-center text-center">
-            <SproutIcon size={90} className="mb-3" style={{ color: '#A8D060' }} />
-            <div className="text-6xl md:text-7xl font-semibold tracking-tight lowercase leading-none" style={{ color: '#A8D060' }}>oleolab</div>
-            <div className="mt-6 flex items-center gap-3">
-              <div className="h-px w-10 bg-slate-700" />
-              <div className="text-slate-400 tracking-[0.3em] text-xs font-semibold">COBERTURAS</div>
-              <div className="h-px w-10 bg-slate-700" />
+            <SproutIcon size={90} className="mb-3" style={{ color: 'var(--brand-hero-accent)' }} />
+            <div
+              className="text-6xl md:text-7xl font-semibold tracking-tight lowercase leading-none"
+              style={{ color: 'var(--brand-hero-accent)' }}
+            >
+              oleolab
             </div>
-            <p className="text-slate-500 text-xs mt-3 italic max-w-xs">Identidad operativa para gestión industrial.</p>
+            <div className="mt-6 flex items-center gap-3">
+              <div className="h-px w-10" style={{ background: 'var(--brand-hero-divider)' }} />
+              <div
+                className="tracking-[0.3em] text-xs font-semibold"
+                style={{ color: 'var(--brand-hero-text-secondary)' }}
+              >
+                COBERTURAS
+              </div>
+              <div className="h-px w-10" style={{ background: 'var(--brand-hero-divider)' }} />
+            </div>
+            <p
+              className="text-xs mt-3 italic max-w-xs"
+              style={{ color: 'var(--brand-hero-text-muted)' }}
+            >
+              Identidad operativa para gestión industrial.
+            </p>
           </div>
 
-          <div className="relative text-slate-400 text-sm">
-            <div className="border-l-2 pl-4" style={{ borderColor: 'rgba(168,208,96,0.7)' }}>
+          <div className="relative text-sm" style={{ color: 'var(--brand-hero-text-secondary)' }}>
+            <div className="border-l-2 pl-4" style={{ borderColor: 'var(--brand-hero-quote-border)' }}>
               "Visibilidad total de tus coberturas, en un solo lugar."
             </div>
           </div>

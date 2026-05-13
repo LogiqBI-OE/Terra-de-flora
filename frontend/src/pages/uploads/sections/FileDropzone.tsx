@@ -48,7 +48,7 @@ export default function FileDropzone({ snapshotId, tipo, label, onResult }: Prop
       className="cursor-pointer rounded-lg border-2 border-dashed px-5 py-6 text-center transition"
       style={{
         borderColor: hover ? 'var(--accent)' : 'var(--border-strong)',
-        background: hover ? 'rgba(168,208,96,0.06)' : 'transparent',
+        background: hover ? 'var(--accent-bg-softer)' : 'transparent',
       }}
     >
       <input
@@ -70,7 +70,7 @@ export default function FileDropzone({ snapshotId, tipo, label, onResult }: Prop
           <span>Arrastra el .xlsx aquí o haz click</span>
         )}
       </div>
-      {error && <div className="mt-2 text-xs" style={{ color: '#dc2626' }}>{error}</div>}
+      {error && <div className="mt-2 text-xs" style={{ color: 'var(--danger)' }}>{error}</div>}
     </div>
   )
 }

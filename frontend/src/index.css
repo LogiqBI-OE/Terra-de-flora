@@ -2,12 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ──────────────────────────────────────────────────────────────────────────
-   THEME TOKENS — CSS variables consumidas por componentes.
-   Para cambiar la paleta de un modo, edita este archivo.
-   ────────────────────────────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════════════
+   TOKENS FIJOS — no cambian con el tema.
+   Cambia aquí para afectar globalmente sin tocar componentes.
+   ══════════════════════════════════════════════════════════════════════════ */
+:root {
+  /* ── Sidebar (siempre oscuro: zinc-900) ────────────────────────────────── */
+  --sidebar-bg: #18181B;                          /* zinc-900 */
+  --sidebar-border: rgba(255, 255, 255, 0.06);
+  --sidebar-text: #FAFAFA;                        /* zinc-50 */
+  --sidebar-text-secondary: #A1A1AA;              /* zinc-400 */
+  --sidebar-text-muted: #71717A;                  /* zinc-500 */
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.06);
+  --sidebar-active-bg: rgba(168, 208, 96, 0.15);
+  --sidebar-active-text: #A8D060;
+
+  /* ── Brand Hero (panel derecho del Login — siempre oscuro) ─────────────── */
+  --brand-hero-bg: linear-gradient(135deg, #0B0F08 0%, #131A0F 60%, #0B0F08 100%);
+  --brand-hero-text: #FFFFFF;
+  --brand-hero-text-secondary: #94A3B8;
+  --brand-hero-text-muted: #64748B;
+  --brand-hero-accent: #A8D060;
+  --brand-hero-accent-bg: rgba(168, 208, 96, 0.18);
+  --brand-hero-accent-bg-soft: rgba(168, 208, 96, 0.08);
+  --brand-hero-divider: #334155;                  /* slate-700 */
+  --brand-hero-quote-border: rgba(168, 208, 96, 0.7);
+
+  /* ── Colores de celda de la matriz de cobertura (semánticos) ───────────── */
+  --cobertura-white: #FFFFFF;
+  --cobertura-green: #BBE07A;
+  --cobertura-yellow: #F5D26B;
+  --cobertura-red: #E16B6B;
+  --cobertura-text: #0B0F08;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TOKENS TEMABLES — DARK MODE (default).
+   ══════════════════════════════════════════════════════════════════════════ */
 :root,
 .theme-dark {
+  /* Page / surfaces */
   --bg-page: #0B0F08;
   --bg-page-2: #131A0F;
   --bg-card: rgba(19, 26, 15, 0.92);
@@ -20,59 +54,100 @@
   --bg-menu: rgba(19, 26, 15, 0.98);
   --shadow-menu: 0 10px 30px rgba(0, 0, 0, 0.5);
 
+  /* Borders */
   --border: rgba(255, 255, 255, 0.08);
   --border-soft: rgba(255, 255, 255, 0.05);
   --border-strong: rgba(255, 255, 255, 0.12);
 
+  /* Text */
   --text-primary: #FFFFFF;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
   --text-faint: #475569;
   --text-on-accent: #0B0F08;
 
+  /* Accent */
   --accent: #A8D060;
   --accent-text: #A8D060;
   --accent-dark: #8AB348;
+  --accent-bg-soft: rgba(168, 208, 96, 0.15);
+  --accent-bg-softer: rgba(168, 208, 96, 0.06);
+  --accent-shadow: rgba(168, 208, 96, 0.35);
+  --accent-ring: rgba(168, 208, 96, 0.18);
 
+  /* Semantic */
+  --danger: #FCA5A5;
+  --danger-bg: rgba(220, 38, 38, 0.15);
+  --danger-border: rgba(220, 38, 38, 0.40);
+  --warning: #FCD34D;
+  --warning-bg: rgba(234, 179, 8, 0.15);
+  --info: #7DD3FC;
+  --info-bg: rgba(14, 165, 233, 0.15);
+  --neutral-bg: rgba(148, 163, 184, 0.15);
+  --neutral-text: #94A3B8;
+  --on-danger: #FFFFFF;
+
+  /* Hero gradient (fondo principal de páginas autenticadas) */
   --hero-gradient:
     radial-gradient(900px 500px at 85% 15%, rgba(168, 208, 96, 0.10), transparent 60%),
     radial-gradient(700px 500px at 10% 90%, rgba(168, 208, 96, 0.06), transparent 60%),
     linear-gradient(180deg, #0B0F08 0%, #131A0F 100%);
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   TOKENS TEMABLES — LIGHT MODE (overrides).
+   ══════════════════════════════════════════════════════════════════════════ */
 .theme-light {
-  --bg-page: #F4F6F0;
+  --bg-page: #F8FAFC;                  /* slate-50 */
   --bg-page-2: #FFFFFF;
   --bg-card: #FFFFFF;
-  --bg-card-soft: #FAFBF6;
-  --bg-elevated: #FFFFFF;
+  --bg-card-soft: #FFFFFF;
+  --bg-elevated: #F8FAFC;
   --bg-elevated-strong: #FFFFFF;
-  --bg-input: #F1F3EE;
-  --bg-hover: rgba(11, 15, 8, 0.04);
-  --bg-toggle: rgba(11, 15, 8, 0.06);
+  --bg-input: #F1F5F9;                 /* slate-100 */
+  --bg-hover: rgba(15, 23, 42, 0.04);
+  --bg-toggle: #E2E8F0;                /* slate-200 */
   --bg-menu: #FFFFFF;
-  --shadow-menu: 0 10px 30px rgba(11, 15, 8, 0.12);
+  --shadow-menu: 0 10px 30px rgba(15, 23, 42, 0.12);
 
-  --border: rgba(11, 15, 8, 0.10);
-  --border-soft: rgba(11, 15, 8, 0.06);
-  --border-strong: rgba(11, 15, 8, 0.16);
+  --border: #E2E8F0;                   /* slate-200 */
+  --border-soft: #F1F5F9;              /* slate-100 */
+  --border-strong: #CBD5E1;            /* slate-300 */
 
-  --text-primary: #0B0F08;
-  --text-secondary: #4B5563;
-  --text-muted: #6B7280;
-  --text-faint: #9CA3AF;
+  --text-primary: #0F172A;             /* slate-900 */
+  --text-secondary: #475569;           /* slate-600 */
+  --text-muted: #64748B;               /* slate-500 */
+  --text-faint: #94A3B8;               /* slate-400 */
   --text-on-accent: #FFFFFF;
 
   --accent: #6B9F2E;
   --accent-text: #5A8722;
   --accent-dark: #527E22;
+  --accent-bg-soft: rgba(107, 159, 46, 0.12);
+  --accent-bg-softer: rgba(107, 159, 46, 0.05);
+  --accent-shadow: rgba(107, 159, 46, 0.30);
+  --accent-ring: rgba(107, 159, 46, 0.15);
+
+  --danger: #DC2626;
+  --danger-bg: rgba(220, 38, 38, 0.08);
+  --danger-border: rgba(220, 38, 38, 0.30);
+  --warning: #B45309;
+  --warning-bg: rgba(234, 179, 8, 0.10);
+  --info: #0369A1;
+  --info-bg: rgba(14, 165, 233, 0.10);
+  --neutral-bg: rgba(100, 116, 139, 0.10);
+  --neutral-text: #475569;
+  --on-danger: #FFFFFF;
 
   --hero-gradient:
-    radial-gradient(900px 500px at 85% 15%, rgba(107, 159, 46, 0.08), transparent 60%),
-    radial-gradient(700px 500px at 10% 90%, rgba(107, 159, 46, 0.05), transparent 60%),
-    linear-gradient(180deg, #F4F6F0 0%, #FFFFFF 100%);
+    radial-gradient(900px 500px at 85% 15%, rgba(107, 159, 46, 0.06), transparent 60%),
+    radial-gradient(700px 500px at 10% 90%, rgba(107, 159, 46, 0.04), transparent 60%),
+    linear-gradient(180deg, #F8FAFC 0%, #FFFFFF 100%);
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   ESTILOS BASE Y UTILIDADES
+   ══════════════════════════════════════════════════════════════════════════ */
 @layer base {
   html, body, #root { height: 100%; }
   body {
@@ -86,25 +161,16 @@
 @layer components {
   .bg-hero { background: var(--hero-gradient); }
 
-  /* Surfaces */
-  .surface-card        { background: var(--bg-card); }
-  .surface-card-soft   { background: var(--bg-card-soft); }
-  .surface-elevated    { background: var(--bg-elevated); }
-  .surface-elevated-strong { background: var(--bg-elevated-strong); }
-  .surface-menu        { background: var(--bg-menu); box-shadow: var(--shadow-menu); }
-
-  /* Borders */
-  .border-app          { border-color: var(--border); }
-  .border-app-soft     { border-color: var(--border-soft); }
-
-  /* Text */
+  /* Texto */
   .text-app            { color: var(--text-primary); }
   .text-app-secondary  { color: var(--text-secondary); }
   .text-app-muted      { color: var(--text-muted); }
   .text-app-faint      { color: var(--text-faint); }
   .text-accent         { color: var(--accent-text); }
+  .text-danger         { color: var(--danger); }
+  .text-warning        { color: var(--warning); }
 
-  /* Inputs */
+  /* Input genérico */
   .oleo-input {
     @apply mt-1 w-full px-4 py-3 rounded-lg border transition;
     background: var(--bg-input);
@@ -115,7 +181,7 @@
   .oleo-input:focus {
     outline: none;
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(168, 208, 96, 0.18);
+    box-shadow: 0 0 0 3px var(--accent-ring);
   }
 
   /* Botón principal */
@@ -123,7 +189,7 @@
     @apply w-full font-semibold py-3 rounded-lg shadow-lg transition;
     background: var(--accent);
     color: var(--text-on-accent);
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 10px 24px var(--accent-shadow);
   }
   .btn-oleo:hover { background: var(--accent-dark); }
   .btn-oleo:disabled { opacity: 0.6; cursor: not-allowed; }
