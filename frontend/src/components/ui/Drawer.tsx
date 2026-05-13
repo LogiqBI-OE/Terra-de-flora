@@ -1,12 +1,12 @@
 // Drawer: panel que entra desde la derecha. Overlay oscuro detrás.
 // Cierra con click en overlay, X, o Esc.
 //
-// Posicionamiento 100% explícito (vía style, no clases) para garantizar
-// cobertura completa del viewport. height/width: 100vw/100vh + position fixed.
-// El estado `mounted` evita que el drawer se vea durante el primer paint
-// (cuando aún no ha aplicado el `transform: translateX(0)`).
+// Se renderiza via createPortal en document.body para escapar cualquier
+// stacking context / overflow del padre. Esto garantiza que position:fixed
+// cubra el viewport completo (top:0 to bottom:0, sin huecos).
 
 import { useEffect, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 
 interface Props {
   open: boolean
@@ -18,65 +18,67 @@ interface Props {
 }
 
 export default function Drawer({ open, onClose, title, children, footer, width = 520 }: Props) {
-  const [mounted, setMounted] = useState(false)
+  const [animateIn, setAnimateIn] = useState(false)
 
   useEffect(() => {
     if (!open) {
-      setMounted(false)
+      setAnimateIn(false)
       return
     }
-    // doble RAF para asegurar que el transform inicial (translateX 100%)
-    // se haya pintado ANTES de que pasemos a translateX(0) y haya transición real.
+    // doble RAF: garantiza que React/Browser ya pintó con translateX(100%)
+    // antes de aplicar translateX(0) y por tanto la transición se vea.
     const r1 = requestAnimationFrame(() => {
-      const r2 = requestAnimationFrame(() => setMounted(true))
-      return () => cancelAnimationFrame(r2)
+      requestAnimationFrame(() => setAnimateIn(true))
     })
     const onEsc = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     document.addEventListener('keydown', onEsc)
+    const prevOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
       cancelAnimationFrame(r1)
       document.removeEventListener('keydown', onEsc)
-      document.body.style.overflow = ''
+      document.body.style.overflow = prevOverflow
     }
   }, [open, onClose])
 
   if (!open) return null
 
-  const overlayStyle: React.CSSProperties = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    width: '100vw',
-    height: '100vh',
-    background: 'rgba(0, 0, 0, 0.55)',
-    opacity: mounted ? 1 : 0,
-    transition: 'opacity 0.2s ease',
-    zIndex: 90,
-  }
-
-  const panelStyle: React.CSSProperties = {
-    position: 'fixed',
-    top: 0,
-    right: 0,
-    width,
-    maxWidth: '100vw',
-    height: '100vh',
-    background: 'var(--bg-page-2)',
-    borderLeft: '1px solid var(--border)',
-    transform: mounted ? 'translateX(0)' : 'translateX(100%)',
-    transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-    zIndex: 100,
-    boxShadow: '-16px 0 40px rgba(0, 0, 0, 0.35)',
-    display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden',
-  }
-
-  return (
+  const content = (
     <>
-      <div onClick={onClose} style={overlayStyle} />
-      <aside role="dialog" aria-label={title} style={panelStyle}>
+      {/* Overlay — cubre 100% del viewport */}
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.55)',
+          opacity: animateIn ? 1 : 0,
+          transition: 'opacity 0.2s ease',
+          zIndex: 90,
+        }}
+      />
+      {/* Panel — pegado a top:0 / bottom:0 a la derecha */}
+      <aside
+        role="dialog"
+        aria-label={title}
+        style={{
+          position: 'fixed',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width,
+          maxWidth: '100vw',
+          background: 'var(--bg-page-2)',
+          borderLeft: '1px solid var(--border)',
+          transform: animateIn ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+          zIndex: 100,
+          boxShadow: '-16px 0 40px rgba(0, 0, 0, 0.35)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
+      >
         <header
           className="shrink-0 px-5 py-4 border-b flex items-center justify-between"
           style={{ borderColor: 'var(--border-soft)' }}
@@ -110,4 +112,6 @@ export default function Drawer({ open, onClose, title, children, footer, width =
       </aside>
     </>
   )
+
+  return createPortal(content, document.body)
 }
