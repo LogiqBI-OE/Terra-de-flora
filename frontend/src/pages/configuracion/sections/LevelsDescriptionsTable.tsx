@@ -49,9 +49,6 @@ export default function LevelsDescriptionsTable({ levels, drafts, onChange }: Pr
                   >
                     L{l.level}
                   </span>
-                  {isHidden && (
-                    <span className="ml-2 text-[10px] uppercase tracking-widest text-warning">oculto</span>
-                  )}
                 </td>
                 <td className="px-4 py-2 text-center">
                   <input
