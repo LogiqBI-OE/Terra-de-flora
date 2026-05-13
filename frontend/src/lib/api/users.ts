@@ -17,6 +17,9 @@ export interface PermissionsCatalog {
 export interface UserDetail {
   id: number
   email: string
+  first_name: string | null
+  last_name_paterno: string | null
+  last_name_materno: string | null
   full_name: string | null
   level: number
   level_label: string
@@ -30,7 +33,9 @@ export interface UserDetail {
 
 export interface UserCreatePayload {
   email: string
-  full_name: string
+  first_name: string
+  last_name_paterno?: string
+  last_name_materno?: string
   password: string
   level: number
   permissions: string[]
@@ -38,7 +43,9 @@ export interface UserCreatePayload {
 }
 
 export interface UserUpdatePayload {
-  full_name?: string
+  first_name?: string
+  last_name_paterno?: string
+  last_name_materno?: string
   password?: string
   level?: number
   permissions?: string[]
@@ -55,4 +62,6 @@ export const usersApi = {
   create: (p: UserCreatePayload) => request<UserDetail>('/users', json(p)),
   update: (id: number, p: UserUpdatePayload) => request<UserDetail>(`/users/${id}`, patch(p)),
   delete: (id: number) => request<void>(`/users/${id}`, { method: 'DELETE' }),
+  resetPassword: (id: number) =>
+    request<{ user_id: number; used_standard: boolean }>(`/users/${id}/reset-password`, { method: 'POST' }),
 }

@@ -1,8 +1,5 @@
-// Página Usuarios: solo nivel 9 (System Admin) ve esto.
-// Estructura:
-//   - tabla con todos los usuarios (UsuariosTable)
-//   - botón "+ Nuevo"
-//   - drawer/modal con form para crear/editar (UsuarioFormModal)
+// Página Usuarios — solo nivel 9.
+// Drawer slide-in para form + tabla con acciones (edit · reset password · delete).
 
 import { useEffect, useState } from 'react'
 import AppShell from '../../components/layout/AppShell'
@@ -11,34 +8,32 @@ import Button from '../../components/ui/Button'
 import { IconPlus } from '../../components/icons/Icons'
 import {
   ApiError,
-  catalogApi,
   usersApi,
-  type Customer,
   type PermissionsCatalog,
   type UserDetail,
 } from '../../lib/api'
 import UsuariosTable from './sections/UsuariosTable'
-import UsuarioFormModal, { type UserFormValue } from './sections/UsuarioFormModal'
+import UsuarioFormDrawer, { type UserFormValue } from './sections/UsuarioFormDrawer'
 
 export default function UsuariosPage() {
   const [rows, setRows] = useState<UserDetail[]>([])
   const [catalog, setCatalog] = useState<PermissionsCatalog | null>(null)
-  const [customers, setCustomers] = useState<Customer[]>([])
   const [editing, setEditing] = useState<UserFormValue | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
 
   async function reload() {
-    const [u, c, cs] = await Promise.all([
-      usersApi.list(),
-      usersApi.catalog(),
-      catalogApi.customers(),
-    ])
+    const [u, c] = await Promise.all([usersApi.list(), usersApi.catalog()])
     setRows(u)
     setCatalog(c)
-    setCustomers(cs)
   }
   useEffect(() => { reload().catch(() => {}) }, [])
+
+  function flash(msg: string) {
+    setToast(msg)
+    setTimeout(() => setToast(null), 3000)
+  }
 
   async function handleSave(value: UserFormValue) {
     setBusy(true)
@@ -47,21 +42,25 @@ export default function UsuariosPage() {
       if (value.id === null) {
         await usersApi.create({
           email: value.email,
-          full_name: value.full_name,
+          first_name: value.first_name,
+          last_name_paterno: value.last_name_paterno || undefined,
+          last_name_materno: value.last_name_materno || undefined,
           password: value.password,
           level: value.level,
           permissions: value.permissions,
-          customer_id: value.customer_id,
         })
+        flash('Usuario creado')
       } else {
         await usersApi.update(value.id, {
-          full_name: value.full_name,
+          first_name: value.first_name,
+          last_name_paterno: value.last_name_paterno,
+          last_name_materno: value.last_name_materno,
           password: value.password || undefined,
           level: value.level,
           permissions: value.permissions,
-          customer_id: value.customer_id,
           is_active: value.is_active,
         })
+        flash('Usuario actualizado')
       }
       setEditing(null)
       await reload()
@@ -77,8 +76,19 @@ export default function UsuariosPage() {
     try {
       await usersApi.delete(row.id)
       await reload()
+      flash('Usuario eliminado')
     } catch (e) {
       alert(e instanceof ApiError ? e.message : 'Error al eliminar')
+    }
+  }
+
+  async function handleResetPassword(row: UserDetail) {
+    if (!confirm(`¿Resetear contraseña de ${row.email}?\nSe aplicará el password estándar configurado en /configuracion.`)) return
+    try {
+      await usersApi.resetPassword(row.id)
+      flash(`Contraseña de ${row.email} reseteada al standard.`)
+    } catch (e) {
+      alert(e instanceof ApiError ? e.message : 'Error al resetear')
     }
   }
 
@@ -87,11 +97,12 @@ export default function UsuariosPage() {
     setEditing({
       id: null,
       email: '',
-      full_name: '',
+      first_name: '',
+      last_name_paterno: '',
+      last_name_materno: '',
       password: '',
       level: 2,
       permissions: [],
-      customer_id: null,
       is_active: true,
     })
   }
@@ -101,11 +112,12 @@ export default function UsuariosPage() {
     setEditing({
       id: row.id,
       email: row.email,
-      full_name: row.full_name ?? '',
+      first_name: row.first_name ?? '',
+      last_name_paterno: row.last_name_paterno ?? '',
+      last_name_materno: row.last_name_materno ?? '',
       password: '',
       level: row.level,
       permissions: [...row.permissions],
-      customer_id: row.customer_id,
       is_active: row.is_active,
     })
   }
@@ -126,21 +138,38 @@ export default function UsuariosPage() {
         </div>
 
         <Card>
-          <UsuariosTable rows={rows} customers={customers} onEdit={startEdit} onDelete={handleDelete} />
+          <UsuariosTable
+            rows={rows}
+            onEdit={startEdit}
+            onDelete={handleDelete}
+            onResetPassword={handleResetPassword}
+          />
         </Card>
 
         {editing && catalog && (
-          <UsuarioFormModal
+          <UsuarioFormDrawer
             open
             value={editing}
             onChange={setEditing}
             onSave={handleSave}
             onClose={() => setEditing(null)}
             catalog={catalog}
-            customers={customers}
             busy={busy}
             error={error}
           />
+        )}
+
+        {toast && (
+          <div
+            className="fixed bottom-6 right-6 px-4 py-3 rounded-lg text-sm text-app shadow-lg border"
+            style={{
+              background: 'var(--bg-card)',
+              borderColor: 'var(--border)',
+              zIndex: 200,
+            }}
+          >
+            ✓ {toast}
+          </div>
         )}
       </div>
     </AppShell>

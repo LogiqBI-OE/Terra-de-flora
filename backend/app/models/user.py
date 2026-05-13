@@ -1,9 +1,7 @@
-"""Modelo User. Sistema de permisos:
-  - level: int 1..9 (jerárquico, ver core/permissions.py)
-  - permissions: JSON list[str] con permisos extras concedidos manualmente
-
-`role` se mantiene como columna derivada para retro-compatibilidad:
-    role = 'admin' si level >= 5, sino 'cliente'
+"""Modelo User.
+Nombre dividido en 3 campos (estándar Mx): first_name + last_name_paterno + last_name_materno.
+`full_name` se mantiene como columna derivada/sincronizada para retro-compat.
+Sistema de permisos: level (1..9) + permissions (JSON list[str]).
 """
 import enum
 from datetime import datetime
@@ -23,12 +21,23 @@ def role_for_level(level: int) -> UserRole:
     return UserRole.admin if level >= 5 else UserRole.cliente
 
 
+def compose_full_name(first: str | None, paterno: str | None, materno: str | None) -> str:
+    parts = [p.strip() for p in (first, paterno, materno) if p and p.strip()]
+    return " ".join(parts)
+
+
 class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    # Nombre dividido
+    first_name: Mapped[str | None] = mapped_column(String(120))
+    last_name_paterno: Mapped[str | None] = mapped_column(String(120))
+    last_name_materno: Mapped[str | None] = mapped_column(String(120))
+    # Cache/computado: se sincroniza al crear/actualizar
     full_name: Mapped[str | None] = mapped_column(String(255))
 
     # Sistema de permisos
@@ -38,7 +47,8 @@ class User(Base):
         Enum(UserRole, name="user_role"), nullable=False, default=UserRole.cliente
     )
 
-    # Si el usuario está atado a un customer (sin view_all_customers), apunta acá
+    # Customer asociado: vive aquí en BD pero ya NO se edita desde la UI de Usuarios.
+    # Se manejará en una vista/tabla aparte.
     customer_id: Mapped[int | None] = mapped_column(ForeignKey("customers.id"))
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

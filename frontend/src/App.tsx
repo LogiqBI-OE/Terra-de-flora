@@ -7,6 +7,7 @@ import SnapshotListPage from './pages/snapshots/SnapshotListPage'
 import UploadsPage from './pages/uploads/UploadsPage'
 import CatalogosPage from './pages/catalogos/CatalogosPage'
 import UsuariosPage from './pages/usuarios/UsuariosPage'
+import ConfiguracionPage from './pages/configuracion/ConfiguracionPage'
 import { useAuth } from './lib/auth'
 
 function HomeRedirect() {
@@ -45,6 +46,7 @@ export default function App() {
 
       {/* CONFIGURACIÓN */}
       <Route path="/usuarios" element={<Level9Route><UsuariosPage /></Level9Route>} />
+      <Route path="/configuracion" element={<Level9Route><ConfiguracionPage /></Level9Route>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -15,6 +15,9 @@ export type { CoberturaCell, CoberturaRow, CoberturaMatrix, CoberturaParams } fr
 export { catalogApi } from './catalog'
 export type { Planta, Customer, Producto } from './catalog'
 
+export { systemConfigApi } from './systemConfig'
+export type { SystemConfigItem } from './systemConfig'
+
 export { usersApi } from './users'
 export type {
   LevelDef,

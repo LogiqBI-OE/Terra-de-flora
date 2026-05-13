@@ -1,4 +1,4 @@
-"""Router: CRUD de usuarios + catálogo de niveles/permisos.
+"""Router: CRUD de usuarios + catálogo de niveles/permisos + reset password.
 
 Acceso: solo nivel 9 (System Admin) — protegido con require_level_9.
 """
@@ -17,8 +17,15 @@ from app.core.permissions import (
 )
 from app.core.security import hash_password
 from app.db import get_db
-from app.models.user import User, role_for_level
-from app.schemas.users import PermissionsCatalog, UserCreate, UserOut, UserUpdate
+from app.models.user import User, compose_full_name, role_for_level
+from app.schemas.users import (
+    PasswordReset,
+    PermissionsCatalog,
+    UserCreate,
+    UserOut,
+    UserUpdate,
+)
+from app.services.system_config_service import get as cfg_get
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -27,6 +34,9 @@ def _to_out(u: User) -> UserOut:
     return UserOut(
         id=u.id,
         email=u.email,
+        first_name=u.first_name,
+        last_name_paterno=u.last_name_paterno,
+        last_name_materno=u.last_name_materno,
         full_name=u.full_name,
         level=u.level,
         level_label=LEVELS.get(u.level, "—"),
@@ -51,7 +61,6 @@ def _validate_payload(level: int, perms: list[str]) -> None:
 
 @router.get("/_catalog", response_model=PermissionsCatalog)
 def catalogo(_: User = Depends(require_level_9)) -> PermissionsCatalog:
-    """Devuelve los niveles + permisos disponibles + defaults para que el frontend renderice."""
     return PermissionsCatalog(
         levels=[
             {"level": lvl, "label": label, "reserved": lvl in RESERVED_LEVELS}
@@ -79,10 +88,14 @@ def crear(
     _: User = Depends(require_level_9),
 ) -> UserOut:
     _validate_payload(payload.level, payload.permissions)
+    full = compose_full_name(payload.first_name, payload.last_name_paterno, payload.last_name_materno)
     u = User(
         email=payload.email.lower(),
         hashed_password=hash_password(payload.password),
-        full_name=payload.full_name,
+        first_name=payload.first_name.strip() or None,
+        last_name_paterno=(payload.last_name_paterno or "").strip() or None,
+        last_name_materno=(payload.last_name_materno or "").strip() or None,
+        full_name=full,
         level=payload.level,
         permissions=payload.permissions or [],
         role=role_for_level(payload.level),
@@ -123,13 +136,35 @@ def actualizar(
     if "password" in data and data["password"]:
         u.hashed_password = hash_password(data["password"])
 
-    for f in ("full_name", "customer_id", "is_active"):
+    for f in ("first_name", "last_name_paterno", "last_name_materno", "customer_id", "is_active"):
         if f in data:
             setattr(u, f, data[f])
+
+    # Resincroniza full_name si cambió cualquier parte del nombre
+    if any(k in data for k in ("first_name", "last_name_paterno", "last_name_materno")):
+        u.full_name = compose_full_name(u.first_name, u.last_name_paterno, u.last_name_materno)
 
     db.commit()
     db.refresh(u)
     return _to_out(u)
+
+
+@router.post("/{user_id}/reset-password", response_model=PasswordReset)
+def reset_password(
+    user_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_level_9),
+) -> PasswordReset:
+    """Resetea la contraseña al `standard_password` configurado en /system-config."""
+    u = db.get(User, user_id)
+    if not u:
+        raise HTTPException(404, "Usuario no encontrado")
+    standard = cfg_get(db, "standard_password")
+    if not standard:
+        raise HTTPException(400, "No hay standard_password configurado en /system-config.")
+    u.hashed_password = hash_password(standard)
+    db.commit()
+    return PasswordReset(user_id=u.id, used_standard=True)
 
 
 @router.delete("/{user_id}", status_code=204)

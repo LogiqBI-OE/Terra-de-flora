@@ -8,6 +8,7 @@ from app.models.inventario import Inventario
 from app.models.produccion import Produccion
 from app.models.compra import Compra
 from app.models.demanda import Demanda
+from app.models.system_config import SystemConfig
 
 __all__ = [
     "User",
@@ -21,4 +22,5 @@ __all__ = [
     "Produccion",
     "Compra",
     "Demanda",
+    "SystemConfig",
 ]

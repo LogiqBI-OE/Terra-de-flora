@@ -5,22 +5,30 @@ from app.core.config import settings
 from app.core.security import hash_password
 from app.db import Base, SessionLocal, engine
 from app.models import Customer, Planta, Producto, User, UserRole
-from app.models.user import role_for_level
+from app.models.user import compose_full_name, role_for_level
+from app.services.system_config_service import ensure_defaults
 
 
 def upsert_user(
     db: Session,
     *,
     email: str,
-    full_name: str,
+    first_name: str,
+    last_name_paterno: str = "",
+    last_name_materno: str = "",
     password: str,
     level: int,
     permissions: list[str] | None = None,
     customer_id: int | None = None,
 ) -> None:
+    full_name = compose_full_name(first_name, last_name_paterno, last_name_materno)
     existing = db.query(User).filter(User.email == email).first()
     if existing:
         # Sincroniza nivel/permisos del seed por si cambiaron en código
+        existing.first_name = first_name
+        existing.last_name_paterno = last_name_paterno
+        existing.last_name_materno = last_name_materno
+        existing.full_name = full_name
         existing.level = level
         existing.permissions = permissions or []
         existing.role = role_for_level(level)
@@ -33,6 +41,9 @@ def upsert_user(
         User(
             email=email.lower(),
             hashed_password=hash_password(password),
+            first_name=first_name,
+            last_name_paterno=last_name_paterno,
+            last_name_materno=last_name_materno,
             full_name=full_name,
             level=level,
             permissions=permissions or [],
@@ -91,20 +102,26 @@ def run() -> None:
         upsert_user(
             db,
             email=settings.SEED_ADMIN_EMAIL,
-            full_name="Orlando (System Admin)",
+            first_name="Orlando",
+            last_name_paterno="Elizondo",
+            last_name_materno="Salazar",
             password=settings.SEED_PASSWORD,
-            level=9,  # System Admin: todos los permisos default
+            level=9,
             permissions=[],
         )
         upsert_user(
             db,
             email=settings.SEED_CLIENT_EMAIL,
-            full_name="Cliente Demo",
+            first_name="Cliente",
+            last_name_paterno="Demo",
             password=settings.SEED_PASSWORD,
-            level=1,  # Outsource
+            level=1,
             permissions=[],
             customer_id=walmart.id if walmart else None,
         )
+
+        print("→ System config (defaults)...")
+        ensure_defaults(db)
 
         print("→ Productos...")
         upsert_producto(db, "AGU-001", "Aguacate Hass A", "kg")

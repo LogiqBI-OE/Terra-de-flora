@@ -6,7 +6,9 @@ from pydantic import BaseModel, EmailStr
 
 class UserCreate(BaseModel):
     email: EmailStr
-    full_name: str
+    first_name: str
+    last_name_paterno: str = ""
+    last_name_materno: str = ""
     password: str
     level: int
     permissions: list[str] = []
@@ -14,7 +16,9 @@ class UserCreate(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    full_name: str | None = None
+    first_name: str | None = None
+    last_name_paterno: str | None = None
+    last_name_materno: str | None = None
     password: str | None = None
     level: int | None = None
     permissions: list[str] | None = None
@@ -25,6 +29,9 @@ class UserUpdate(BaseModel):
 class UserOut(BaseModel):
     id: int
     email: EmailStr
+    first_name: str | None
+    last_name_paterno: str | None
+    last_name_materno: str | None
     full_name: str | None
     level: int
     level_label: str
@@ -39,8 +46,13 @@ class UserOut(BaseModel):
 
 
 class PermissionsCatalog(BaseModel):
-    """Para que el frontend renderice select + switches sin hardcoded."""
-    levels: list[dict]      # [{level: 9, label: 'System Admin', reserved: bool}, ...]
-    permissions: list[str]  # nombres de permisos disponibles
-    restricted: list[str]   # permisos que solo nivel 9 puede tener
+    levels: list[dict]
+    permissions: list[str]
+    restricted: list[str]
     defaults_by_level: dict[int, list[str]]
+
+
+class PasswordReset(BaseModel):
+    """Respuesta del reset: indica si usó el standard del sistema."""
+    user_id: int
+    used_standard: bool
