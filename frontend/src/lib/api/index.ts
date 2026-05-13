@@ -18,6 +18,9 @@ export type { Planta, Customer, Producto } from './catalog'
 export { systemConfigApi } from './systemConfig'
 export type { SystemConfigItem } from './systemConfig'
 
+export { levelsApi } from './levels'
+export type { LevelDetail, LevelsPayload } from './levels'
+
 export { usersApi } from './users'
 export type {
   LevelDef,

@@ -52,7 +52,7 @@ export const NAV_SECTIONS: NavSection[] = [
     title: 'Configuración',
     items: [
       { to: '/usuarios', label: 'Usuarios', icon: <IconUsers />, minLevel: 9 },
-      { to: '/configuracion', label: 'Configuración general', icon: <IconSettings />, minLevel: 9 },
+      { to: '/configuracion', label: 'System settings', icon: <IconSettings />, minLevel: 9 },
       { to: '/manual', label: 'Manual de uso', icon: <IconManual />, disabled: true, hint: 'Próximamente' },
     ],
   },
