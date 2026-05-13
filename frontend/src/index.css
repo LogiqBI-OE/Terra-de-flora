@@ -151,7 +151,11 @@
    ESTILOS BASE Y UTILIDADES
    ══════════════════════════════════════════════════════════════════════════ */
 @layer base {
-  html, body, #root { height: 100%; }
+  html, body, #root { height: 100%; margin: 0; }
+  /* html también con bg-page para que cualquier hueco entre body y la app
+     (scrollbar removal, gaps inesperados) se vea con el color del tema,
+     no blanco. */
+  html { background-color: var(--bg-page); }
   body {
     font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
     background-color: var(--bg-page);
