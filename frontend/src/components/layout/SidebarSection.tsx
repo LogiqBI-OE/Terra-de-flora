@@ -1,4 +1,4 @@
-// Sección del sidebar: header + lista de items filtrados por permisos/nivel.
+// Sección del sidebar: header + línea divisoria + lista de items.
 
 import { useAuth } from '../../lib/auth'
 import type { NavSection } from './navConfig'
@@ -20,10 +20,14 @@ export default function SidebarSection({ section }: Props) {
   if (visibles.length === 0) return null
 
   return (
-    <div className="mb-1">
+    <div className="mb-3">
+      {/* Título de sección con línea divisoria abajo */}
       <div
-        className="px-3 pt-4 pb-1 text-[10px] font-semibold tracking-[0.18em] uppercase"
-        style={{ color: 'var(--sidebar-section-title)' }}
+        className="mx-3 mt-3 mb-2 pb-2 text-[10px] font-semibold tracking-[0.18em] uppercase border-b"
+        style={{
+          color: 'var(--sidebar-section-title)',
+          borderColor: 'var(--sidebar-border)',
+        }}
       >
         {section.title}
       </div>
