@@ -71,8 +71,8 @@ export default function UserMenu() {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 mt-2 w-72 rounded-xl border surface-menu z-50 overflow-hidden"
-          style={{ borderColor: 'var(--border)' }}
+          className="absolute right-0 mt-2 w-72 rounded-xl border surface-menu overflow-hidden"
+          style={{ borderColor: 'var(--border)', zIndex: 100 }}
         >
           <div
             className="px-4 py-4 flex items-center gap-3"

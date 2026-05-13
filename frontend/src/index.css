@@ -53,8 +53,8 @@
   --bg-input: rgba(255, 255, 255, 0.04);
   --bg-hover: rgba(255, 255, 255, 0.05);
   --bg-toggle: rgba(255, 255, 255, 0.06);
-  --bg-menu: rgba(19, 26, 15, 0.98);
-  --shadow-menu: 0 10px 30px rgba(0, 0, 0, 0.5);
+  --bg-menu: #1A2210;                              /* sólido, sin transparencia para legibilidad */
+  --shadow-menu: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04);
 
   /* Borders */
   --border: rgba(255, 255, 255, 0.08);
@@ -110,7 +110,7 @@
   --bg-hover: rgba(15, 23, 42, 0.04);
   --bg-toggle: #E2E8F0;                /* slate-200 */
   --bg-menu: #FFFFFF;
-  --shadow-menu: 0 10px 30px rgba(15, 23, 42, 0.12);
+  --shadow-menu: 0 12px 40px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(15, 23, 42, 0.04);
 
   --border: #E2E8F0;                   /* slate-200 */
   --border-soft: #F1F5F9;              /* slate-100 */
