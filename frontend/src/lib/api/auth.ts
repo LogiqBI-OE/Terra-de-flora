@@ -5,7 +5,8 @@ export type Role = 'admin' | 'cliente'
 export interface LoginPayload {
   email: string
   password: string
-  role: Role
+  // El toggle del frontend se quitó. Ya no enviamos role.
+  role?: Role
 }
 
 export interface LoginResponse {
@@ -14,6 +15,9 @@ export interface LoginResponse {
   role: Role
   email: string
   full_name: string | null
+  level: number
+  level_label: string
+  permissions: string[]
 }
 
 export const authApi = {

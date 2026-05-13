@@ -1,14 +1,13 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import SproutIcon from '../components/SproutIcon'
-import { ApiError, type Role } from '../lib/api/index'
+import { ApiError } from '../lib/api/index'
 import { useAuth } from '../lib/auth'
 
 export default function Login() {
   const navigate = useNavigate()
   const { login, loading } = useAuth()
 
-  const [role, setRole] = useState<Role>('cliente')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -19,7 +18,7 @@ export default function Login() {
     e.preventDefault()
     setError(null)
     try {
-      await login({ email: email.trim().toLowerCase(), password, role })
+      await login({ email: email.trim().toLowerCase(), password })
       // Después del login todos van a Hallazgos (home).
       navigate('/hallazgos', { replace: true })
     } catch (err) {
@@ -48,43 +47,13 @@ export default function Login() {
           <h1 className="text-4xl font-bold text-app mb-2 tracking-tight">Bienvenido</h1>
           <p className="text-sm text-app-secondary mb-6">Ingresa tus credenciales para continuar.</p>
 
-          {/* Role toggle */}
-          <div className="relative rounded-full p-1 grid grid-cols-2 mb-6 text-sm font-semibold" style={{ background: 'var(--bg-toggle)' }}>
-            <div
-              className="absolute top-1 bottom-1 rounded-full transition-transform duration-300 ease-out"
-              style={{
-                width: 'calc(50% - 4px)',
-                left: 4,
-                background: 'var(--accent)',
-                boxShadow: '0 4px 12px var(--accent-shadow)',
-                transform: role === 'admin' ? 'translateX(100%)' : 'translateX(0)',
-              }}
-            />
-            <button
-              type="button"
-              onClick={() => setRole('cliente')}
-              className="relative z-10 py-2 rounded-full transition-colors"
-              style={{ color: role === 'cliente' ? 'var(--text-on-accent)' : 'var(--text-secondary)' }}
-            >
-              Cliente
-            </button>
-            <button
-              type="button"
-              onClick={() => setRole('admin')}
-              className="relative z-10 py-2 rounded-full transition-colors"
-              style={{ color: role === 'admin' ? 'var(--text-on-accent)' : 'var(--text-secondary)' }}
-            >
-              Administrador
-            </button>
-          </div>
-
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="text-[11px] font-semibold tracking-widest uppercase text-app-secondary">Correo</label>
               <input
                 type="email"
                 required
-                placeholder={role === 'admin' ? 'admin@empresa.com' : 'usuario@oleolab.com'}
+                placeholder="usuario@oleolab.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="oleo-input"

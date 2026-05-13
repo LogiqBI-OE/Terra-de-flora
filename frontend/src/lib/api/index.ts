@@ -15,4 +15,13 @@ export type { CoberturaCell, CoberturaRow, CoberturaMatrix, CoberturaParams } fr
 export { catalogApi } from './catalog'
 export type { Planta, Customer, Producto } from './catalog'
 
+export { usersApi } from './users'
+export type {
+  LevelDef,
+  PermissionsCatalog,
+  UserDetail,
+  UserCreatePayload,
+  UserUpdatePayload,
+} from './users'
+
 export { ApiError, API_URL } from './client'

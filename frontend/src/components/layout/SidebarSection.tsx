@@ -1,16 +1,22 @@
-// Sección del sidebar = header + lista de items filtrados por rol.
+// Sección del sidebar: header + lista de items filtrados por permisos/nivel.
 
-import type { Role } from '../../lib/api'
+import { useAuth } from '../../lib/auth'
 import type { NavSection } from './navConfig'
 import SidebarItem from './SidebarItem'
 
 interface Props {
   section: NavSection
-  role: Role
 }
 
-export default function SidebarSection({ section, role }: Props) {
-  const visibles = section.items.filter((i) => i.roles.includes(role))
+export default function SidebarSection({ section }: Props) {
+  const { user, can } = useAuth()
+  if (!user) return null
+
+  const visibles = section.items.filter((i) => {
+    if (i.requiresPermission && !can(i.requiresPermission)) return false
+    if (i.minLevel !== undefined && user.level < i.minLevel) return false
+    return true
+  })
   if (visibles.length === 0) return null
 
   return (

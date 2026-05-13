@@ -1,15 +1,10 @@
 // Dropdown que aparece al hacer click en el avatar.
-// Contiene: nombre · email · tipo de cuenta · Log out.
+// Contiene: nombre · email · nivel · Log out.
 
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../lib/auth'
 import Avatar from './Avatar'
-
-const ROLE_LABEL: Record<string, string> = {
-  admin: 'Administrador',
-  cliente: 'Cliente',
-}
 
 export default function UserMenu() {
   const { user, logout } = useAuth()
@@ -48,11 +43,8 @@ export default function UserMenu() {
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label="Menú de usuario"
-        className="rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 transition"
-        style={{
-          // ring offset coloured against page bg
-          boxShadow: open ? '0 0 0 2px var(--accent)' : 'none',
-        }}
+        className="rounded-full focus:outline-none transition"
+        style={{ boxShadow: open ? '0 0 0 2px var(--accent)' : 'none' }}
       >
         <Avatar name={user.full_name} email={user.email} />
       </button>
@@ -60,22 +52,29 @@ export default function UserMenu() {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 mt-2 w-64 rounded-xl border surface-menu z-50 overflow-hidden"
+          className="absolute right-0 mt-2 w-72 rounded-xl border surface-menu z-50 overflow-hidden"
           style={{ borderColor: 'var(--border)' }}
         >
           {/* Header del menú */}
           <div className="px-4 py-4 flex items-center gap-3" style={{ borderBottom: '1px solid var(--border-soft)' }}>
-            <Avatar name={user.full_name} email={user.email} size={42} />
-            <div className="min-w-0">
+            <Avatar name={user.full_name} email={user.email} size={44} />
+            <div className="min-w-0 flex-1">
               <div className="text-sm font-semibold text-app truncate">{user.full_name ?? user.email}</div>
               <div className="text-xs text-app-muted truncate">{user.email}</div>
-              <div className="text-[10px] uppercase tracking-widest mt-0.5 text-accent font-semibold">
-                {ROLE_LABEL[user.role] ?? user.role}
+              <div className="flex items-center gap-1 mt-1 text-[10px] font-semibold tracking-widest uppercase">
+                <span
+                  className="px-1.5 py-0.5 rounded font-mono"
+                  style={{ background: 'var(--accent-bg-soft)', color: 'var(--accent-text)' }}
+                >
+                  L{user.level}
+                </span>
+                <span className="text-app-muted">·</span>
+                <span className="text-accent">{user.level_label}</span>
               </div>
             </div>
           </div>
 
-          {/* Acciones */}
+          {/* Acción Log out */}
           <button
             onClick={handleLogout}
             className="w-full text-left px-4 py-3 text-sm text-app hover:bg-[var(--bg-hover)] flex items-center gap-2"

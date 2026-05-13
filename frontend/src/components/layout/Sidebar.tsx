@@ -25,8 +25,7 @@ const STYLES = {
 
 export default function Sidebar() {
   const { user } = useAuth()
-  const role = user?.role
-  if (!role) return null
+  if (!user) return null
 
   return (
     <aside className="w-60 shrink-0 border-r flex flex-col" style={STYLES.aside}>
@@ -41,7 +40,7 @@ export default function Sidebar() {
       {/* Navegación por secciones */}
       <nav className="flex-1 overflow-y-auto py-2">
         {NAV_SECTIONS.map((section) => (
-          <SidebarSection key={section.title} section={section} role={role} />
+          <SidebarSection key={section.title} section={section} />
         ))}
       </nav>
 
