@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session
 
 from app.core.deps import require_level_9
 from app.core.permissions import (
-    DEFAULT_PERMISSIONS,
     LEVELS,
     PERMISSIONS,
     RESERVED_LEVELS,
@@ -25,12 +24,13 @@ from app.schemas.users import (
     UserOut,
     UserUpdate,
 )
+from app.services.levels_service import all_permissions_matrix
 from app.services.system_config_service import get as cfg_get
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-def _to_out(u: User) -> UserOut:
+def _to_out(u: User, db: Session) -> UserOut:
     return UserOut(
         id=u.id,
         email=u.email,
@@ -42,7 +42,7 @@ def _to_out(u: User) -> UserOut:
         level_label=LEVELS.get(u.level, "—"),
         role=u.role.value,
         permissions=list(u.permissions or []),
-        effective_permissions=sorted(effective_permissions(u.level, list(u.permissions or []))),
+        effective_permissions=sorted(effective_permissions(db, u.level, list(u.permissions or []))),
         customer_id=u.customer_id,
         is_active=u.is_active,
         created_at=u.created_at,
@@ -60,7 +60,11 @@ def _validate_payload(level: int, perms: list[str]) -> None:
 
 
 @router.get("/_catalog", response_model=PermissionsCatalog)
-def catalogo(_: User = Depends(require_level_9)) -> PermissionsCatalog:
+def catalogo(
+    db: Session = Depends(get_db),
+    _: User = Depends(require_level_9),
+) -> PermissionsCatalog:
+    matrix = all_permissions_matrix(db)
     return PermissionsCatalog(
         levels=[
             {"level": lvl, "label": label, "reserved": lvl in RESERVED_LEVELS}
@@ -68,7 +72,7 @@ def catalogo(_: User = Depends(require_level_9)) -> PermissionsCatalog:
         ],
         permissions=PERMISSIONS,
         restricted=list(RESTRICTED_PERMISSIONS),
-        defaults_by_level={k: sorted(v) for k, v in DEFAULT_PERMISSIONS.items()},
+        defaults_by_level={k: sorted(v) for k, v in matrix.items()},
     )
 
 
@@ -78,7 +82,7 @@ def listar(
     _: User = Depends(require_level_9),
 ) -> list[UserOut]:
     rows = db.query(User).order_by(User.level.desc(), User.email).all()
-    return [_to_out(u) for u in rows]
+    return [_to_out(u, db) for u in rows]
 
 
 @router.post("", response_model=UserOut, status_code=201)
@@ -109,7 +113,7 @@ def crear(
         db.rollback()
         raise HTTPException(409, "Ya existe un usuario con ese email.")
     db.refresh(u)
-    return _to_out(u)
+    return _to_out(u, db)
 
 
 @router.patch("/{user_id}", response_model=UserOut)
@@ -146,7 +150,7 @@ def actualizar(
 
     db.commit()
     db.refresh(u)
-    return _to_out(u)
+    return _to_out(u, db)
 
 
 @router.post("/{user_id}/reset-password", response_model=PasswordReset)

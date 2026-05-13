@@ -32,7 +32,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> TokenResponse
             detail=f"Este usuario no tiene acceso como {payload.role.value}",
         )
 
-    perms = sorted(effective_permissions(user.level, list(user.permissions or [])))
+    perms = sorted(effective_permissions(db, user.level, list(user.permissions or [])))
     token = create_access_token(
         subject=user.email, role=user.role.value, extra={"level": user.level}
     )

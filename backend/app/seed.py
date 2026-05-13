@@ -6,6 +6,7 @@ from app.core.security import hash_password
 from app.db import Base, SessionLocal, engine
 from app.models import Customer, Planta, Producto, User, UserRole
 from app.models.user import compose_full_name, role_for_level
+from app.services.levels_service import ensure_levels_seeded
 from app.services.system_config_service import ensure_defaults
 
 
@@ -122,6 +123,9 @@ def run() -> None:
 
         print("→ System config (defaults)...")
         ensure_defaults(db)
+
+        print("→ Niveles + matriz de permisos (defaults iniciales)...")
+        ensure_levels_seeded(db)
 
         print("→ Productos...")
         upsert_producto(db, "AGU-001", "Aguacate Hass A", "kg")

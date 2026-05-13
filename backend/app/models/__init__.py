@@ -9,6 +9,8 @@ from app.models.produccion import Produccion
 from app.models.compra import Compra
 from app.models.demanda import Demanda
 from app.models.system_config import SystemConfig
+from app.models.level import Level
+from app.models.level_permission import LevelPermission
 
 __all__ = [
     "User",
@@ -23,4 +25,6 @@ __all__ = [
     "Compra",
     "Demanda",
     "SystemConfig",
+    "Level",
+    "LevelPermission",
 ]
