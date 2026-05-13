@@ -1,6 +1,12 @@
 // Drawer: panel que entra desde la derecha. Overlay oscuro detrás.
 // Cierra con click en overlay, X, o Esc.
-// Estructura: header (título + X) · body (children) · footer opcional.
+//
+// Layout:
+//   - position: fixed, top:0 + bottom:0 garantiza ocupar 100% del viewport
+//     (h-full / height:100% falla en algunos contextos)
+//   - flex-col: header (shrink-0) + body (flex-1 + min-h-0 + overflow-y-auto)
+//     + footer (shrink-0). El footer queda pegado al fondo del PANEL, no del
+//     viewport, así "se siente" anclado al contenido.
 
 import { useEffect, type ReactNode } from 'react'
 
@@ -27,7 +33,6 @@ export default function Drawer({ open, onClose, title, children, footer, width =
 
   return (
     <>
-      {/* Overlay */}
       <div
         onClick={onClose}
         className="fixed inset-0 transition-opacity"
@@ -38,11 +43,11 @@ export default function Drawer({ open, onClose, title, children, footer, width =
           zIndex: 90,
         }}
       />
-      {/* Panel */}
+
       <aside
         role="dialog"
         aria-label={title}
-        className="fixed right-0 top-0 h-full border-l flex flex-col transition-transform"
+        className="fixed right-0 top-0 bottom-0 border-l flex flex-col overflow-hidden transition-transform"
         style={{
           width,
           maxWidth: '100vw',
@@ -69,11 +74,17 @@ export default function Drawer({ open, onClose, title, children, footer, width =
             </svg>
           </button>
         </header>
-        <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
+
+        {/* Body — min-h-0 es CRÍTICO para que flex-1 + overflow funcionen */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4">{children}</div>
+
         {footer && (
           <footer
             className="shrink-0 px-5 py-3 border-t flex justify-end gap-2"
-            style={{ borderColor: 'var(--border-soft)' }}
+            style={{
+              borderColor: 'var(--border-soft)',
+              background: 'var(--bg-page-2)',
+            }}
           >
             {footer}
           </footer>
