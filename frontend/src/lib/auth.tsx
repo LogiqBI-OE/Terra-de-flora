@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
 import { authApi, type LoginPayload, type Role } from './api'
 
 interface AuthUser {
@@ -44,13 +44,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(initial?.user ?? null)
   const [loading, setLoading] = useState<boolean>(false)
 
-  useEffect(() => {
-    if (token && user) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ token, user }))
-    } else {
-      localStorage.removeItem(STORAGE_KEY)
-    }
-  }, [token, user])
+  // NOTA: localStorage se actualiza de forma síncrona en login()/logout(),
+  // NO via useEffect. Esto es crítico porque el cliente HTTP (lib/api/client.ts)
+  // lee directo de localStorage. Si lo dejábamos en useEffect, el primer fetch
+  // tras login() se mandaba sin token → 401 → loop al login.
 
   const login = useCallback(async (payload: LoginPayload) => {
     setLoading(true)
@@ -64,6 +61,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         level_label: res.level_label,
         permissions: res.permissions ?? [],
       }
+      // Síncrono: garantiza que la próxima fetch encuentre el token.
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ token: res.access_token, user: u }))
       setToken(res.access_token)
       setUser(u)
       return u
@@ -73,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const logout = useCallback(() => {
+    localStorage.removeItem(STORAGE_KEY)
     setToken(null)
     setUser(null)
   }, [])
