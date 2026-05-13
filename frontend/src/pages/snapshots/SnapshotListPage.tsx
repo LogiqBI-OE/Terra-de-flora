@@ -13,12 +13,14 @@ export default function SnapshotListPage() {
   }, [])
 
   return (
-    <AppShell title="Snapshots">
+    <AppShell title="Carga de datos">
       <div className="max-w-6xl">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-app">Snapshots</h2>
-            <p className="text-sm text-app-secondary">Fotografías de inventario + producción + compras + demanda usadas para calcular cobertura.</p>
+            <h2 className="text-2xl font-bold text-app">Carga de datos</h2>
+            <p className="text-sm text-app-secondary">
+              Cada carga genera un <strong>snapshot</strong> con los 4 datasets (inventario, producción, compras y demanda) usados para calcular cobertura.
+            </p>
           </div>
           <NewSnapshotButton />
         </div>
@@ -27,8 +29,8 @@ export default function SnapshotListPage() {
           <div className="text-app-secondary text-sm">Cargando...</div>
         ) : rows.length === 0 ? (
           <EmptyState
-            title="No hay snapshots todavía"
-            description="Crea el primero y carga los 4 archivos (inventario, producción, compras, demanda)."
+            title="No hay cargas todavía"
+            description="Crea la primera y sube los 4 archivos (inventario, producción, compras, demanda)."
             action={<NewSnapshotButton />}
           />
         ) : (

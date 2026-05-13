@@ -16,6 +16,8 @@
   --sidebar-hover-bg: rgba(255, 255, 255, 0.06);
   --sidebar-active-bg: rgba(168, 208, 96, 0.15);
   --sidebar-active-text: #A8D060;
+  --sidebar-section-title: #71717A;               /* zinc-500 — títulos de sección */
+  --sidebar-disabled-text: #52525B;               /* zinc-600 — items disabled */
 
   /* ── Brand Hero (panel derecho del Login — siempre oscuro) ─────────────── */
   --brand-hero-bg: linear-gradient(135deg, #0B0F08 0%, #131A0F 60%, #0B0F08 100%);

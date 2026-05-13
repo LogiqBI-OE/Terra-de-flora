@@ -1,57 +1,53 @@
-import { NavLink } from 'react-router-dom'
+// Sidebar principal. Estructura compuesta:
+//   - BrandHeader (logo)
+//   - Sections (definidas en navConfig.tsx)
+//   - Footer (versión)
+//
+// El sidebar siempre va en oscuro (zinc-900): consume tokens --sidebar-* fijos.
+
 import SproutIcon from '../SproutIcon'
 import { useAuth } from '../../lib/auth'
+import { NAV_SECTIONS } from './navConfig'
+import SidebarSection from './SidebarSection'
 
-// Para añadir/quitar links del menú: edita NAV_ITEMS abajo.
-const NAV_ITEMS: { to: string; label: string; roles: Array<'admin' | 'cliente'> }[] = [
-  { to: '/cobertura', label: 'Cobertura', roles: ['admin', 'cliente'] },
-  { to: '/snapshots', label: 'Snapshots', roles: ['admin', 'cliente'] },
-  { to: '/uploads', label: 'Subir datos', roles: ['admin', 'cliente'] },
-  { to: '/admin', label: 'Administración', roles: ['admin'] },
-]
-
-// Tokens del Sidebar — fijos en ambos temas (definidos en index.css como --sidebar-*).
 const STYLES = {
-  aside: { background: 'var(--sidebar-bg)', borderColor: 'var(--sidebar-border)' } as const,
+  aside: {
+    background: 'var(--sidebar-bg)',
+    borderColor: 'var(--sidebar-border)',
+  } as const,
   header: { borderColor: 'var(--sidebar-border)' } as const,
   brand: { color: 'var(--sidebar-active-text)' } as const,
-  footer: { borderColor: 'var(--sidebar-border)', color: 'var(--sidebar-text-muted)' } as const,
-}
-
-function navLinkStyle(isActive: boolean): React.CSSProperties {
-  return {
-    background: isActive ? 'var(--sidebar-active-bg)' : 'transparent',
-    color: isActive ? 'var(--sidebar-active-text)' : 'var(--sidebar-text-secondary)',
-    fontWeight: isActive ? 600 : 400,
-  }
+  footer: {
+    borderColor: 'var(--sidebar-border)',
+    color: 'var(--sidebar-text-muted)',
+  } as const,
 }
 
 export default function Sidebar() {
   const { user } = useAuth()
   const role = user?.role
+  if (!role) return null
 
   return (
     <aside className="w-60 shrink-0 border-r flex flex-col" style={STYLES.aside}>
+      {/* Brand */}
       <div className="px-5 py-5 flex items-center gap-2 border-b" style={STYLES.header}>
         <SproutIcon size={26} style={STYLES.brand} />
-        <span className="text-xl font-semibold tracking-tight lowercase" style={STYLES.brand}>oleolab</span>
+        <span className="text-xl font-semibold tracking-tight lowercase" style={STYLES.brand}>
+          oleolab
+        </span>
       </div>
 
-      <nav className="flex-1 py-3 px-2 space-y-1 text-sm">
-        {NAV_ITEMS.filter((i) => role && i.roles.includes(role)).map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            className="block px-3 py-2 rounded-lg transition"
-            style={({ isActive }) => navLinkStyle(isActive)}
-          >
-            {item.label}
-          </NavLink>
+      {/* Navegación por secciones */}
+      <nav className="flex-1 overflow-y-auto py-2">
+        {NAV_SECTIONS.map((section) => (
+          <SidebarSection key={section.title} section={section} role={role} />
         ))}
       </nav>
 
+      {/* Footer */}
       <div className="px-5 py-4 border-t text-[11px]" style={STYLES.footer}>
-        Coberturas · v0.2
+        Coberturas · v0.3
       </div>
     </aside>
   )
