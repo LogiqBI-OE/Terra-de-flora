@@ -4,22 +4,43 @@ import SproutIcon from '../components/SproutIcon'
 import { ApiError } from '../lib/api/index'
 import { useAuth } from '../lib/auth'
 
+// "Recuérdame": guardamos solo el email (NUNCA el password) para precargar
+// el form la próxima vez. Si el usuario lo desmarca, borramos.
+const REMEMBER_KEY = 'oleolab.remember_email'
+
+function loadRememberedEmail(): string {
+  try {
+    return localStorage.getItem(REMEMBER_KEY) ?? ''
+  } catch {
+    return ''
+  }
+}
+
 export default function Login() {
   const navigate = useNavigate()
   const { login, loading } = useAuth()
 
-  const [email, setEmail] = useState('')
+  const rememberedEmail = loadRememberedEmail()
+  const [email, setEmail] = useState(rememberedEmail)
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [remember, setRemember] = useState(true)
+  // Si había email guardado, asumimos que el usuario quiere seguir recordándolo.
+  const [remember, setRemember] = useState(rememberedEmail !== '')
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
     try {
-      await login({ email: email.trim().toLowerCase(), password })
-      // Después del login todos van a Hallazgos (home).
+      const cleanEmail = email.trim().toLowerCase()
+      await login({ email: cleanEmail, password })
+
+      // Persistir/limpiar email según la elección del usuario.
+      try {
+        if (remember) localStorage.setItem(REMEMBER_KEY, cleanEmail)
+        else localStorage.removeItem(REMEMBER_KEY)
+      } catch { /* ignore */ }
+
       navigate('/hallazgos', { replace: true })
     } catch (err) {
       if (err instanceof ApiError) setError(err.message)
