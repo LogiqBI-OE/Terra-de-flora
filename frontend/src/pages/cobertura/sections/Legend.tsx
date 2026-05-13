@@ -8,10 +8,10 @@ export default function Legend() {
       {ORDEN.map((c) => (
         <div key={c} className="flex items-center gap-2">
           <span
-            className="inline-block w-4 h-4 rounded border border-white/10"
-            style={{ background: COLOR_HEX[c] }}
+            className="inline-block w-4 h-4 rounded border"
+            style={{ background: COLOR_HEX[c], borderColor: 'var(--border)' }}
           />
-          <span className="text-slate-400">{COLOR_LABEL[c]}</span>
+          <span className="text-app-secondary">{COLOR_LABEL[c]}</span>
         </div>
       ))}
     </div>

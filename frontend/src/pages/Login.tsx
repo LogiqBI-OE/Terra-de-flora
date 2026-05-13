@@ -19,8 +19,9 @@ export default function Login() {
     e.preventDefault()
     setError(null)
     try {
-      const u = await login({ email: email.trim().toLowerCase(), password, role })
-      navigate(u.role === 'admin' ? '/admin' : '/cliente', { replace: true })
+      await login({ email: email.trim().toLowerCase(), password, role })
+      // Después del login, todos van a Cobertura (la app principal).
+      navigate('/cobertura', { replace: true })
     } catch (err) {
       if (err instanceof ApiError) setError(err.message)
       else setError('Error inesperado. Intenta de nuevo.')
@@ -30,28 +31,31 @@ export default function Login() {
   return (
     <div className="bg-hero min-h-screen flex items-center justify-center p-4">
       <div
-        className="w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2 border border-white/5"
-        style={{ background: 'rgba(11,15,8,0.6)', backdropFilter: 'blur(20px)' }}
+        className="w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2 border"
+        style={{ background: 'var(--bg-card-soft)', borderColor: 'var(--border-soft)', backdropFilter: 'blur(20px)' }}
       >
         {/* LEFT — FORM */}
-        <div className="p-10 md:p-14 flex flex-col justify-center" style={{ background: 'rgba(19,26,15,0.92)' }}>
+        <div
+          className="p-10 md:p-14 flex flex-col justify-center"
+          style={{ background: 'var(--bg-card)' }}
+        >
           {/* Logo */}
           <div className="flex items-center gap-3 mb-10">
-            <SproutIcon size={34} className="text-oleo-green" />
-            <span className="text-3xl font-semibold tracking-tight text-oleo-green lowercase">oleolab</span>
+            <SproutIcon size={34} className="text-accent" />
+            <span className="text-3xl font-semibold tracking-tight text-accent lowercase">oleolab</span>
           </div>
 
-          <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">Bienvenido</h1>
-          <p className="text-sm text-slate-400 mb-6">Ingresa tus credenciales para continuar.</p>
+          <h1 className="text-4xl font-bold text-app mb-2 tracking-tight">Bienvenido</h1>
+          <p className="text-sm text-app-secondary mb-6">Ingresa tus credenciales para continuar.</p>
 
           {/* Role toggle */}
-          <div className="relative rounded-full p-1 grid grid-cols-2 mb-6 text-sm font-semibold" style={{ background: 'rgba(255,255,255,0.06)' }}>
+          <div className="relative rounded-full p-1 grid grid-cols-2 mb-6 text-sm font-semibold" style={{ background: 'var(--bg-toggle)' }}>
             <div
               className="absolute top-1 bottom-1 rounded-full transition-transform duration-300 ease-out"
               style={{
                 width: 'calc(50% - 4px)',
                 left: 4,
-                background: '#A8D060',
+                background: 'var(--accent)',
                 boxShadow: '0 4px 12px rgba(168,208,96,0.35)',
                 transform: role === 'admin' ? 'translateX(100%)' : 'translateX(0)',
               }}
@@ -60,7 +64,7 @@ export default function Login() {
               type="button"
               onClick={() => setRole('cliente')}
               className="relative z-10 py-2 rounded-full transition-colors"
-              style={{ color: role === 'cliente' ? '#0B0F08' : '#94a3b8' }}
+              style={{ color: role === 'cliente' ? 'var(--text-on-accent)' : 'var(--text-secondary)' }}
             >
               Cliente
             </button>
@@ -68,7 +72,7 @@ export default function Login() {
               type="button"
               onClick={() => setRole('admin')}
               className="relative z-10 py-2 rounded-full transition-colors"
-              style={{ color: role === 'admin' ? '#0B0F08' : '#94a3b8' }}
+              style={{ color: role === 'admin' ? 'var(--text-on-accent)' : 'var(--text-secondary)' }}
             >
               Administrador
             </button>
@@ -76,7 +80,7 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-[11px] font-semibold tracking-widest uppercase text-slate-400">Correo</label>
+              <label className="text-[11px] font-semibold tracking-widest uppercase text-app-secondary">Correo</label>
               <input
                 type="email"
                 required
@@ -88,7 +92,7 @@ export default function Login() {
             </div>
 
             <div>
-              <label className="text-[11px] font-semibold tracking-widest uppercase text-slate-400">Contraseña</label>
+              <label className="text-[11px] font-semibold tracking-widest uppercase text-app-secondary">Contraseña</label>
               <div className="relative mt-1">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -102,7 +106,7 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-1"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-app-muted hover:text-app p-1"
                   aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -113,21 +117,24 @@ export default function Login() {
             </div>
 
             <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-sm text-slate-400">
+              <label className="flex items-center gap-2 text-sm text-app-secondary">
                 <input
                   type="checkbox"
                   checked={remember}
                   onChange={(e) => setRemember(e.target.checked)}
                   className="w-4 h-4"
-                  style={{ accentColor: '#A8D060' }}
+                  style={{ accentColor: 'var(--accent)' }}
                 />
                 Recuérdame
               </label>
-              <a href="#" className="text-sm font-semibold text-oleo-green hover:underline">¿Olvidaste tu contraseña?</a>
+              <a href="#" className="text-sm font-semibold text-accent hover:underline">¿Olvidaste tu contraseña?</a>
             </div>
 
             {error && (
-              <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+              <div
+                className="rounded-lg border px-4 py-3 text-sm"
+                style={{ borderColor: 'rgba(220,38,38,0.3)', background: 'rgba(220,38,38,0.08)', color: '#dc2626' }}
+              >
                 {error}
               </div>
             )}
@@ -136,16 +143,16 @@ export default function Login() {
               {loading ? 'INGRESANDO...' : 'INICIAR SESIÓN'}
             </button>
 
-            <p className="text-center text-sm text-slate-500 pt-2">
+            <p className="text-center text-sm text-app-muted pt-2">
               ¿Necesitas ayuda?{' '}
-              <a href="#" className="font-semibold text-oleo-green hover:underline">Contacta a soporte</a>
+              <a href="#" className="font-semibold text-accent hover:underline">Contacta a soporte</a>
             </p>
           </form>
 
-          <div className="mt-8 pt-5 border-t border-white/5 flex items-center justify-between text-[11px]">
-            <span className="text-slate-500">Powered by</span>
-            <span className="font-bold tracking-wider text-slate-300">
-              LOGIQ <span className="font-normal text-slate-500">· Business Intelligence</span>
+          <div className="mt-8 pt-5 border-t flex items-center justify-between text-[11px]" style={{ borderColor: 'var(--border-soft)' }}>
+            <span className="text-app-muted">Powered by</span>
+            <span className="font-bold tracking-wider text-app-secondary">
+              LOGIQ <span className="font-normal text-app-muted">· Business Intelligence</span>
             </span>
           </div>
         </div>
@@ -161,12 +168,12 @@ export default function Login() {
           <div className="relative flex items-center gap-2 text-xs font-bold tracking-[0.3em]">
             <span className="w-8 h-px bg-slate-600" />
             <span className="text-slate-300">OLEOLAB</span>
-            <span className="text-oleo-green">WORKSPACE</span>
+            <span style={{ color: '#A8D060' }}>WORKSPACE</span>
           </div>
 
           <div className="relative flex flex-col items-center justify-center text-center">
-            <SproutIcon size={90} className="text-oleo-green mb-3" />
-            <div className="text-6xl md:text-7xl font-semibold tracking-tight text-oleo-green lowercase leading-none">oleolab</div>
+            <SproutIcon size={90} className="mb-3" style={{ color: '#A8D060' }} />
+            <div className="text-6xl md:text-7xl font-semibold tracking-tight lowercase leading-none" style={{ color: '#A8D060' }}>oleolab</div>
             <div className="mt-6 flex items-center gap-3">
               <div className="h-px w-10 bg-slate-700" />
               <div className="text-slate-400 tracking-[0.3em] text-xs font-semibold">COBERTURAS</div>

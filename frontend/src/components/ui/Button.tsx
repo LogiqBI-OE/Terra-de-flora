@@ -7,19 +7,33 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode
 }
 
-const variantClasses: Record<Variant, string> = {
-  primary: 'bg-oleo-green text-oleo-bg hover:bg-oleo-green-dark',
-  secondary: 'bg-white/5 text-white border border-white/10 hover:bg-white/10',
-  ghost: 'text-oleo-green hover:underline',
-  danger: 'bg-red-500/80 text-white hover:bg-red-500',
-}
+const baseClasses =
+  'inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition disabled:opacity-50 disabled:cursor-not-allowed'
 
-export default function Button({ variant = 'primary', className = '', children, disabled, ...rest }: Props) {
+export default function Button({ variant = 'primary', className = '', children, disabled, style, ...rest }: Props) {
+  const stylesByVariant: Record<Variant, React.CSSProperties> = {
+    primary: { background: 'var(--accent)', color: 'var(--text-on-accent)' },
+    secondary: { background: 'var(--bg-toggle)', color: 'var(--text-primary)', border: '1px solid var(--border)' },
+    ghost: { background: 'transparent', color: 'var(--accent-text)' },
+    danger: { background: '#dc2626', color: '#ffffff' },
+  }
   return (
     <button
       {...rest}
       disabled={disabled}
-      className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition disabled:opacity-50 disabled:cursor-not-allowed ${variantClasses[variant]} ${className}`}
+      className={`${baseClasses} ${className}`}
+      style={{ ...stylesByVariant[variant], ...style }}
+      onMouseEnter={(e) => {
+        if (disabled) return
+        if (variant === 'primary') (e.currentTarget.style.background = 'var(--accent-dark)')
+        if (variant === 'secondary') (e.currentTarget.style.background = 'var(--bg-hover)')
+        if (variant === 'ghost') (e.currentTarget.style.textDecoration = 'underline')
+      }}
+      onMouseLeave={(e) => {
+        const s = stylesByVariant[variant]
+        e.currentTarget.style.background = (s.background as string) ?? ''
+        if (variant === 'ghost') e.currentTarget.style.textDecoration = 'none'
+      }}
     >
       {children}
     </button>

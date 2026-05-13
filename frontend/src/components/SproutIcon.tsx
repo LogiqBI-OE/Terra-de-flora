@@ -1,4 +1,14 @@
-export default function SproutIcon({ size = 34, className = '' }: { size?: number; className?: string }) {
+import type { CSSProperties } from 'react'
+
+export default function SproutIcon({
+  size = 34,
+  className = '',
+  style,
+}: {
+  size?: number
+  className?: string
+  style?: CSSProperties
+}) {
   return (
     <svg
       width={size}
@@ -7,6 +17,7 @@ export default function SproutIcon({ size = 34, className = '' }: { size?: numbe
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
+      style={style}
     >
       <path d="M32 56 V34" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
       <path d="M32 36 C 22 36, 14 28, 14 16 C 26 16, 32 22, 32 34 Z" fill="currentColor" />

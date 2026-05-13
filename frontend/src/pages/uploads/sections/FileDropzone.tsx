@@ -45,9 +45,11 @@ export default function FileDropzone({ snapshotId, tipo, label, onResult }: Prop
         handleFiles(e.dataTransfer.files)
       }}
       onClick={() => inputRef.current?.click()}
-      className={`cursor-pointer rounded-lg border-2 border-dashed px-5 py-6 text-center transition ${
-        hover ? 'border-oleo-green bg-oleo-green/5' : 'border-white/10 hover:border-white/20'
-      }`}
+      className="cursor-pointer rounded-lg border-2 border-dashed px-5 py-6 text-center transition"
+      style={{
+        borderColor: hover ? 'var(--accent)' : 'var(--border-strong)',
+        background: hover ? 'rgba(168,208,96,0.06)' : 'transparent',
+      }}
     >
       <input
         ref={inputRef}
@@ -56,10 +58,10 @@ export default function FileDropzone({ snapshotId, tipo, label, onResult }: Prop
         className="hidden"
         onChange={(e) => handleFiles(e.target.files)}
       />
-      <div className="text-sm font-semibold text-white mb-1">{label}</div>
-      <div className="text-xs text-slate-500">
+      <div className="text-sm font-semibold text-app mb-1">{label}</div>
+      <div className="text-xs text-app-muted">
         {loading ? (
-          <span className="text-oleo-green inline-flex items-center gap-2">
+          <span className="text-accent inline-flex items-center gap-2">
             <Spinner /> Subiendo {filename}...
           </span>
         ) : filename ? (
@@ -68,7 +70,7 @@ export default function FileDropzone({ snapshotId, tipo, label, onResult }: Prop
           <span>Arrastra el .xlsx aquí o haz click</span>
         )}
       </div>
-      {error && <div className="mt-2 text-xs text-red-400">{error}</div>}
+      {error && <div className="mt-2 text-xs" style={{ color: '#dc2626' }}>{error}</div>}
     </div>
   )
 }

@@ -13,10 +13,14 @@ export default function TemplateDownloader() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
       {TIPOS.map((t) => (
-        <div key={t.tipo} className="flex items-center justify-between rounded-lg border border-white/5 px-4 py-3" style={{ background: 'rgba(11,15,8,0.4)' }}>
+        <div
+          key={t.tipo}
+          className="flex items-center justify-between rounded-lg border px-4 py-3"
+          style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-soft)' }}
+        >
           <div>
-            <div className="text-sm font-semibold text-white">{t.label}</div>
-            <div className="text-xs text-slate-500">{t.descripcion}</div>
+            <div className="text-sm font-semibold text-app">{t.label}</div>
+            <div className="text-xs text-app-muted">{t.descripcion}</div>
           </div>
           <Button variant="secondary" onClick={() => templatesApi.downloadAndSave(t.tipo)}>
             Descargar

@@ -22,17 +22,22 @@ export default function CoberturaToolbar({
   onChangeNBuckets,
 }: Props) {
   return (
-    <div className="flex flex-wrap items-center gap-4 px-4 py-3 border-b border-white/5" style={{ background: 'rgba(11,15,8,0.6)' }}>
-      {/* Toggle granularidad */}
-      <div className="flex items-center gap-1 rounded-full p-1 text-xs font-semibold" style={{ background: 'rgba(255,255,255,0.06)' }}>
+    <div
+      className="flex flex-wrap items-center gap-4 px-4 py-3 border-b"
+      style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-soft)' }}
+    >
+      <div
+        className="flex items-center gap-1 rounded-full p-1 text-xs font-semibold"
+        style={{ background: 'var(--bg-toggle)' }}
+      >
         {(['semanal', 'mensual'] as const).map((g) => (
           <button
             key={g}
             onClick={() => onChangeGranularidad(g)}
             className="px-3 py-1.5 rounded-full transition"
             style={{
-              background: granularidad === g ? '#A8D060' : 'transparent',
-              color: granularidad === g ? '#0B0F08' : '#94a3b8',
+              background: granularidad === g ? 'var(--accent)' : 'transparent',
+              color: granularidad === g ? 'var(--text-on-accent)' : 'var(--text-secondary)',
             }}
           >
             {g === 'semanal' ? 'Semanal' : 'Mensual'}
@@ -40,13 +45,17 @@ export default function CoberturaToolbar({
         ))}
       </div>
 
-      {/* Planta selector */}
       <div className="flex items-center gap-2 text-xs">
-        <label className="text-slate-500">Planta</label>
+        <label className="text-app-muted">Planta</label>
         <select
           value={planta}
           onChange={(e) => onChangePlanta(e.target.value)}
-          className="bg-white/5 border border-white/10 rounded px-2 py-1.5 text-white"
+          className="rounded px-2 py-1.5 border"
+          style={{
+            background: 'var(--bg-input)',
+            color: 'var(--text-primary)',
+            borderColor: 'var(--border)',
+          }}
         >
           <option value="TODAS">Todas</option>
           {plantas.map((p) => (
@@ -55,18 +64,22 @@ export default function CoberturaToolbar({
         </select>
       </div>
 
-      {/* Horizonte */}
       <div className="flex items-center gap-2 text-xs">
-        <label className="text-slate-500">Horizonte</label>
+        <label className="text-app-muted">Horizonte</label>
         <input
           type="number"
           min={1}
           max={52}
           value={nBuckets}
           onChange={(e) => onChangeNBuckets(Number(e.target.value))}
-          className="w-16 bg-white/5 border border-white/10 rounded px-2 py-1.5 text-white"
+          className="w-16 rounded px-2 py-1.5 border"
+          style={{
+            background: 'var(--bg-input)',
+            color: 'var(--text-primary)',
+            borderColor: 'var(--border)',
+          }}
         />
-        <span className="text-slate-500">{granularidad === 'semanal' ? 'semanas' : 'meses'}</span>
+        <span className="text-app-muted">{granularidad === 'semanal' ? 'semanas' : 'meses'}</span>
       </div>
     </div>
   )

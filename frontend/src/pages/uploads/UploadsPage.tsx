@@ -61,8 +61,8 @@ export default function UploadsPage() {
             <CardBody>
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-xs uppercase tracking-widest text-slate-500">Snapshot</div>
-                  <div className="text-xl font-bold text-white">{snapshot.nombre}</div>
+                  <div className="text-xs uppercase tracking-widest text-app-muted">Snapshot</div>
+                  <div className="text-xl font-bold text-app">{snapshot.nombre}</div>
                 </div>
                 {todosCargados && (
                   <Button onClick={() => navigate(`/cobertura?snapshot=${snapshotId}`)}>
@@ -77,8 +77,8 @@ export default function UploadsPage() {
         {/* Templates */}
         <Card>
           <CardHeader>
-            <h3 className="text-sm font-semibold text-white">1. Descarga los templates</h3>
-            <p className="text-xs text-slate-500 mt-1">
+            <h3 className="text-sm font-semibold text-app">1. Descarga los templates</h3>
+            <p className="text-xs text-app-muted mt-1">
               Usa SIEMPRE estos formatos. Si el archivo no empata las columnas, se rechazará el upload.
             </p>
           </CardHeader>
@@ -90,8 +90,8 @@ export default function UploadsPage() {
         {/* Uploads */}
         <Card>
           <CardHeader>
-            <h3 className="text-sm font-semibold text-white">2. Sube los 4 archivos</h3>
-            <p className="text-xs text-slate-500 mt-1">
+            <h3 className="text-sm font-semibold text-app">2. Sube los 4 archivos</h3>
+            <p className="text-xs text-app-muted mt-1">
               Cada nuevo upload <strong>reemplaza</strong> el dataset anterior en este snapshot.
             </p>
           </CardHeader>
@@ -113,7 +113,7 @@ export default function UploadsPage() {
         </Card>
 
         <div className="text-right">
-          <Link to={`/cobertura?snapshot=${snapshotId}`} className="text-oleo-green hover:underline text-sm font-semibold">
+          <Link to={`/cobertura?snapshot=${snapshotId}`} className="text-accent hover:underline text-sm font-semibold">
             Ir a calcular cobertura →
           </Link>
         </div>

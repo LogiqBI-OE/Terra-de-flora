@@ -17,14 +17,14 @@ export default function SnapshotListPage() {
       <div className="max-w-6xl">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-white">Snapshots</h2>
-            <p className="text-sm text-slate-400">Fotografías de inventario + producción + compras + demanda usadas para calcular cobertura.</p>
+            <h2 className="text-2xl font-bold text-app">Snapshots</h2>
+            <p className="text-sm text-app-secondary">Fotografías de inventario + producción + compras + demanda usadas para calcular cobertura.</p>
           </div>
           <NewSnapshotButton />
         </div>
 
         {rows === null ? (
-          <div className="text-slate-400 text-sm">Cargando...</div>
+          <div className="text-app-secondary text-sm">Cargando...</div>
         ) : rows.length === 0 ? (
           <EmptyState
             title="No hay snapshots todavía"

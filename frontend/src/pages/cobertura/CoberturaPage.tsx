@@ -75,12 +75,12 @@ export default function CoberturaPage() {
             onChangeNBuckets={setNBuckets}
           />
           {loading ? (
-            <CardBody><div className="text-slate-400 text-sm">Calculando...</div></CardBody>
+            <CardBody><div className="text-app-secondary text-sm">Calculando...</div></CardBody>
           ) : error ? (
-            <CardBody><div className="text-red-400 text-sm">{error}</div></CardBody>
+            <CardBody><div className="text-sm" style={{ color: '#dc2626' }}>{error}</div></CardBody>
           ) : !matrix || matrix.filas.length === 0 ? (
             <CardBody>
-              <div className="text-slate-400 text-sm">
+              <div className="text-app-secondary text-sm">
                 Aún no hay datos en este snapshot. Carga los 4 archivos (inventario, producción, compras y demanda).
               </div>
             </CardBody>

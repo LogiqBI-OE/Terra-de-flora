@@ -10,9 +10,12 @@ export default function EmptyState({
   action?: ReactNode
 }) {
   return (
-    <div className="rounded-xl border border-white/5 px-8 py-12 text-center" style={{ background: 'rgba(19,26,15,0.4)' }}>
-      <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
-      {description && <p className="text-sm text-slate-400 mb-5">{description}</p>}
+    <div
+      className="rounded-xl border px-8 py-12 text-center"
+      style={{ background: 'var(--bg-card-soft)', borderColor: 'var(--border-soft)' }}
+    >
+      <h3 className="text-lg font-semibold text-app mb-2">{title}</h3>
+      {description && <p className="text-sm text-app-secondary mb-5">{description}</p>}
       {action}
     </div>
   )

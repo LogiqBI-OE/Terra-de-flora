@@ -16,12 +16,15 @@ export default function Sidebar() {
 
   return (
     <aside
-      className="w-60 shrink-0 border-r border-white/5 flex flex-col"
-      style={{ background: 'rgba(19,26,15,0.92)' }}
+      className="w-60 shrink-0 border-r flex flex-col"
+      style={{ background: 'var(--bg-card)', borderColor: 'var(--border-soft)' }}
     >
-      <div className="px-5 py-5 flex items-center gap-2 border-b border-white/5">
-        <SproutIcon size={26} className="text-oleo-green" />
-        <span className="text-xl font-semibold tracking-tight text-oleo-green lowercase">oleolab</span>
+      <div
+        className="px-5 py-5 flex items-center gap-2 border-b"
+        style={{ borderColor: 'var(--border-soft)' }}
+      >
+        <SproutIcon size={26} className="text-accent" />
+        <span className="text-xl font-semibold tracking-tight text-accent lowercase">oleolab</span>
       </div>
 
       <nav className="flex-1 py-3 px-2 space-y-1 text-sm">
@@ -31,18 +34,23 @@ export default function Sidebar() {
             to={item.to}
             className={({ isActive }) =>
               `block px-3 py-2 rounded-lg transition ${
-                isActive
-                  ? 'bg-oleo-green/15 text-oleo-green font-semibold'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                isActive ? 'font-semibold' : 'text-app-secondary hover:text-app'
               }`
             }
+            style={({ isActive }) => ({
+              background: isActive ? 'rgba(168, 208, 96, 0.15)' : 'transparent',
+              color: isActive ? 'var(--accent-text)' : undefined,
+            })}
           >
             {item.label}
           </NavLink>
         ))}
       </nav>
 
-      <div className="px-5 py-4 border-t border-white/5 text-[11px] text-slate-500">
+      <div
+        className="px-5 py-4 border-t text-[11px] text-app-muted"
+        style={{ borderColor: 'var(--border-soft)' }}
+      >
         Coberturas · v0.2
       </div>
     </aside>
