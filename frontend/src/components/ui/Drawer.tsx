@@ -1,14 +1,12 @@
 // Drawer: panel que entra desde la derecha. Overlay oscuro detrás.
 // Cierra con click en overlay, X, o Esc.
 //
-// Layout:
-//   - position: fixed, top:0 + bottom:0 garantiza ocupar 100% del viewport
-//     (h-full / height:100% falla en algunos contextos)
-//   - flex-col: header (shrink-0) + body (flex-1 + min-h-0 + overflow-y-auto)
-//     + footer (shrink-0). El footer queda pegado al fondo del PANEL, no del
-//     viewport, así "se siente" anclado al contenido.
+// Posicionamiento 100% explícito (vía style, no clases) para garantizar
+// cobertura completa del viewport. height/width: 100vw/100vh + position fixed.
+// El estado `mounted` evita que el drawer se vea durante el primer paint
+// (cuando aún no ha aplicado el `transform: translateX(0)`).
 
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 
 interface Props {
   open: boolean
@@ -20,44 +18,65 @@ interface Props {
 }
 
 export default function Drawer({ open, onClose, title, children, footer, width = 520 }: Props) {
+  const [mounted, setMounted] = useState(false)
+
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      setMounted(false)
+      return
+    }
+    // doble RAF para asegurar que el transform inicial (translateX 100%)
+    // se haya pintado ANTES de que pasemos a translateX(0) y haya transición real.
+    const r1 = requestAnimationFrame(() => {
+      const r2 = requestAnimationFrame(() => setMounted(true))
+      return () => cancelAnimationFrame(r2)
+    })
     const onEsc = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     document.addEventListener('keydown', onEsc)
     document.body.style.overflow = 'hidden'
     return () => {
+      cancelAnimationFrame(r1)
       document.removeEventListener('keydown', onEsc)
       document.body.style.overflow = ''
     }
   }, [open, onClose])
 
+  if (!open) return null
+
+  const overlayStyle: React.CSSProperties = {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100vw',
+    height: '100vh',
+    background: 'rgba(0, 0, 0, 0.55)',
+    opacity: mounted ? 1 : 0,
+    transition: 'opacity 0.2s ease',
+    zIndex: 90,
+  }
+
+  const panelStyle: React.CSSProperties = {
+    position: 'fixed',
+    top: 0,
+    right: 0,
+    width,
+    maxWidth: '100vw',
+    height: '100vh',
+    background: 'var(--bg-page-2)',
+    borderLeft: '1px solid var(--border)',
+    transform: mounted ? 'translateX(0)' : 'translateX(100%)',
+    transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+    zIndex: 100,
+    boxShadow: '-16px 0 40px rgba(0, 0, 0, 0.35)',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+  }
+
   return (
     <>
-      <div
-        onClick={onClose}
-        className="fixed inset-0 transition-opacity"
-        style={{
-          background: 'rgba(0, 0, 0, 0.45)',
-          opacity: open ? 1 : 0,
-          pointerEvents: open ? 'auto' : 'none',
-          zIndex: 90,
-        }}
-      />
-
-      <aside
-        role="dialog"
-        aria-label={title}
-        className="fixed right-0 top-0 bottom-0 border-l flex flex-col overflow-hidden transition-transform"
-        style={{
-          width,
-          maxWidth: '100vw',
-          background: 'var(--bg-page-2)',
-          borderColor: 'var(--border)',
-          transform: open ? 'translateX(0)' : 'translateX(100%)',
-          zIndex: 100,
-          boxShadow: open ? '-16px 0 40px rgba(0, 0, 0, 0.25)' : 'none',
-        }}
-      >
+      <div onClick={onClose} style={overlayStyle} />
+      <aside role="dialog" aria-label={title} style={panelStyle}>
         <header
           className="shrink-0 px-5 py-4 border-b flex items-center justify-between"
           style={{ borderColor: 'var(--border-soft)' }}
@@ -75,7 +94,6 @@ export default function Drawer({ open, onClose, title, children, footer, width =
           </button>
         </header>
 
-        {/* Body — min-h-0 es CRÍTICO para que flex-1 + overflow funcionen */}
         <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4">{children}</div>
 
         {footer && (
