@@ -33,6 +33,14 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
 
   const res = await fetch(`${API_URL}${path}`, { ...init, headers })
   if (!res.ok) {
+    // Si el token está expirado/inválido, limpiamos la sesión y mandamos al login.
+    // Así no se quedan tablas "vacías" silenciosamente por culpa de un 401.
+    if (res.status === 401) {
+      try { localStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ }
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        window.location.assign('/login')
+      }
+    }
     let detail = res.statusText
     try {
       const body = await res.json()
