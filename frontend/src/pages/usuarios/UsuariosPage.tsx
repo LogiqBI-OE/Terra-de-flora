@@ -1,7 +1,7 @@
 // Página Usuarios — solo nivel 9.
 // Drawer slide-in para form + tabla con acciones (edit · reset password · delete).
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import AppShell from '../../components/layout/AppShell'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
@@ -12,16 +12,28 @@ import {
   type PermissionsCatalog,
   type UserDetail,
 } from '../../lib/api'
+import { useAuth } from '../../lib/auth'
 import UsuariosTable from './sections/UsuariosTable'
 import UsuarioFormDrawer, { type UserFormValue } from './sections/UsuarioFormDrawer'
 
 export default function UsuariosPage() {
+  const { user: currentUser } = useAuth()
+  const currentLevel = currentUser?.level ?? 0
   const [rows, setRows] = useState<UserDetail[]>([])
   const [catalog, setCatalog] = useState<PermissionsCatalog | null>(null)
   const [editing, setEditing] = useState<UserFormValue | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+
+  // Catalogo filtrado para el form: solo niveles <= currentLevel
+  const scopedCatalog = useMemo<PermissionsCatalog | null>(() => {
+    if (!catalog) return null
+    return {
+      ...catalog,
+      levels: catalog.levels.filter((l) => l.level <= currentLevel),
+    }
+  }, [catalog, currentLevel])
 
   async function reload() {
     const [u, c] = await Promise.all([usersApi.list(), usersApi.catalog()])
@@ -96,6 +108,9 @@ export default function UsuariosPage() {
 
   function startNew() {
     setError(null)
+    // Default level: el más bajo dentro del scope del actor (típicamente L1 o L2)
+    const allowedLevels = (scopedCatalog?.levels ?? []).filter((l) => !l.reserved).map((l) => l.level)
+    const defaultLevel = allowedLevels.length > 0 ? Math.min(...allowedLevels) : 1
     setEditing({
       id: null,
       email: '',
@@ -104,7 +119,7 @@ export default function UsuariosPage() {
       last_name_paterno: '',
       last_name_materno: '',
       password: '',
-      level: 2,
+      level: defaultLevel,
       permissions: [],
       is_active: true,
     })
@@ -133,7 +148,7 @@ export default function UsuariosPage() {
           <div>
             <h2 className="text-2xl font-bold text-app">Usuarios</h2>
             <p className="text-sm text-app-secondary">
-              Visible desde nivel 5. Crear, editar o eliminar requiere nivel 9.
+              Visible desde nivel 5. Cada usuario solo puede gestionar a otros de su nivel para abajo.
             </p>
           </div>
           <Button onClick={startNew}>
@@ -144,20 +159,22 @@ export default function UsuariosPage() {
         <Card>
           <UsuariosTable
             rows={rows}
+            currentUserLevel={currentLevel}
+            currentUserEmail={currentUser?.email}
             onEdit={startEdit}
             onDelete={handleDelete}
             onResetPassword={handleResetPassword}
           />
         </Card>
 
-        {editing && catalog && (
+        {editing && scopedCatalog && (
           <UsuarioFormDrawer
             open
             value={editing}
             onChange={setEditing}
             onSave={handleSave}
             onClose={() => setEditing(null)}
-            catalog={catalog}
+            catalog={scopedCatalog}
             busy={busy}
             error={error}
           />

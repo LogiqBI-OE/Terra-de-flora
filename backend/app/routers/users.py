@@ -1,12 +1,17 @@
-"""Router: CRUD de usuarios + catálogo de niveles/permisos + reset password.
+"""Router: CRUD de usuarios + catalogo de niveles/permisos + reset password.
 
-Acceso: solo nivel 9 (System Admin) — protegido con require_level_9.
+Acceso (todos los endpoints requieren al menos L5):
+  - GET endpoints: cualquier L5+
+  - Mutaciones (POST/PATCH/DELETE/reset-password): cada actor puede gestionar
+    usuarios DE SU NIVEL PARA ABAJO. Es decir, un L7 puede crear/editar/borrar
+    cualquier usuario con level <= 7. No puede tocar L8 o L9, ni promover a
+    nadie por encima de su propio nivel.
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.deps import require_level_5, require_level_9
+from app.core.deps import require_level_5
 from app.core.permissions import (
     LEVELS,
     PERMISSIONS,
@@ -33,7 +38,6 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 
 def _normalize_username(raw: str | None) -> str | None:
-    """Lowercase + trim. Vacio -> None."""
     if raw is None:
         return None
     cleaned = raw.strip().lower()
@@ -69,6 +73,34 @@ def _validate_payload(level: int, perms: list[str]) -> None:
         raise HTTPException(400, f"Permisos desconocidos: {invalid}")
 
 
+def _require_can_manage(actor: User, target_level: int, action: str) -> None:
+    """Verifica que `actor` pueda gestionar a un usuario de nivel `target_level`.
+    Regla: actor.level >= target_level. Si no, 403.
+    """
+    if actor.level < target_level:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=(
+                f"No puedes {action} a un usuario de nivel L{target_level} "
+                f"(tu nivel es L{actor.level}). Solo puedes gestionar usuarios "
+                "de tu nivel para abajo."
+            ),
+        )
+
+
+def _require_can_assign_level(actor: User, new_level: int) -> None:
+    """No puedes asignar a un usuario un nivel mayor al tuyo."""
+    if new_level > actor.level:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=(
+                f"No puedes asignar el nivel L{new_level} "
+                f"(tu nivel es L{actor.level}). Solo puedes asignar niveles "
+                "iguales o inferiores al tuyo."
+            ),
+        )
+
+
 @router.get("/_catalog", response_model=PermissionsCatalog)
 def catalogo(
     db: Session = Depends(get_db),
@@ -99,9 +131,11 @@ def listar(
 def crear(
     payload: UserCreate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_level_9),
+    actor: User = Depends(require_level_5),
 ) -> UserOut:
     _validate_payload(payload.level, payload.permissions)
+    _require_can_assign_level(actor, payload.level)
+
     full = compose_full_name(payload.first_name, payload.last_name_paterno, payload.last_name_materno)
     u = User(
         email=payload.email.lower(),
@@ -131,11 +165,14 @@ def actualizar(
     user_id: int,
     payload: UserUpdate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_level_9),
+    actor: User = Depends(require_level_5),
 ) -> UserOut:
     u = db.get(User, user_id)
     if not u:
         raise HTTPException(404, "Usuario no encontrado")
+
+    # Check 1: el target actual debe estar dentro del scope del actor.
+    _require_can_manage(actor, u.level, "editar")
 
     data = payload.model_dump(exclude_unset=True)
 
@@ -143,6 +180,8 @@ def actualizar(
         new_level = data.get("level", u.level)
         new_perms = data.get("permissions", list(u.permissions or []))
         _validate_payload(new_level, new_perms)
+        # Check 2: no puedes promover a un nivel superior al tuyo.
+        _require_can_assign_level(actor, new_level)
         u.level = new_level
         u.permissions = new_perms
         u.role = role_for_level(new_level)
@@ -157,7 +196,6 @@ def actualizar(
         if f in data:
             setattr(u, f, data[f])
 
-    # Resincroniza full_name si cambió cualquier parte del nombre
     if any(k in data for k in ("first_name", "last_name_paterno", "last_name_materno")):
         u.full_name = compose_full_name(u.first_name, u.last_name_paterno, u.last_name_materno)
 
@@ -174,12 +212,13 @@ def actualizar(
 def reset_password(
     user_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_level_9),
+    actor: User = Depends(require_level_5),
 ) -> PasswordReset:
-    """Resetea la contraseña al `standard_password` configurado en /system-config."""
+    """Resetea la contraseña al `standard_password`. Solo target de nivel <= actor."""
     u = db.get(User, user_id)
     if not u:
         raise HTTPException(404, "Usuario no encontrado")
+    _require_can_manage(actor, u.level, "resetear la contraseña de")
     standard = cfg_get(db, "standard_password")
     if not standard:
         raise HTTPException(400, "No hay standard_password configurado en /system-config.")
@@ -212,12 +251,13 @@ def login_events(
 def eliminar(
     user_id: int,
     db: Session = Depends(get_db),
-    actor: User = Depends(require_level_9),
+    actor: User = Depends(require_level_5),
 ) -> None:
     if user_id == actor.id:
         raise HTTPException(400, "No puedes eliminarte a ti mismo.")
     u = db.get(User, user_id)
     if not u:
         raise HTTPException(404, "Usuario no encontrado")
+    _require_can_manage(actor, u.level, "eliminar")
     db.delete(u)
     db.commit()
