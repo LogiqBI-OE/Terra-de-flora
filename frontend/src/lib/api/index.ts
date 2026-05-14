@@ -43,4 +43,13 @@ export type {
   TipoProyecto, EstadoProyecto, TipoMeta, EstadoMeta, VendedorOption,
 } from './proyectos'
 
+export { cotizacionesApi } from './cotizaciones'
+export type {
+  Cotizacion, CotizacionItem, CotizacionSeccion, CotizacionSummary,
+  CotizacionCatalog, CotizacionCreatePayload, CotizacionUpdatePayload,
+  SeccionCreatePayload, SeccionUpdatePayload,
+  ItemCreatePayload, ItemUpdatePayload,
+  EstadoCotizacion,
+} from './cotizaciones'
+
 export { ApiError, API_URL } from './client'

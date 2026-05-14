@@ -10,6 +10,12 @@ from app.models.material import Material
 from app.models.material_catalog import MaterialFamilia, MaterialUnidad
 from app.models.receta import Receta, RecetaItem
 from app.models.proyecto import Proyecto, EstadoProyecto, TipoProyecto
+from app.models.cotizacion import (
+    Cotizacion,
+    CotizacionSeccion,
+    CotizacionItem,
+    EstadoCotizacion,
+)
 
 __all__ = [
     "User",
@@ -29,4 +35,8 @@ __all__ = [
     "Proyecto",
     "EstadoProyecto",
     "TipoProyecto",
+    "Cotizacion",
+    "CotizacionSeccion",
+    "CotizacionItem",
+    "EstadoCotizacion",
 ]

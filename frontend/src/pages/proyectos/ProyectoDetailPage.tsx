@@ -9,6 +9,7 @@ import { ApiError, proyectosApi, type ProyectoRow } from '../../lib/api'
 import FolioTab from './sections/FolioTab'
 import PagosTab from './sections/PagosTab'
 import ComentariosTab from './sections/ComentariosTab'
+import CotizacionTab from './sections/CotizacionTab'
 import PlaceholderTab from './sections/PlaceholderTab'
 
 type TabKey = 'folio' | 'pagos' | 'cotizacion' | 'comprar' | 'gestion' | 'comentarios'
@@ -169,14 +170,7 @@ export default function ProyectoDetailPage() {
               <FolioTab proyecto={proyecto} onUpdated={setProyecto} />
             )}
             {tab === 'pagos' && <PagosTab proyecto={proyecto} />}
-            {tab === 'cotizacion' && (
-              <PlaceholderTab
-                emoji="🧾"
-                title="Cotización"
-                description="Aquí construiremos la cotización detallada con recetas, materiales y mano de obra."
-                hint="Próximamente"
-              />
-            )}
+            {tab === 'cotizacion' && <CotizacionTab proyecto={proyecto} />}
             {tab === 'comprar' && (
               <PlaceholderTab
                 emoji="🛒"
