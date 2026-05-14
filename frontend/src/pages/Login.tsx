@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import SproutIcon from '../components/SproutIcon'
 import { ApiError } from '../lib/api/index'
 import { useAuth } from '../lib/auth'
+import { useTheme } from '../lib/theme'
 
 // "Recuérdame": guardamos solo el email (NUNCA el password) para precargar
 // el form la próxima vez. Si el usuario lo desmarca, borramos.
@@ -19,6 +19,8 @@ function loadRememberedEmail(): string {
 export default function Login() {
   const navigate = useNavigate()
   const { login, loading } = useAuth()
+  const { theme } = useTheme()
+  const formLogoSrc = theme === 'dark' ? '/logo-seal-white.png' : '/logo-seal-navy.png'
 
   const rememberedEmail = loadRememberedEmail()
   const [email, setEmail] = useState(rememberedEmail)
@@ -61,8 +63,8 @@ export default function Login() {
         >
           {/* Logo */}
           <div className="flex items-center gap-3 mb-10">
-            <SproutIcon size={34} className="text-accent" />
-            <span className="text-3xl font-semibold tracking-tight text-accent lowercase">terra de flora</span>
+            <img src={formLogoSrc} alt="Terra de Flora" className="h-12 w-auto" />
+            <span className="text-2xl font-semibold tracking-wide uppercase text-accent">Terra de Flora</span>
           </div>
 
           <h1 className="text-4xl font-bold text-app mb-2 tracking-tight">Bienvenido</h1>
@@ -168,14 +170,12 @@ export default function Login() {
           </div>
 
           <div className="relative flex flex-col items-center justify-center text-center">
-            <SproutIcon size={90} className="mb-3" style={{ color: 'var(--brand-hero-accent)' }} />
-            <div
-              className="text-5xl md:text-6xl font-semibold tracking-tight lowercase leading-none"
-              style={{ color: 'var(--brand-hero-accent)' }}
-            >
-              terra de flora
-            </div>
-            <div className="mt-6 flex items-center gap-3">
+            <img
+              src="/logo-full-white.png"
+              alt="Terra de Flora"
+              className="w-72 md:w-80 h-auto mb-4"
+            />
+            <div className="mt-2 flex items-center gap-3">
               <div className="h-px w-10" style={{ background: 'var(--brand-hero-divider)' }} />
               <div
                 className="tracking-[0.3em] text-xs font-semibold"

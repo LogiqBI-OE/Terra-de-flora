@@ -5,7 +5,6 @@
 //
 // El sidebar siempre va en oscuro (zinc-900): consume tokens --sidebar-* fijos.
 
-import SproutIcon from '../SproutIcon'
 import { useAuth } from '../../lib/auth'
 import { NAV_SECTIONS } from './navConfig'
 import SidebarSection from './SidebarSection'
@@ -16,7 +15,7 @@ const STYLES = {
     borderColor: 'var(--sidebar-border)',
   } as const,
   header: { borderColor: 'var(--sidebar-border)' } as const,
-  brand: { color: 'var(--sidebar-active-text)' } as const,
+  brand: { color: 'var(--sidebar-text)' } as const,
   footer: {
     borderColor: 'var(--sidebar-border)',
     color: 'var(--sidebar-text-muted)',
@@ -30,10 +29,10 @@ export default function Sidebar() {
   return (
     <aside className="w-60 shrink-0 border-r flex flex-col" style={STYLES.aside}>
       {/* Brand */}
-      <div className="px-5 py-5 flex items-center gap-2 border-b" style={STYLES.header}>
-        <SproutIcon size={26} style={STYLES.brand} />
-        <span className="text-xl font-semibold tracking-tight lowercase" style={STYLES.brand}>
-          terra de flora
+      <div className="px-5 py-5 flex items-center gap-3 border-b" style={STYLES.header}>
+        <img src="/logo-seal-white.png" alt="Terra de Flora" className="h-8 w-auto" />
+        <span className="text-base font-semibold tracking-wide uppercase" style={STYLES.brand}>
+          Terra de Flora
         </span>
       </div>
 
