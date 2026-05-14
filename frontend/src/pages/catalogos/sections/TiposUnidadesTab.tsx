@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react'
 import Button from '../../../components/ui/Button'
-import { IconEdit, IconPlus, IconTrash, IconX } from '../../../components/icons/Icons'
+import { IconEdit, IconPlus, IconTrash } from '../../../components/icons/Icons'
 import {
   ApiError,
   materialesApi,
