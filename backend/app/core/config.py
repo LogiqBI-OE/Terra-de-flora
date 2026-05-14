@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     SEED_ADMIN_EMAIL: str = "orlando@logiqbi.com"
     SEED_CLIENT_EMAIL: str = "cliente.demo@terradeflora.com"
     SEED_PASSWORD: str = "TerraDeFlora2026!"
+    # Bootstrap: si es True, el seed FUERZA el reset del password del admin
+    # al valor de SEED_PASSWORD en cada arranque. Util cuando se pierde la pwd.
+    # Apagar despues de usar (set a False / quitar la env var).
+    SEED_RESET_ADMIN_PASSWORD: bool = False
 
     @property
     def cors_origins_list(self) -> list[str]:

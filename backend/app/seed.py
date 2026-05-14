@@ -36,12 +36,13 @@ def upsert_user(
     password: str,
     level: int,
     permissions: list[str] | None = None,
+    force_password_reset: bool = False,
 ) -> None:
     full_name = compose_full_name(first_name, last_name_paterno, last_name_materno)
     existing = db.query(User).filter(User.email == email).first()
     if existing:
         # Sincroniza nivel/permisos/username del seed por si cambiaron en código.
-        # NO toca el password (idempotente: solo lo crea en insert inicial).
+        # Password: por default NO se toca; solo si force_password_reset=True.
         existing.first_name = first_name
         existing.last_name_paterno = last_name_paterno
         existing.last_name_materno = last_name_materno
@@ -51,6 +52,9 @@ def upsert_user(
         existing.role = role_for_level(level)
         if username and not existing.username:
             existing.username = username.lower()
+        if force_password_reset:
+            existing.hashed_password = hash_password(password)
+            print(f"  ! password RESET para {email} (SEED_RESET_ADMIN_PASSWORD=true)")
         db.commit()
         print(f"  - usuario sincronizado: {email} (level {level})")
         return
@@ -92,6 +96,7 @@ def run() -> None:
             password=settings.SEED_PASSWORD,
             level=9,
             permissions=[],
+            force_password_reset=settings.SEED_RESET_ADMIN_PASSWORD,
         )
         upsert_user(
             db,
