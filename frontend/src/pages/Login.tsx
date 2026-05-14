@@ -74,7 +74,7 @@ export default function Login() {
       >
         {/* LEFT — FORM (blanco translucido con glassmorphism) */}
         <div
-          className="px-9 md:px-12 py-6 md:py-7 flex flex-col"
+          className="px-9 md:px-12 pt-6 pb-3 md:pt-7 md:pb-3 flex flex-col"
           style={{
             background: 'rgba(255, 255, 255, 0.72)',
             backdropFilter: 'blur(28px) saturate(170%)',
@@ -204,9 +204,9 @@ export default function Login() {
             </form>
           </div>
 
-          {/* Footer LOGIQ — al pie derecho, separado del form */}
+          {/* Footer LOGIQ — pegado al pie derecho */}
           <div
-            className="mt-6 pt-2 text-right text-[10px]"
+            className="mt-8 text-right text-[10px]"
           >
             <span style={{ color: '#64748B' }}>
               Powered by{' '}
@@ -220,7 +220,7 @@ export default function Login() {
 
         {/* RIGHT — BRAND HERO (navy con glassmorphism) */}
         <div
-          className="hidden md:flex relative px-9 py-7 flex-col justify-between overflow-hidden"
+          className="hidden md:flex relative px-9 pt-7 pb-3 flex-col justify-between overflow-hidden"
           style={{
             background: 'linear-gradient(135deg, rgba(10, 20, 40, 0.68) 0%, rgba(26, 46, 90, 0.62) 60%, rgba(10, 20, 40, 0.68) 100%)',
             backdropFilter: 'blur(28px) saturate(170%)',
