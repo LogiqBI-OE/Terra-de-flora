@@ -1,5 +1,9 @@
-// Crear evento — layout flat de una sola columna con cards por sección.
-// Mantiene el wiring existente: clientes API, vendedores, locations JSON, planner_*.
+// Crear evento — grid 2x2:
+//   ┌───────────────┬───────────────┐
+//   │ EVENTO        │ CLIENTE       │
+//   ├───────────────┼───────────────┤
+//   │ LOGISTICA     │ LUGAR Y HORA  │
+//   └───────────────┴───────────────┘
 
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -45,7 +49,6 @@ export default function NuevoProyectoPage() {
   const [error, setError] = useState<string | null>(null)
 
   // Cliente
-  const [showSearch, setShowSearch] = useState(false)
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Cliente | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -62,11 +65,9 @@ export default function NuevoProyectoPage() {
   const [plannerNombre, setPlannerNombre] = useState('')
   const [plannerTel, setPlannerTel] = useState('')
   const [plannerEmail, setPlannerEmail] = useState('')
-
-  // Comentarios
   const [descripcion, setDescripcion] = useState('')
 
-  // Lugares (dinámico, con defaults según tipo)
+  // Lugares
   const [locations, setLocations] = useState<LocationForm[]>([])
 
   async function reload() {
@@ -78,7 +79,6 @@ export default function NuevoProyectoPage() {
   }
   useEffect(() => { reload() }, [])
 
-  // Defaults de locations según tipo
   useEffect(() => {
     if (locations.length > 0) return
     if (tipo === 'boda') {
@@ -108,13 +108,7 @@ export default function NuevoProyectoPage() {
 
   function handleClienteCreated(c: Cliente) {
     setClientes((prev) => [c, ...prev])
-    setSelected(c)
-    setDrawerOpen(false)
-    setShowSearch(false)
-  }
-
-  function pickCliente(c: Cliente) {
-    setSelected(c); setShowSearch(false); setSearch('')
+    setSelected(c); setDrawerOpen(false); setSearch('')
   }
 
   function addLocation() {
@@ -155,7 +149,7 @@ export default function NuevoProyectoPage() {
 
   return (
     <AppShell title="Crear evento">
-      <div className="max-w-5xl mx-auto space-y-5">
+      <div className="space-y-5">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -197,22 +191,11 @@ export default function NuevoProyectoPage() {
         {loading ? (
           <div className="py-12 text-center text-sm text-app-muted">Cargando…</div>
         ) : (
-        <>
-          {/* === Nombre + Tipo + datos rápidos === */}
-          <Section>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          {/* === Top-left: EVENTO === */}
+          <BlockCard title="Evento" className="lg:col-span-7">
             <Field label="Nombre del proyecto" required>
-              <input
-                type="text"
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-                placeholder="Ej: Bautizo Perla Martínez — Iglesia & Recepción"
-                className="w-full px-4 py-2.5 rounded-lg border text-sm transition"
-                style={{
-                  background: 'var(--bg-input)',
-                  borderColor: 'var(--border)',
-                  color: 'var(--text-primary)',
-                }}
-              />
+              <SimpleInput value={nombre} onChange={setNombre} placeholder="Ej: Bautizo Perla Martínez — Iglesia & Recepción" />
             </Field>
 
             <Field label="Tipo de proyecto" required>
@@ -224,15 +207,15 @@ export default function NuevoProyectoPage() {
                       key={t.id}
                       type="button"
                       onClick={() => setTipo(t.id)}
-                      className="rounded-lg border-2 py-2.5 px-1 text-center transition"
+                      className="rounded-lg border-2 py-2 px-1 text-center transition"
                       style={{
                         borderColor: active ? 'var(--accent)' : 'transparent',
                         background: active ? 'var(--accent-bg-soft)' : 'var(--bg-input)',
                       }}
                     >
-                      <div className="text-lg leading-none">{TIPO_EMOJI[t.id] ?? '🎉'}</div>
+                      <div className="text-base leading-none">{TIPO_EMOJI[t.id] ?? '🎉'}</div>
                       <div
-                        className="text-[11px] mt-1.5 font-medium"
+                        className="text-[10px] mt-1 font-medium"
                         style={{ color: active ? 'var(--accent-text)' : 'var(--text-secondary)' }}
                       >
                         {t.label}
@@ -243,20 +226,7 @@ export default function NuevoProyectoPage() {
               </div>
             </Field>
 
-            <div className="grid grid-cols-3 gap-3">
-              <Field label="Vendedor" required>
-                <select
-                  value={vendedor}
-                  onChange={(e) => setVendedor(e.target.value ? Number(e.target.value) : '')}
-                  className="w-full px-3 py-2 rounded-lg border text-sm cursor-pointer"
-                  style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
-                >
-                  <option value="">— Selecciona —</option>
-                  {(catalog?.vendedores ?? []).map((v) => (
-                    <option key={v.id} value={v.id}>{v.nombre}</option>
-                  ))}
-                </select>
-              </Field>
+            <div className="grid grid-cols-2 gap-3">
               <Field label="Fecha del evento" required>
                 <input
                   type="date"
@@ -280,29 +250,49 @@ export default function NuevoProyectoPage() {
                 </div>
               </Field>
             </div>
-          </Section>
 
-          {/* === Cliente === */}
-          <Section title="Datos del cliente">
-            {selected && !showSearch ? (
-              <ClienteAvatarCard
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Vendedor asignado" required>
+                <select
+                  value={vendedor}
+                  onChange={(e) => setVendedor(e.target.value ? Number(e.target.value) : '')}
+                  className="w-full px-3 py-2 rounded-lg border text-sm cursor-pointer"
+                  style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+                >
+                  <option value="">— Selecciona —</option>
+                  {(catalog?.vendedores ?? []).map((v) => (
+                    <option key={v.id} value={v.id}>{v.nombre}</option>
+                  ))}
+                </select>
+                {(catalog?.vendedores ?? []).length === 0 && (
+                  <div className="text-[10px] text-app-muted mt-1">
+                    No hay usuarios L5+ disponibles. Crea uno desde Administración → Usuarios.
+                  </div>
+                )}
+              </Field>
+              <Field label="Presupuesto">
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-app-muted">$</span>
+                  <input
+                    type="number"
+                    value={valor}
+                    onChange={(e) => setValor(e.target.value)}
+                    placeholder="0"
+                    className="w-full pl-7 pr-14 py-2 rounded-lg border text-sm"
+                    style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-app-muted">MXN</span>
+                </div>
+              </Field>
+            </div>
+          </BlockCard>
+
+          {/* === Top-right: CLIENTE === */}
+          <BlockCard title="Cliente" className="lg:col-span-5">
+            {selected ? (
+              <ClienteAvatarPanel
                 cliente={selected}
-                presupuestoBlock={
-                  <Field label="Presupuesto">
-                    <div className="relative">
-                      <input
-                        type="number"
-                        value={valor}
-                        onChange={(e) => setValor(e.target.value)}
-                        placeholder="0"
-                        className="w-full px-3 py-2 pr-12 rounded-lg border text-sm"
-                        style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-app-muted">MXN</span>
-                    </div>
-                  </Field>
-                }
-                onChange={() => { setShowSearch(true); setSelected(null) }}
+                onChange={() => { setSelected(null) }}
               />
             ) : (
               <ClientePicker
@@ -310,75 +300,75 @@ export default function NuevoProyectoPage() {
                 results={results}
                 search={search}
                 setSearch={setSearch}
-                onPick={pickCliente}
+                onPick={setSelected}
                 onCreateNew={() => setDrawerOpen(true)}
               />
             )}
-          </Section>
+          </BlockCard>
 
-          {/* === Logística (planner + comentarios en 2 cols) === */}
-          <Section title="Logística del evento">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <SubCard icon="👤" title="Event planner">
-                <Field label="Planner">
-                  <SimpleInput value={plannerNombre} onChange={setPlannerNombre} placeholder="Juana Pérez" />
-                </Field>
+          {/* === Bottom-left: LOGÍSTICA === */}
+          <BlockCard title="Logística del evento" className="lg:col-span-5">
+            <SubBlock icon="👤" title="Event planner">
+              <Field label="Planner">
+                <SimpleInput value={plannerNombre} onChange={setPlannerNombre} placeholder="Juana Pérez" />
+              </Field>
+              <div className="grid grid-cols-2 gap-3">
                 <Field label="Teléfono">
                   <SimpleInput value={plannerTel} onChange={setPlannerTel} placeholder="811-800-1350" />
                 </Field>
                 <Field label="E-mail">
                   <SimpleInput value={plannerEmail} onChange={setPlannerEmail} placeholder="planner@ejemplo.com" type="email" />
                 </Field>
-              </SubCard>
+              </div>
+            </SubBlock>
 
-              <SubCard icon="💬" title="Comentarios generales">
-                <textarea
-                  rows={7}
-                  value={descripcion}
-                  onChange={(e) => setDescripcion(e.target.value)}
-                  placeholder="Escribe aquí los comentarios o notas especiales del evento…"
-                  className="w-full px-3 py-2 rounded-lg border text-sm resize-none italic"
-                  style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
-                />
-              </SubCard>
-            </div>
-          </Section>
+            <SubBlock icon="💬" title="Comentarios generales">
+              <textarea
+                rows={5}
+                value={descripcion}
+                onChange={(e) => setDescripcion(e.target.value)}
+                placeholder="Escribe aquí los comentarios o notas especiales del evento…"
+                className="w-full px-3 py-2 rounded-lg border text-sm resize-none italic"
+                style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+              />
+            </SubBlock>
+          </BlockCard>
 
-          {/* === Lugar y hora (tabla) === */}
-          <Section title="Lugar y hora del evento">
+          {/* === Bottom-right: LUGAR Y HORA === */}
+          <BlockCard title="Lugar y hora del evento" className="lg:col-span-7">
             <div
-              className="rounded-xl border overflow-hidden"
-              style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
+              className="rounded-lg border overflow-hidden"
+              style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-soft)' }}
             >
               <table className="w-full text-sm">
                 <thead>
                   <tr
-                    className="text-left text-[11px] uppercase tracking-widest text-app-muted border-b"
+                    className="text-left text-[10px] uppercase tracking-widest text-app-muted border-b"
                     style={{ borderColor: 'var(--border-soft)' }}
                   >
-                    <th className="px-4 py-2.5 font-semibold w-32">Etapa</th>
-                    <th className="px-4 py-2.5 font-semibold">Lugar</th>
-                    <th className="px-4 py-2.5 font-semibold w-32">Hora</th>
-                    <th className="px-4 py-2.5 font-semibold w-32">Montaje</th>
-                    <th className="px-4 py-2.5 font-semibold w-32">Desmontaje</th>
-                    <th className="w-10"></th>
+                    <th className="px-3 py-2 font-semibold w-28">Etapa</th>
+                    <th className="px-3 py-2 font-semibold">Lugar</th>
+                    <th className="px-3 py-2 font-semibold w-24">Hora</th>
+                    <th className="px-3 py-2 font-semibold w-24">Montaje</th>
+                    <th className="px-3 py-2 font-semibold w-24">Desmontaje</th>
+                    <th className="w-8"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {locations.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-4 py-6 text-center text-xs text-app-muted">
+                      <td colSpan={6} className="px-3 py-6 text-center text-xs text-app-muted">
                         Sin lugares. Click "Agregar lugar".
                       </td>
                     </tr>
                   ) : (
                     locations.map((loc, idx) => (
                       <tr key={idx} className="border-b last:border-0" style={{ borderColor: 'var(--border-soft)' }}>
-                        <td className="px-4 py-2">
+                        <td className="px-2 py-1.5">
                           <select
                             value={loc.tipo}
                             onChange={(e) => updateLocation(idx, { tipo: e.target.value })}
-                            className="w-full px-2 py-1.5 rounded border text-xs cursor-pointer font-semibold"
+                            className="w-full px-1.5 py-1 rounded border text-xs cursor-pointer font-semibold"
                             style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                           >
                             {(catalog?.tipos_lugar ?? ['Otro']).map((t) => (
@@ -386,69 +376,69 @@ export default function NuevoProyectoPage() {
                             ))}
                           </select>
                         </td>
-                        <td className="px-4 py-2">
+                        <td className="px-2 py-1.5">
                           <input
                             type="text"
                             value={loc.nombre}
                             onChange={(e) => updateLocation(idx, { nombre: e.target.value })}
                             placeholder="Santa Engracia"
-                            className="w-full px-2 py-1.5 rounded border text-xs"
+                            className="w-full px-1.5 py-1 rounded border text-xs"
                             style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                           />
                         </td>
-                        <td className="px-4 py-2">
+                        <td className="px-2 py-1.5">
                           <input
                             type="time"
                             value={loc.hora_evento ?? ''}
                             onChange={(e) => updateLocation(idx, { hora_evento: e.target.value || null })}
-                            className="w-full px-2 py-1.5 rounded border text-xs"
+                            className="w-full px-1 py-1 rounded border text-xs"
                             style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                           />
                         </td>
-                        <td className="px-4 py-2">
+                        <td className="px-2 py-1.5">
                           <input
                             type="time"
                             value={loc.hora_montaje ?? ''}
                             onChange={(e) => updateLocation(idx, { hora_montaje: e.target.value || null })}
-                            className="w-full px-2 py-1.5 rounded border text-xs"
+                            className="w-full px-1 py-1 rounded border text-xs"
                             style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                           />
                         </td>
-                        <td className="px-4 py-2">
+                        <td className="px-2 py-1.5">
                           <input
                             type="time"
                             value={loc.hora_desmontaje ?? ''}
                             onChange={(e) => updateLocation(idx, { hora_desmontaje: e.target.value || null })}
-                            className="w-full px-2 py-1.5 rounded border text-xs"
+                            className="w-full px-1 py-1 rounded border text-xs"
                             style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                           />
                         </td>
-                        <td className="px-2 py-2 text-right">
+                        <td className="px-1 py-1.5 text-right">
                           <button
                             onClick={() => removeLocation(idx)}
-                            className="p-1 rounded hover:bg-[var(--bg-hover)] text-app-muted"
+                            className="p-0.5 rounded hover:bg-[var(--bg-hover)] text-app-muted"
                             aria-label="Quitar"
-                          ><IconX size={14} /></button>
+                          ><IconX size={13} /></button>
                         </td>
                       </tr>
                     ))
                   )}
                 </tbody>
               </table>
-              <div className="flex justify-center py-2 border-t" style={{ borderColor: 'var(--border-soft)' }}>
+              <div className="flex justify-center py-1.5 border-t" style={{ borderColor: 'var(--border-soft)' }}>
                 <button
                   onClick={addLocation}
-                  className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded transition"
+                  className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded transition"
                   style={{ color: 'var(--accent-text)' }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--accent-bg-soft)' }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
                 >
-                  <IconPlus size={13} /> Agregar lugar
+                  <IconPlus size={12} /> Agregar lugar
                 </button>
               </div>
             </div>
-          </Section>
-        </>
+          </BlockCard>
+        </div>
         )}
       </div>
 
@@ -461,27 +451,45 @@ export default function NuevoProyectoPage() {
   )
 }
 
-// ── Helpers UI ─────────────────────────────────────────────────────────
+// ── UI helpers ─────────────────────────────────────────────────────
 
-function Section({ title, children }: { title?: string; children: React.ReactNode }) {
+function BlockCard({
+  title, className = '', children,
+}: { title: string; className?: string; children: React.ReactNode }) {
   return (
-    <section className="space-y-3">
-      {title && (
-        <div className="text-[11px] font-bold tracking-[0.2em] uppercase text-app-muted">
-          {title}
-        </div>
-      )}
+    <section
+      className={`rounded-2xl border p-5 space-y-4 ${className}`}
+      style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
+    >
+      <div className="text-[11px] font-bold tracking-[0.22em] uppercase text-app-secondary">
+        {title}
+      </div>
       <div className="space-y-3">{children}</div>
     </section>
   )
 }
 
-function Field({
-  label, required, children,
-}: { label: string; required?: boolean; children: React.ReactNode }) {
+function SubBlock({
+  icon, title, children,
+}: { icon: string; title: string; children: React.ReactNode }) {
+  return (
+    <div
+      className="rounded-lg border p-3 space-y-3"
+      style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-soft)' }}
+    >
+      <div className="flex items-center gap-2">
+        <span className="text-sm leading-none">{icon}</span>
+        <span className="text-sm font-semibold text-app">{title}</span>
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <label className="block">
-      <div className="text-[11px] font-bold tracking-widest uppercase mb-1.5 text-app-secondary">
+      <div className="text-[10px] font-bold tracking-widest uppercase mb-1.5 text-app-secondary">
         {label}{required && <span className="ml-1" style={{ color: 'var(--danger)' }}>*</span>}
       </div>
       {children}
@@ -504,84 +512,71 @@ function SimpleInput({
   )
 }
 
-function SubCard({ icon, title, children }: { icon: string; title: string; children: React.ReactNode }) {
-  return (
-    <div
-      className="rounded-xl border p-4 space-y-3"
-      style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
-    >
-      <div className="flex items-center gap-2 pb-1">
-        <span className="text-base leading-none">{icon}</span>
-        <span className="text-sm font-semibold text-app">{title}</span>
-      </div>
-      {children}
-    </div>
-  )
-}
+// ── Cliente: avatar panel + picker ─────────────────────────────────────
 
-// ── Cliente: avatar card y picker ──────────────────────────────────────
-
-function ClienteAvatarCard({
-  cliente, presupuestoBlock, onChange,
+function ClienteAvatarPanel({
+  cliente, onChange,
 }: {
   cliente: Cliente
-  presupuestoBlock: React.ReactNode
   onChange: () => void
 }) {
   const initials = cliente.nombre
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(s => s[0])
-    .join('')
-    .toUpperCase()
+    .split(' ').filter(Boolean).slice(0, 2).map(s => s[0]).join('').toUpperCase()
 
   return (
-    <div
-      className="rounded-xl border p-4"
-      style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
-    >
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-        {/* Avatar + datos */}
-        <div className="md:col-span-2 flex items-start gap-3">
-          <div
-            className="w-14 h-14 rounded-full flex items-center justify-center font-bold text-lg shrink-0"
-            style={{ background: 'var(--accent-bg-soft)', color: 'var(--accent-text)' }}
+    <div className="flex flex-col items-center text-center gap-3 py-2">
+      <div
+        className="w-20 h-20 rounded-full flex items-center justify-center font-bold text-2xl"
+        style={{ background: 'var(--accent-bg-soft)', color: 'var(--accent-text)' }}
+      >
+        {cliente.tipo === 'PM' ? <IconBuilding size={32} /> : initials}
+      </div>
+      <div className="space-y-1">
+        <div className="text-base font-bold text-app">{cliente.nombre}</div>
+        <div>
+          <span
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-widest"
+            style={{ background: 'var(--bg-toggle)', color: 'var(--text-secondary)' }}
           >
-            {cliente.tipo === 'PM' ? <IconBuilding size={22} /> : initials}
-          </div>
-          <div className="min-w-0 flex-1 space-y-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <div className="text-base font-bold text-app">{cliente.nombre}</div>
-              <span
-                className="text-[10px] uppercase tracking-widest px-1.5 py-0.5 rounded"
-                style={{ background: 'var(--bg-toggle)', color: 'var(--text-secondary)' }}
-              >
-                {cliente.tipo === 'PM' ? '🏢 Moral' : '👤 Física'}
-              </span>
-            </div>
-            <div className="text-xs text-app-secondary space-y-0.5">
-              {cliente.telefono && <div>📞 {cliente.telefono}</div>}
-              {cliente.email && <div>✉️ {cliente.email}</div>}
-              {cliente.rfc && <div className="font-mono">RFC: {cliente.rfc}</div>}
-              {cliente.como_nos_contacto && (
-                <div className="text-app-muted">Fuente: {cliente.como_nos_contacto}</div>
-              )}
-            </div>
-            <button
-              onClick={onChange}
-              className="text-xs font-semibold mt-1 hover:underline"
-              style={{ color: 'var(--accent-text)' }}
-            >
-              Cambiar cliente
-            </button>
-          </div>
-        </div>
-        {/* Presupuesto */}
-        <div className="md:border-l md:pl-4" style={{ borderColor: 'var(--border-soft)' }}>
-          {presupuestoBlock}
+            {cliente.tipo === 'PM' ? '🏢 Persona moral' : '👤 Persona física'}
+          </span>
         </div>
       </div>
+
+      <div className="w-full text-xs text-app-secondary space-y-1.5 mt-1 border-t pt-3" style={{ borderColor: 'var(--border-soft)' }}>
+        {cliente.telefono && (
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-app-muted">Teléfono</span>
+            <span className="text-app">{cliente.telefono}</span>
+          </div>
+        )}
+        {cliente.email && (
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-app-muted">E-mail</span>
+            <span className="text-app truncate max-w-[200px]">{cliente.email}</span>
+          </div>
+        )}
+        {cliente.rfc && (
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-app-muted">RFC</span>
+            <span className="text-app font-mono">{cliente.rfc}</span>
+          </div>
+        )}
+        {cliente.como_nos_contacto && (
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-app-muted">Fuente</span>
+            <span className="text-app">{cliente.como_nos_contacto}</span>
+          </div>
+        )}
+      </div>
+
+      <button
+        onClick={onChange}
+        className="text-xs font-semibold mt-1 hover:underline"
+        style={{ color: 'var(--accent-text)' }}
+      >
+        Cambiar cliente
+      </button>
     </div>
   )
 }
@@ -597,10 +592,7 @@ function ClientePicker({
   onCreateNew: () => void
 }) {
   return (
-    <div
-      className="rounded-xl border p-4 space-y-3"
-      style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
-    >
+    <div className="space-y-3">
       <div className="relative">
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted" aria-hidden>
           <IconSearch size={16} />
@@ -627,7 +619,7 @@ function ClientePicker({
               <button
                 key={c.id}
                 onClick={() => onPick(c)}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg border transition text-left hover:border-[var(--accent)]"
+                className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg border transition text-left hover:border-[var(--accent)]"
                 style={{ borderColor: 'var(--border-soft)', background: 'var(--bg-elevated)' }}
               >
                 <div
