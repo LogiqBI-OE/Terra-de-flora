@@ -210,6 +210,15 @@ export function IconX({ size, className, style }: IconProps) {
   )
 }
 
+export function IconRecipe({ size, className, style }: IconProps) {
+  return (
+    <svg {...svgBase(size)} className={className} style={style}>
+      <rect x="5" y="3" width="14" height="18" rx="2" />
+      <path d="M9 7h6M9 11h6M9 15h4" />
+    </svg>
+  )
+}
+
 export function IconBox({ size, className, style }: IconProps) {
   return (
     <svg {...svgBase(size)} className={className} style={style}>

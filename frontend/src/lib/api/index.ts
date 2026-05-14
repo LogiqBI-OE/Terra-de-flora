@@ -26,4 +26,10 @@ export type { Cliente, ClienteCreatePayload, ClienteUpdatePayload, TipoCliente }
 export { materialesApi } from './materiales'
 export type { Material, MaterialCreatePayload, MaterialUpdatePayload, MaterialCatalog } from './materiales'
 
+export { recetasApi } from './recetas'
+export type {
+  Receta, RecetaSummary, RecetaItem, RecetaItemIn,
+  RecetaCreatePayload, RecetaUpdatePayload, RecetaCatalog,
+} from './recetas'
+
 export { ApiError, API_URL } from './client'

@@ -7,6 +7,7 @@ from app.models.login_event import LoginEvent
 from app.models.proveedor import Proveedor
 from app.models.cliente import Cliente, TipoCliente
 from app.models.material import Material
+from app.models.receta import Receta, RecetaItem
 
 __all__ = [
     "User",
@@ -19,4 +20,6 @@ __all__ = [
     "Cliente",
     "TipoCliente",
     "Material",
+    "Receta",
+    "RecetaItem",
 ]

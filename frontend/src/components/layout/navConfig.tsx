@@ -16,6 +16,7 @@ import {
   IconManual,
   IconMegaphone,
   IconNetwork,
+  IconRecipe,
   IconSettings,
   IconUserCircle,
   IconUsers,
@@ -68,6 +69,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { to: '/clientes', label: 'Clientes', icon: <IconUserCircle /> },
       { to: '/materiales', label: 'Materiales y proveedores', icon: <IconBox /> },
+      { to: '/recetas', label: 'Recetas', icon: <IconRecipe /> },
     ],
   },
   {
