@@ -5,6 +5,8 @@ export interface SystemConfigItem {
   key: string
   label: string
   description: string
+  section: string       // ej. "Accesos", "Licencia"
+  input_type: string    // "text" | "password" | "number"
   secret: boolean
   value: string
 }

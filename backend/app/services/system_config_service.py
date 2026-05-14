@@ -50,6 +50,8 @@ def all_with_meta(db: Session) -> list[dict]:
             "key": spec.key,
             "label": spec.label,
             "description": spec.description,
+            "section": spec.section,
+            "input_type": spec.input_type,
             "secret": spec.secret,
             "value": (row.value if row else spec.default),
         })

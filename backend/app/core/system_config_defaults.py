@@ -20,16 +20,21 @@ class ConfigKey:
     default: str
     label: str
     description: str
-    secret: bool = False  # si es True, en GET se devuelve enmascarado
+    section: str = "Accesos"   # agrupa visualmente en la UI
+    input_type: str = "text"   # text | password | number
+    secret: bool = False       # si es True, en GET se devuelve enmascarado
 
 
 SYSTEM_CONFIG_KEYS: list[ConfigKey] = [
+    # ── Accesos ──────────────────────────────────────────────────────────────
     ConfigKey(
         key="standard_password",
         default="TerraDeFlora2026!",
         label="Contraseña estándar",
         description="Se aplica al usuario cuando un admin presiona “Resetear contraseña”.",
-        secret=False,  # admin L9 debe poder verlo, sino no sabe cuál setear
+        section="Accesos",
+        input_type="text",  # L9 lo necesita ver para comunicarlo
+        secret=False,
     ),
     ConfigKey(
         key="token_lifetime_days",
@@ -39,6 +44,8 @@ SYSTEM_CONFIG_KEYS: list[ConfigKey] = [
             "Cuántos días dura el JWT de login antes de expirar. "
             "Después de ese tiempo, el usuario debe volver a iniciar sesión."
         ),
+        section="Accesos",
+        input_type="number",
         secret=False,
     ),
 ]
