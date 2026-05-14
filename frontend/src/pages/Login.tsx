@@ -74,7 +74,7 @@ export default function Login() {
       >
         {/* LEFT — FORM (blanco translucido con glassmorphism) */}
         <div
-          className="px-9 md:px-12 pt-6 pb-3 md:pt-7 md:pb-3 flex flex-col"
+          className="px-9 md:px-12 pt-5 pb-3 md:pt-6 md:pb-3 flex flex-col"
           style={{
             background: 'rgba(255, 255, 255, 0.72)',
             backdropFilter: 'blur(28px) saturate(170%)',
@@ -82,18 +82,10 @@ export default function Login() {
             color: '#0F172A',
           }}
         >
-          {/* Top: logo */}
-          <div className="flex items-center gap-3 mb-4">
-            <img src="/logo-seal-navy.png" alt="Terra de Flora" className="h-10 w-auto" />
-            <span className="text-lg font-semibold tracking-wide uppercase" style={{ color: '#1A2E5A' }}>
-              Terra de Flora
-            </span>
-          </div>
-
           {/* Form section grows to fill */}
           <div className="flex-1 flex flex-col justify-center">
             <h1 className="text-2xl font-bold mb-0.5 tracking-tight" style={{ color: '#0F172A' }}>Bienvenido</h1>
-            <p className="text-sm mb-4" style={{ color: '#475569' }}>Ingresa tus credenciales para continuar.</p>
+            <p className="text-sm mb-3.5" style={{ color: '#475569' }}>Ingresa tus credenciales para continuar.</p>
 
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>
@@ -220,7 +212,7 @@ export default function Login() {
 
         {/* RIGHT — BRAND HERO (navy con glassmorphism) */}
         <div
-          className="hidden md:flex relative px-9 pt-7 pb-3 flex-col justify-between overflow-hidden"
+          className="hidden md:flex relative px-9 pt-6 pb-3 flex-col justify-between overflow-hidden"
           style={{
             background: 'linear-gradient(135deg, rgba(10, 20, 40, 0.68) 0%, rgba(26, 46, 90, 0.62) 60%, rgba(10, 20, 40, 0.68) 100%)',
             backdropFilter: 'blur(28px) saturate(170%)',
@@ -257,7 +249,7 @@ export default function Login() {
             <img
               src="/logo-full-white.png"
               alt="Terra de Flora"
-              className="w-56 md:w-64 h-auto mb-2"
+              className="w-52 md:w-60 h-auto mb-2"
             />
             <div className="mt-1 flex items-center gap-3">
               <div className="h-px w-10" style={{ background: 'var(--brand-hero-divider)' }} />
