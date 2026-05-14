@@ -88,10 +88,10 @@ export default function Login() {
         >
           {/* Top: TERRA DE FLORA · WORKSPACE chip */}
           <div className="flex items-center gap-2 text-[11px] font-bold tracking-[0.35em] mb-6">
-            <span className="w-8 h-px" style={{ background: 'rgba(15, 23, 42, 0.20)' }} />
-            <span style={{ color: '#475569' }}>TERRA DE FLORA</span>
+            <span className="w-8 h-px" style={{ background: 'rgba(15, 23, 42, 0.35)' }} />
+            <span style={{ color: '#1E293B', textShadow: '0 1px 2px rgba(255, 255, 255, 0.9)' }}>TERRA DE FLORA</span>
             <span
-              className="px-2 py-0.5 rounded"
+              className="px-2 py-0.5 rounded shadow-sm"
               style={{
                 color: '#0A1428',
                 background: '#D4B996',
@@ -104,12 +104,22 @@ export default function Login() {
 
           {/* Form section grows to fill */}
           <div className="flex-1 flex flex-col justify-center">
-            <h1 className="text-2xl font-bold mb-0.5 tracking-tight" style={{ color: '#0F172A' }}>Bienvenido</h1>
-            <p className="text-sm mb-4" style={{ color: '#475569' }}>Ingresa tus credenciales para continuar.</p>
+            <h1
+              className="text-2xl font-bold mb-0.5 tracking-tight"
+              style={{ color: '#0F172A', textShadow: '0 1px 3px rgba(255, 255, 255, 0.85)' }}
+            >
+              Bienvenido
+            </h1>
+            <p
+              className="text-sm mb-4 font-medium"
+              style={{ color: '#334155', textShadow: '0 1px 2px rgba(255, 255, 255, 0.9)' }}
+            >
+              Ingresa tus credenciales para continuar.
+            </p>
 
             <form onSubmit={handleSubmit} className="space-y-3.5">
               <div>
-                <label className="text-[11px] font-semibold tracking-widest uppercase" style={{ color: '#475569' }}>Correo</label>
+                <label className="text-[11px] font-bold tracking-widest uppercase" style={{ color: '#1E293B', textShadow: '0 1px 3px rgba(255, 255, 255, 0.95), 0 0 8px rgba(255, 255, 255, 0.6)' }}>Correo</label>
                 <input
                   type="email"
                   required
@@ -134,7 +144,7 @@ export default function Login() {
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold tracking-widest uppercase" style={{ color: '#475569' }}>Contraseña</label>
+                <label className="text-[11px] font-bold tracking-widest uppercase" style={{ color: '#1E293B', textShadow: '0 1px 3px rgba(255, 255, 255, 0.95), 0 0 8px rgba(255, 255, 255, 0.6)' }}>Contraseña</label>
                 <div className="relative mt-1">
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -172,7 +182,10 @@ export default function Login() {
               </div>
 
               <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 text-sm" style={{ color: '#475569' }}>
+                <label
+                  className="flex items-center gap-2 text-sm font-medium"
+                  style={{ color: '#1E293B', textShadow: '0 1px 2px rgba(255, 255, 255, 0.9)' }}
+                >
                   <input
                     type="checkbox"
                     checked={remember}
@@ -182,7 +195,13 @@ export default function Login() {
                   />
                   Recuérdame
                 </label>
-                <a href="#" className="text-sm font-semibold hover:underline" style={{ color: '#1A2E5A' }}>¿Olvidaste tu contraseña?</a>
+                <a
+                  href="#"
+                  className="text-sm font-bold hover:underline"
+                  style={{ color: '#1A2E5A', textShadow: '0 1px 2px rgba(255, 255, 255, 0.9)' }}
+                >
+                  ¿Olvidaste tu contraseña?
+                </a>
               </div>
 
               {error && (
@@ -209,9 +228,18 @@ export default function Login() {
                 {loading ? 'INGRESANDO...' : 'INICIAR SESIÓN'}
               </button>
 
-              <p className="text-center text-sm pt-1" style={{ color: '#64748B' }}>
+              <p
+                className="text-center text-sm pt-1 font-medium"
+                style={{ color: '#334155', textShadow: '0 1px 2px rgba(255, 255, 255, 0.9)' }}
+              >
                 ¿Necesitas ayuda?{' '}
-                <a href="#" className="font-semibold hover:underline" style={{ color: '#1A2E5A' }}>Contacta a soporte</a>
+                <a
+                  href="#"
+                  className="font-bold hover:underline"
+                  style={{ color: '#1A2E5A', textShadow: '0 1px 2px rgba(255, 255, 255, 0.9)' }}
+                >
+                  Contacta a soporte
+                </a>
               </p>
             </form>
           </div>
@@ -219,13 +247,14 @@ export default function Login() {
           {/* Footer LOGIQ — pegado al pie izquierdo */}
           <div
             className="mt-8 text-left text-[10px]"
+            style={{ textShadow: '0 1px 2px rgba(255, 255, 255, 0.9)' }}
           >
-            <span style={{ color: '#64748B' }}>
+            <span style={{ color: '#334155' }}>
               Powered by{' '}
-              <span className="font-bold tracking-wider" style={{ color: '#475569' }}>
+              <span className="font-bold tracking-wider" style={{ color: '#1E293B' }}>
                 LOGIQ
               </span>
-              <span className="font-normal" style={{ color: '#64748B' }}> · Business Intelligence</span>
+              <span className="font-medium" style={{ color: '#475569' }}> · Business Intelligence</span>
             </span>
           </div>
         </div>
