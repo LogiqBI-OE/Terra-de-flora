@@ -1,12 +1,14 @@
 // Sidebar principal. Estructura compuesta:
 //   - BrandHeader (logo)
+//   - NewProjectButton (CTA outlined)
 //   - Sections (definidas en navConfig.tsx)
 //   - Footer (versión)
 //
-// El sidebar siempre va en oscuro (zinc-900): consume tokens --sidebar-* fijos.
+// El sidebar consume tokens --sidebar-* fijos.
 
 import { useAuth } from '../../lib/auth'
 import { NAV_SECTIONS } from './navConfig'
+import NewProjectButton from './NewProjectButton'
 import SidebarSection from './SidebarSection'
 
 const STYLES = {
@@ -36,8 +38,13 @@ export default function Sidebar() {
         </span>
       </div>
 
+      {/* CTA Nuevo Proyecto */}
+      <div className="px-3 pt-3 pb-2">
+        <NewProjectButton onClick={() => { /* TODO: navegar a /proyectos/nuevo cuando exista */ }} />
+      </div>
+
       {/* Navegación por secciones */}
-      <nav className="flex-1 overflow-y-auto py-2">
+      <nav className="flex-1 overflow-y-auto py-1">
         {NAV_SECTIONS.map((section) => (
           <SidebarSection key={section.title} section={section} />
         ))}
