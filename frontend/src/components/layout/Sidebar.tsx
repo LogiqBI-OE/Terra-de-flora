@@ -33,7 +33,7 @@ export default function Sidebar() {
       <div className="px-5 py-5 flex items-center gap-2 border-b" style={STYLES.header}>
         <SproutIcon size={26} style={STYLES.brand} />
         <span className="text-xl font-semibold tracking-tight lowercase" style={STYLES.brand}>
-          oleolab
+          terra de flora
         </span>
       </div>
 
@@ -46,7 +46,7 @@ export default function Sidebar() {
 
       {/* Footer */}
       <div className="px-5 py-4 border-t text-[11px]" style={STYLES.footer}>
-        Coberturas · v0.3
+        Terra de Flora · v0.1
       </div>
     </aside>
   )

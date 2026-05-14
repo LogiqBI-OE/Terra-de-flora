@@ -9,8 +9,7 @@
     "**/node_modules": true
   },
   "search.exclude": {
-    "**/node_modules": true,
-    "**/oleolab.db": true
+    "**/node_modules": true
   },
   "[python]": { "editor.defaultFormatter": "ms-python.python" },
   "[typescript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },

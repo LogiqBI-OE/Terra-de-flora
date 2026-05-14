@@ -23,45 +23,6 @@ const svgBase = (size = 18) =>
     strokeLinejoin: 'round' as const,
   })
 
-// ── Monitores ────────────────────────────────────────────────────────────────
-export function IconCobertura({ size, className, style }: IconProps) {
-  return (
-    <svg {...svgBase(size)} className={className} style={style}>
-      <rect x="3" y="3" width="18" height="18" rx="2" />
-      <path d="M3 9h18M3 15h18M9 3v18M15 3v18" />
-    </svg>
-  )
-}
-
-export function IconDemanda({ size, className, style }: IconProps) {
-  return (
-    <svg {...svgBase(size)} className={className} style={style}>
-      <path d="M3 17l6-6 4 4 8-8" />
-      <path d="M14 7h7v7" />
-    </svg>
-  )
-}
-
-// ── Inputs ───────────────────────────────────────────────────────────────────
-export function IconUpload({ size, className, style }: IconProps) {
-  return (
-    <svg {...svgBase(size)} className={className} style={style}>
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <polyline points="17 8 12 3 7 8" />
-      <line x1="12" y1="3" x2="12" y2="15" />
-    </svg>
-  )
-}
-
-export function IconCatalog({ size, className, style }: IconProps) {
-  return (
-    <svg {...svgBase(size)} className={className} style={style}>
-      <path d="M4 4h12a3 3 0 0 1 3 3v14H7a3 3 0 0 1-3-3z" />
-      <path d="M4 19a3 3 0 0 1 3-3h12" />
-    </svg>
-  )
-}
-
 export function IconSettings({ size, className, style }: IconProps) {
   return (
     <svg {...svgBase(size)} className={className} style={style}>
@@ -125,17 +86,6 @@ export function IconPlus({ size, className, style }: IconProps) {
   )
 }
 
-export function IconAlerta({ size, className, style }: IconProps) {
-  return (
-    <svg {...svgBase(size)} className={className} style={style}>
-      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-      <line x1="12" y1="9" x2="12" y2="13" />
-      <line x1="12" y1="17" x2="12.01" y2="17" />
-    </svg>
-  )
-}
-
-// ── Configuración ────────────────────────────────────────────────────────────
 export function IconUsers({ size, className, style }: IconProps) {
   return (
     <svg {...svgBase(size)} className={className} style={style}>

@@ -1,13 +1,12 @@
-# Oleolab — Coberturas Workspace
+# Terra de Flora — Workspace
 
-Workspace web para gestión de coberturas de Oleolab. Login diferenciado para Clientes y Administradores.
+Workspace web de Terra de Flora. Login con sistema de niveles 1-9 + permisos custom.
 
 ## Stack
 
 - **Frontend:** React 18 + Vite + TypeScript + Tailwind CSS
 - **Backend:** Python 3 + FastAPI + SQLAlchemy + JWT
-- **DB local:** SQLite (archivo `backend/oleolab.db`, cero instalación)
-- **DB prod:** PostgreSQL (Railway)
+- **DB:** PostgreSQL en TODOS los entornos (dev → Postgres-dev en Railway, prod → Postgres-prod en Railway)
 - **Hosting:** Railway
 
 ## Estructura
@@ -24,6 +23,10 @@ Workspace web para gestión de coberturas de Oleolab. Login diferenciado para Cl
 ```
 
 ## Cómo arrancar (cada vez)
+
+> **DATABASE_URL es obligatoria en todos los entornos.** No hay fallback a SQLite.
+> Antes de la primera corrida copia `.env.example` a `backend/.env` y pega el
+> connection string del Postgres-dev de Railway.
 
 ### 🟢 Opción 1 — VS Code (recomendado, 1 click)
 
@@ -56,10 +59,10 @@ npm run dev
 
 ## Usuarios sembrados (seed)
 
-| Email                       | Rol     | Contraseña       |
-| --------------------------- | ------- | ---------------- |
-| `orlando@logiqbi.com`       | admin   | `Oleolab2026!`   |
-| `cliente.demo@oleolab.com`  | cliente | `Oleolab2026!`   |
+| Email                            | Nivel | Contraseña          |
+| -------------------------------- | ----- | ------------------- |
+| `orlando@logiqbi.com`            | 9     | `TerraDeFlora2026!` |
+| `cliente.demo@terradeflora.com`  | 1     | `TerraDeFlora2026!` |
 
 Para re-correr el seed: `Ctrl+Shift+P → Tasks: Run Task → Backend: seed DB`
 
@@ -76,14 +79,19 @@ Si esto es una clonada fresca del repo:
    ```powershell
    scoop install python nodejs-lts
    ```
-3. **Instala deps:**
+3. **Configura tu `.env`:**
+   ```powershell
+   cp .env.example backend\.env
+   ```
+   Edita `backend\.env` y pon el `DATABASE_URL` del Postgres-dev de Railway.
+4. **Instala deps:**
    - VS Code: `Ctrl+Shift+P → Tasks: Run Task → Install: backend deps` y luego `Install: frontend deps`
    - O manualmente:
      ```powershell
      cd backend; python -m pip install -r requirements.txt
      cd ..\frontend; npm install
      ```
-4. **Crea el seed inicial:**
+5. **Corre el seed inicial:**
    ```powershell
    cd backend
    python -m app.seed
@@ -103,50 +111,51 @@ Si esto es una clonada fresca del repo:
 ### Una sola vez (setup inicial)
 
 1. **Crea cuenta en Railway**: https://railway.app → Sign in with GitHub
-2. Autoriza Railway en tu repo `LogiqBI-OE/oleolab-coberturas`
-3. En Railway: **New Project → Deploy from GitHub repo → oleolab-coberturas**
+2. Autoriza Railway en tu repo `LogiqBI-OE/Terra-de-flora`
+3. En Railway: **New Project → Deploy from GitHub repo → Terra-de-flora**
 
 Esto crea UN servicio inicial. Vamos a tener **3 en total**: db, backend, frontend.
 
-### 1) Postgres
+### 1) Postgres (prod)
    - En el proyecto: **+ New → Database → PostgreSQL**
    - Railway lo provisiona automáticamente y crea la env var `DATABASE_URL`.
+   - **Nota:** el Postgres-dev al que apunta tu `.env` local es un servicio Postgres *separado* (otro proyecto o el mismo, según prefieras). NO uses el mismo Postgres para dev y prod.
 
 ### 2) Servicio Backend
-   - Si Railway creó un servicio del repo, edítalo. Si no: **+ New → GitHub Repo → oleolab-coberturas**
+   - Si Railway creó un servicio del repo, edítalo. Si no: **+ New → GitHub Repo → Terra-de-flora**
    - Settings:
      - **Root Directory:** `backend`
      - **Build:** detecta Dockerfile automáticamente
    - Variables (Settings → Variables):
-     - `DATABASE_URL` → click "Reference" → selecciona el de Postgres
-     - `JWT_SECRET` → genera uno aleatorio largo (32+ chars). Railway tiene "Generate" si das click derecho.
+     - `DATABASE_URL` → click "Reference" → selecciona el de Postgres-prod
+     - `JWT_SECRET` → genera uno aleatorio largo (32+ chars).
      - `CORS_ORIGINS` → vacío por ahora; lo llenamos cuando tengamos URL del frontend
      - `SEED_ADMIN_EMAIL`, `SEED_CLIENT_EMAIL`, `SEED_PASSWORD` → los del seed
-   - **Generate domain** en Settings → Networking. Ej: `oleolab-backend.up.railway.app`
+   - **Generate domain** en Settings → Networking. Ej: `terradeflora-backend.up.railway.app`
 
 ### 3) Servicio Frontend
-   - **+ New → GitHub Repo → oleolab-coberturas**
+   - **+ New → GitHub Repo → Terra-de-flora**
    - Settings:
      - **Root Directory:** `frontend`
      - **Build:** detecta Dockerfile automáticamente
    - Variables:
-     - `VITE_API_URL` → URL pública del backend (paso 2). Ej: `https://oleolab-backend.up.railway.app`
-   - **Generate domain** en Settings → Networking. Ej: `oleolab-front.up.railway.app`
+     - `VITE_API_URL` → URL pública del backend (paso 2). Ej: `https://terradeflora-backend.up.railway.app`
+   - **Generate domain** en Settings → Networking. Ej: `terradeflora-front.up.railway.app`
 
 ### 4) Conectar los dos
    - Vuelve al servicio **Backend** → Variables → edita `CORS_ORIGINS` y pon la URL pública del frontend:
      ```
-     https://oleolab-front.up.railway.app
+     https://terradeflora-front.up.railway.app
      ```
    - Si quieres permitir local también: separa con coma:
      ```
-     http://localhost:5173,https://oleolab-front.up.railway.app
+     http://localhost:5173,https://terradeflora-front.up.railway.app
      ```
    - Esto re-despliega el backend automáticamente (~90s).
 
 ### 5) Probar
    - Abre la URL del frontend → debes ver el login.
-   - Login con `orlando@logiqbi.com` / `Oleolab2026!` (el seed corrió en el primer arranque).
+   - Login con `orlando@logiqbi.com` / `TerraDeFlora2026!` (el seed corrió en el primer arranque).
 
 ### A partir de aquí
    Cada `git push origin main` despliega:
@@ -162,28 +171,16 @@ Esto crea UN servicio inicial. Vamos a tener **3 en total**: db, backend, fronte
 **Backend:**
 | Variable | Valor | Quién la setea |
 |---|---|---|
-| `DATABASE_URL` | conexión postgres | Railway (al crear el plugin Postgres) |
+| `DATABASE_URL` | conexión postgres (obligatoria) | Railway (al crear el plugin Postgres) — o tú en `.env` para dev |
 | `JWT_SECRET` | string 32+ chars random | tú, al crear el servicio |
 | `CORS_ORIGINS` | URL(s) del frontend, separadas por coma | tú |
 | `JWT_ALGORITHM` | `HS256` | default |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | `60` | default |
 | `SEED_ADMIN_EMAIL` | `orlando@logiqbi.com` | tú |
-| `SEED_CLIENT_EMAIL` | `cliente.demo@oleolab.com` | tú |
+| `SEED_CLIENT_EMAIL` | `cliente.demo@terradeflora.com` | tú |
 | `SEED_PASSWORD` | password inicial | tú |
 
 **Frontend:**
 | Variable | Valor |
 |---|---|
 | `VITE_API_URL` | URL pública del backend (https://...railway.app) |
-
-## Roadmap
-
-- [x] Login con niveles 1-9 + permisos custom
-- [x] Hallazgos (home) + Coberturas + Catálogos CRUD + Usuarios + System settings
-- [x] Carga de datos (Excel templates + uploads)
-- [ ] Drill-down en Cobertura
-- [ ] Tabla de hallazgos exportable a Excel
-- [ ] Comparador de snapshots
-- [ ] Vista de Demanda
-- [ ] Notificaciones / alertas por email
-- [ ] Reglas de coloreo editables

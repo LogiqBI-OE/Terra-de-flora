@@ -26,7 +26,6 @@ export interface UserDetail {
   role: string
   permissions: string[]
   effective_permissions: string[]
-  customer_id: number | null
   is_active: boolean
   created_at: string
 }
@@ -39,7 +38,6 @@ export interface UserCreatePayload {
   password: string
   level: number
   permissions: string[]
-  customer_id?: number | null
 }
 
 export interface UserUpdatePayload {
@@ -49,7 +47,6 @@ export interface UserUpdatePayload {
   password?: string
   level?: number
   permissions?: string[]
-  customer_id?: number | null
   is_active?: boolean
 }
 

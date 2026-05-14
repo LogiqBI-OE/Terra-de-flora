@@ -26,7 +26,7 @@ class ConfigKey:
 SYSTEM_CONFIG_KEYS: list[ConfigKey] = [
     ConfigKey(
         key="standard_password",
-        default="Oleolab2026!",
+        default="TerraDeFlora2026!",
         label="Contraseña estándar",
         description="Se aplica al usuario cuando un admin presiona “Resetear contraseña”.",
         secret=False,  # admin L9 debe poder verlo, sino no sabe cuál setear

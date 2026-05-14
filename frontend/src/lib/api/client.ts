@@ -11,7 +11,7 @@ export class ApiError extends Error {
   }
 }
 
-const STORAGE_KEY = 'oleolab.session'
+const STORAGE_KEY = 'terradeflora.session'
 
 function getToken(): string | null {
   try {

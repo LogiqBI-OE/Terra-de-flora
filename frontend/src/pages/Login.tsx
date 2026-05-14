@@ -6,7 +6,7 @@ import { useAuth } from '../lib/auth'
 
 // "Recuérdame": guardamos solo el email (NUNCA el password) para precargar
 // el form la próxima vez. Si el usuario lo desmarca, borramos.
-const REMEMBER_KEY = 'oleolab.remember_email'
+const REMEMBER_KEY = 'terradeflora.remember_email'
 
 function loadRememberedEmail(): string {
   try {
@@ -41,7 +41,7 @@ export default function Login() {
         else localStorage.removeItem(REMEMBER_KEY)
       } catch { /* ignore */ }
 
-      navigate('/hallazgos', { replace: true })
+      navigate('/', { replace: true })
     } catch (err) {
       if (err instanceof ApiError) setError(err.message)
       else setError('Error inesperado. Intenta de nuevo.')
@@ -62,7 +62,7 @@ export default function Login() {
           {/* Logo */}
           <div className="flex items-center gap-3 mb-10">
             <SproutIcon size={34} className="text-accent" />
-            <span className="text-3xl font-semibold tracking-tight text-accent lowercase">oleolab</span>
+            <span className="text-3xl font-semibold tracking-tight text-accent lowercase">terra de flora</span>
           </div>
 
           <h1 className="text-4xl font-bold text-app mb-2 tracking-tight">Bienvenido</h1>
@@ -74,7 +74,7 @@ export default function Login() {
               <input
                 type="email"
                 required
-                placeholder="usuario@oleolab.com"
+                placeholder="usuario@terradeflora.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="oleo-input"
@@ -163,17 +163,17 @@ export default function Login() {
 
           <div className="relative flex items-center gap-2 text-xs font-bold tracking-[0.3em]">
             <span className="w-8 h-px" style={{ background: 'var(--brand-hero-divider)' }} />
-            <span style={{ color: 'var(--brand-hero-text-secondary)' }}>OLEOLAB</span>
+            <span style={{ color: 'var(--brand-hero-text-secondary)' }}>TERRA DE FLORA</span>
             <span style={{ color: 'var(--brand-hero-accent)' }}>WORKSPACE</span>
           </div>
 
           <div className="relative flex flex-col items-center justify-center text-center">
             <SproutIcon size={90} className="mb-3" style={{ color: 'var(--brand-hero-accent)' }} />
             <div
-              className="text-6xl md:text-7xl font-semibold tracking-tight lowercase leading-none"
+              className="text-5xl md:text-6xl font-semibold tracking-tight lowercase leading-none"
               style={{ color: 'var(--brand-hero-accent)' }}
             >
-              oleolab
+              terra de flora
             </div>
             <div className="mt-6 flex items-center gap-3">
               <div className="h-px w-10" style={{ background: 'var(--brand-hero-divider)' }} />
@@ -181,21 +181,15 @@ export default function Login() {
                 className="tracking-[0.3em] text-xs font-semibold"
                 style={{ color: 'var(--brand-hero-text-secondary)' }}
               >
-                COBERTURAS
+                WORKSPACE
               </div>
               <div className="h-px w-10" style={{ background: 'var(--brand-hero-divider)' }} />
             </div>
-            <p
-              className="text-xs mt-3 italic max-w-xs"
-              style={{ color: 'var(--brand-hero-text-muted)' }}
-            >
-              Identidad operativa para gestión industrial.
-            </p>
           </div>
 
           <div className="relative text-sm" style={{ color: 'var(--brand-hero-text-secondary)' }}>
-            <div className="border-l-2 pl-4" style={{ borderColor: 'var(--brand-hero-quote-border)' }}>
-              "Visibilidad total de tus coberturas, en un solo lugar."
+            <div className="border-l-2 pl-4 italic" style={{ borderColor: 'var(--brand-hero-quote-border)' }}>
+              "Las flores son un hermoso regalo de la naturaleza que despiertan emociones y sentimientos positivos en quien las recibe."
             </div>
           </div>
         </div>

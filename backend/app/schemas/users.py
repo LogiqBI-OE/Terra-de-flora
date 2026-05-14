@@ -12,7 +12,6 @@ class UserCreate(BaseModel):
     password: str
     level: int
     permissions: list[str] = []
-    customer_id: int | None = None
 
 
 class UserUpdate(BaseModel):
@@ -22,7 +21,6 @@ class UserUpdate(BaseModel):
     password: str | None = None
     level: int | None = None
     permissions: list[str] | None = None
-    customer_id: int | None = None
     is_active: bool | None = None
 
 
@@ -38,7 +36,6 @@ class UserOut(BaseModel):
     role: str
     permissions: list[str]
     effective_permissions: list[str]
-    customer_id: int | None
     is_active: bool
     created_at: datetime
 

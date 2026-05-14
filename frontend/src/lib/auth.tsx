@@ -22,7 +22,7 @@ interface AuthState {
 
 const AuthCtx = createContext<AuthState | null>(null)
 
-const STORAGE_KEY = 'oleolab.session'
+const STORAGE_KEY = 'terradeflora.session'
 
 interface PersistedSession {
   token: string

@@ -43,7 +43,6 @@ def _to_out(u: User, db: Session) -> UserOut:
         role=u.role.value,
         permissions=list(u.permissions or []),
         effective_permissions=sorted(effective_permissions(db, u.level, list(u.permissions or []))),
-        customer_id=u.customer_id,
         is_active=u.is_active,
         created_at=u.created_at,
     )
@@ -103,7 +102,6 @@ def crear(
         level=payload.level,
         permissions=payload.permissions or [],
         role=role_for_level(payload.level),
-        customer_id=payload.customer_id,
         is_active=True,
     )
     db.add(u)
@@ -140,7 +138,7 @@ def actualizar(
     if "password" in data and data["password"]:
         u.hashed_password = hash_password(data["password"])
 
-    for f in ("first_name", "last_name_paterno", "last_name_materno", "customer_id", "is_active"):
+    for f in ("first_name", "last_name_paterno", "last_name_materno", "is_active"):
         if f in data:
             setattr(u, f, data[f])
 

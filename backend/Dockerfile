@@ -11,9 +11,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential libpq-dev curl \
     && rm -rf /var/lib/apt/lists/*
 
-# En prod usamos psycopg para Postgres + las deps base
-COPY requirements.txt requirements-prod.txt ./
-RUN pip install --upgrade pip && pip install -r requirements-prod.txt
+# Postgres en todos los entornos (psycopg viene en requirements.txt)
+COPY requirements.txt ./
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY . .
 

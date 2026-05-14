@@ -11,7 +11,7 @@ interface ThemeState {
   setTheme: (t: Theme) => void
 }
 
-const STORAGE_KEY = 'oleolab.theme'
+const STORAGE_KEY = 'terradeflora.theme'
 const ThemeCtx = createContext<ThemeState | null>(null)
 
 function detectInitial(): Theme {

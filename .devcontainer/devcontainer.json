@@ -1,5 +1,5 @@
 {
-  "name": "Oleolab Coberturas",
+  "name": "Terra de Flora",
   "image": "mcr.microsoft.com/devcontainers/universal:2",
   "forwardPorts": [5173, 8000, 5432],
   "portsAttributes": {

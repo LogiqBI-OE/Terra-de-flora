@@ -3,15 +3,15 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-oleolab}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-oleolab_dev}
-      POSTGRES_DB: ${POSTGRES_DB:-oleolab_coberturas}
+      POSTGRES_USER: ${POSTGRES_USER:-terradeflora}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-terradeflora_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-terradeflora}
     ports:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-oleolab}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-terradeflora}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -23,14 +23,14 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-oleolab}:${POSTGRES_PASSWORD:-oleolab_dev}@db:5432/${POSTGRES_DB:-oleolab_coberturas}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-terradeflora}:${POSTGRES_PASSWORD:-terradeflora_dev}@db:5432/${POSTGRES_DB:-terradeflora}
       JWT_SECRET: ${JWT_SECRET:-change-me-in-production-please-32chars+}
       JWT_ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 60
       CORS_ORIGINS: http://localhost:5173
       SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-orlando@logiqbi.com}
-      SEED_CLIENT_EMAIL: ${SEED_CLIENT_EMAIL:-cliente.demo@oleolab.com}
-      SEED_PASSWORD: ${SEED_PASSWORD:-Oleolab2026!}
+      SEED_CLIENT_EMAIL: ${SEED_CLIENT_EMAIL:-cliente.demo@terradeflora.com}
+      SEED_PASSWORD: ${SEED_PASSWORD:-TerraDeFlora2026!}
     ports:
       - "8000:8000"
     volumes:

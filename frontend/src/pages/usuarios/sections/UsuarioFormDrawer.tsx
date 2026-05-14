@@ -99,7 +99,7 @@ function DatosTab({
         value={value.email}
         disabled={!isCreate}
         onChange={(e) => onChange({ ...value, email: e.target.value })}
-        placeholder="usuario@oleolab.com"
+        placeholder="usuario@terradeflora.com"
       />
       <TextField
         label="Nombre(s)"

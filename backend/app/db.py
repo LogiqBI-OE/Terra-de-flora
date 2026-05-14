@@ -7,8 +7,8 @@ from app.core.config import settings
 
 
 def _normalize_db_url(url: str) -> str:
-    """Railway/Heroku inyectan 'postgres://' o 'postgresql://' (driver implícito).
-    Forzamos +psycopg para usar el driver v3 (que está en requirements-prod.txt).
+    """Railway inyecta 'postgres://' o 'postgresql://' (driver implícito).
+    Forzamos +psycopg para usar el driver v3.
     """
     if url.startswith("postgres://"):
         url = "postgresql://" + url[len("postgres://"):]
@@ -17,9 +17,7 @@ def _normalize_db_url(url: str) -> str:
     return url
 
 
-_db_url = _normalize_db_url(settings.DATABASE_URL)
-_connect_args = {"check_same_thread": False} if _db_url.startswith("sqlite") else {}
-engine = create_engine(_db_url, pool_pre_ping=True, connect_args=_connect_args)
+engine = create_engine(_normalize_db_url(settings.DATABASE_URL), pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 

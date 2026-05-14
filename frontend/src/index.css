@@ -14,28 +14,21 @@
   --sidebar-text-secondary: #A1A1AA;              /* zinc-400 */
   --sidebar-text-muted: #71717A;                  /* zinc-500 */
   --sidebar-hover-bg: rgba(255, 255, 255, 0.06);
-  --sidebar-active-bg: rgba(168, 208, 96, 0.15);
-  --sidebar-active-text: #A8D060;
+  --sidebar-active-bg: rgba(127, 163, 220, 0.15);
+  --sidebar-active-text: #7FA3DC;
   --sidebar-section-title: #71717A;               /* zinc-500 — títulos de sección */
   --sidebar-disabled-text: #52525B;               /* zinc-600 — items disabled */
 
   /* ── Brand Hero (panel derecho del Login — siempre oscuro) ─────────────── */
-  --brand-hero-bg: linear-gradient(135deg, #0B0F08 0%, #131A0F 60%, #0B0F08 100%);
+  --brand-hero-bg: linear-gradient(135deg, #0A1428 0%, #1A2E5A 60%, #0A1428 100%);
   --brand-hero-text: #FFFFFF;
   --brand-hero-text-secondary: #94A3B8;
   --brand-hero-text-muted: #64748B;
-  --brand-hero-accent: #A8D060;
-  --brand-hero-accent-bg: rgba(168, 208, 96, 0.18);
-  --brand-hero-accent-bg-soft: rgba(168, 208, 96, 0.08);
+  --brand-hero-accent: #7FA3DC;
+  --brand-hero-accent-bg: rgba(127, 163, 220, 0.18);
+  --brand-hero-accent-bg-soft: rgba(127, 163, 220, 0.08);
   --brand-hero-divider: #334155;                  /* slate-700 */
-  --brand-hero-quote-border: rgba(168, 208, 96, 0.7);
-
-  /* ── Colores de celda de la matriz de cobertura (semánticos) ───────────── */
-  --cobertura-white: #FFFFFF;
-  --cobertura-green: #BBE07A;
-  --cobertura-yellow: #F5D26B;
-  --cobertura-red: #E16B6B;
-  --cobertura-text: #0B0F08;
+  --brand-hero-quote-border: rgba(127, 163, 220, 0.7);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -44,16 +37,16 @@
 :root,
 .theme-dark {
   /* Page / surfaces */
-  --bg-page: #0B0F08;
-  --bg-page-2: #131A0F;
-  --bg-card: rgba(19, 26, 15, 0.92);
-  --bg-card-soft: rgba(19, 26, 15, 0.6);
-  --bg-elevated: rgba(11, 15, 8, 0.6);
-  --bg-elevated-strong: rgba(11, 15, 8, 0.95);
+  --bg-page: #0A1428;
+  --bg-page-2: #11203F;
+  --bg-card: rgba(17, 32, 63, 0.92);
+  --bg-card-soft: rgba(17, 32, 63, 0.6);
+  --bg-elevated: rgba(10, 20, 40, 0.6);
+  --bg-elevated-strong: rgba(10, 20, 40, 0.95);
   --bg-input: rgba(255, 255, 255, 0.04);
   --bg-hover: rgba(255, 255, 255, 0.05);
   --bg-toggle: rgba(255, 255, 255, 0.06);
-  --bg-menu: rgba(20, 28, 14, 0.72);                /* glass: 72% + backdrop-blur en .surface-menu */
+  --bg-menu: rgba(17, 32, 63, 0.72);                /* glass: 72% + backdrop-blur en .surface-menu */
   --shadow-menu: 0 16px 48px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06);
 
   /* Borders */
@@ -66,16 +59,16 @@
   --text-secondary: #94A3B8;
   --text-muted: #64748B;
   --text-faint: #475569;
-  --text-on-accent: #0B0F08;
+  --text-on-accent: #FFFFFF;
 
   /* Accent */
-  --accent: #A8D060;
-  --accent-text: #A8D060;
-  --accent-dark: #8AB348;
-  --accent-bg-soft: rgba(168, 208, 96, 0.15);
-  --accent-bg-softer: rgba(168, 208, 96, 0.06);
-  --accent-shadow: rgba(168, 208, 96, 0.35);
-  --accent-ring: rgba(168, 208, 96, 0.18);
+  --accent: #1A2E5A;
+  --accent-text: #7FA3DC;
+  --accent-dark: #11203F;
+  --accent-bg-soft: rgba(26, 46, 90, 0.25);
+  --accent-bg-softer: rgba(26, 46, 90, 0.12);
+  --accent-shadow: rgba(26, 46, 90, 0.55);
+  --accent-ring: rgba(127, 163, 220, 0.25);
 
   /* Semantic */
   --danger: #FCA5A5;
@@ -91,9 +84,9 @@
 
   /* Hero gradient (fondo principal de páginas autenticadas) */
   --hero-gradient:
-    radial-gradient(900px 500px at 85% 15%, rgba(168, 208, 96, 0.10), transparent 60%),
-    radial-gradient(700px 500px at 10% 90%, rgba(168, 208, 96, 0.06), transparent 60%),
-    linear-gradient(180deg, #0B0F08 0%, #131A0F 100%);
+    radial-gradient(900px 500px at 85% 15%, rgba(26, 46, 90, 0.22), transparent 60%),
+    radial-gradient(700px 500px at 10% 90%, rgba(127, 163, 220, 0.08), transparent 60%),
+    linear-gradient(180deg, #0A1428 0%, #11203F 100%);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -122,13 +115,13 @@
   --text-faint: #94A3B8;               /* slate-400 */
   --text-on-accent: #FFFFFF;
 
-  --accent: #6B9F2E;
-  --accent-text: #5A8722;
-  --accent-dark: #527E22;
-  --accent-bg-soft: rgba(107, 159, 46, 0.12);
-  --accent-bg-softer: rgba(107, 159, 46, 0.05);
-  --accent-shadow: rgba(107, 159, 46, 0.30);
-  --accent-ring: rgba(107, 159, 46, 0.15);
+  --accent: #1A2E5A;
+  --accent-text: #1A2E5A;
+  --accent-dark: #11203F;
+  --accent-bg-soft: rgba(26, 46, 90, 0.10);
+  --accent-bg-softer: rgba(26, 46, 90, 0.04);
+  --accent-shadow: rgba(26, 46, 90, 0.30);
+  --accent-ring: rgba(26, 46, 90, 0.15);
 
   --danger: #DC2626;
   --danger-bg: rgba(220, 38, 38, 0.08);
@@ -142,8 +135,8 @@
   --on-danger: #FFFFFF;
 
   --hero-gradient:
-    radial-gradient(900px 500px at 85% 15%, rgba(107, 159, 46, 0.06), transparent 60%),
-    radial-gradient(700px 500px at 10% 90%, rgba(107, 159, 46, 0.04), transparent 60%),
+    radial-gradient(900px 500px at 85% 15%, rgba(26, 46, 90, 0.07), transparent 60%),
+    radial-gradient(700px 500px at 10% 90%, rgba(26, 46, 90, 0.04), transparent 60%),
     linear-gradient(180deg, #F8FAFC 0%, #FFFFFF 100%);
 }
 

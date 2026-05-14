@@ -32,25 +32,22 @@ INITIAL_LEVEL_DESCRIPTIONS: dict[int, str] = {
     9: "TI / dueño técnico. Acceso total.",
     8: "Hueco reservado para futuros usos (ej. VP / C-suite).",
     7: "C-suite / decisor final.",
-    6: "Dueño del proceso de coberturas.",
-    5: "Supply chain / planning.",
-    4: "Operativos de área (compras, producción, demanda).",
+    6: "Dueño del proceso.",
+    5: "Cadena de valor / planning.",
+    4: "Operativos de área.",
     3: "Jefes de equipo / supervisores.",
     2: "Empleado consultor.",
     1: "Externo / contratista. Solo lo que se le permita explícitamente.",
 }
 
 # ── Permisos disponibles ─────────────────────────────────────────────────────
+# Catálogo mínimo de arranque. Conforme se agreguen módulos del dominio
+# (Terra de Flora), añade aquí los permisos correspondientes y actualiza
+# INITIAL_LEVEL_PERMISSIONS abajo.
 PERMISSIONS: list[str] = [
-    "view_cobertura",
-    "upload_data",
-    "manage_snapshots",
-    "manage_catalogs",
-    "edit_coloring_rules",
-    "manage_notifications",
     "manage_users",
+    "manage_notifications",
     "export_data",
-    "view_all_customers",
 ]
 
 RESTRICTED_PERMISSIONS: set[str] = {"manage_users"}
@@ -59,30 +56,13 @@ RESTRICTED_PERMISSIONS: set[str] = {"manage_users"}
 INITIAL_LEVEL_PERMISSIONS: dict[int, set[str]] = {
     9: set(PERMISSIONS),
     8: {p for p in PERMISSIONS if p != "manage_users"},
-    7: {
-        "view_cobertura", "manage_snapshots", "manage_catalogs",
-        "edit_coloring_rules", "export_data", "view_all_customers",
-    },
-    6: {
-        "view_cobertura", "upload_data", "manage_snapshots", "manage_catalogs",
-        "edit_coloring_rules", "export_data", "view_all_customers",
-    },
-    5: {
-        "view_cobertura", "upload_data", "manage_snapshots", "export_data",
-        "view_all_customers",
-    },
-    4: {
-        "view_cobertura", "upload_data", "export_data", "view_all_customers",
-    },
-    3: {
-        "view_cobertura", "export_data", "view_all_customers",
-    },
-    2: {
-        "view_cobertura", "export_data",
-    },
-    1: {
-        "view_cobertura",
-    },
+    7: {"manage_notifications", "export_data"},
+    6: {"manage_notifications", "export_data"},
+    5: {"export_data"},
+    4: {"export_data"},
+    3: {"export_data"},
+    2: set(),
+    1: set(),
 }
 
 

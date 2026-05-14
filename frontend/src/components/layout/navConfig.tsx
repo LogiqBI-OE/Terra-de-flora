@@ -6,16 +6,7 @@
 // minLevel?: si se especifica, solo se muestra a usuarios con nivel >= N.
 
 import type { ReactNode } from 'react'
-import {
-  IconAlerta,
-  IconCatalog,
-  IconCobertura,
-  IconDemanda,
-  IconManual,
-  IconSettings,
-  IconUpload,
-  IconUsers,
-} from '../icons/Icons'
+import { IconManual, IconSettings, IconUsers } from '../icons/Icons'
 
 export interface NavItem {
   to: string
@@ -33,21 +24,6 @@ export interface NavSection {
 }
 
 export const NAV_SECTIONS: NavSection[] = [
-  {
-    title: 'Monitores',
-    items: [
-      { to: '/hallazgos', label: 'Hallazgos', icon: <IconAlerta /> },
-      { to: '/cobertura', label: 'Coberturas', icon: <IconCobertura /> },
-      { to: '/demanda', label: 'Demanda', icon: <IconDemanda />, disabled: true, hint: 'Próximamente' },
-    ],
-  },
-  {
-    title: 'Inputs',
-    items: [
-      { to: '/snapshots', label: 'Carga de datos', icon: <IconUpload /> },
-      { to: '/catalogos', label: 'Catálogos', icon: <IconCatalog />, requiresPermission: 'manage_catalogs' },
-    ],
-  },
   {
     title: 'Configuración',
     items: [
