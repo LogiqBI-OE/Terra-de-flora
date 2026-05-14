@@ -3,7 +3,7 @@
 // tiene un nivel mayor al del usuario actual.
 
 import { IconEdit, IconTrash } from '../../../components/icons/Icons'
-import { fmtDateTime } from '../../../lib/format'
+import { fmtDate } from '../../../lib/format'
 import type { UserDetail } from '../../../lib/api'
 
 interface Props {
@@ -44,7 +44,7 @@ export default function UsuariosTable({
             <th className="px-4 py-3 font-semibold">Nivel</th>
             <th className="px-4 py-3 font-semibold">Permisos</th>
             <th className="px-4 py-3 font-semibold">Activo</th>
-            <th className="px-4 py-3 font-semibold">Creado</th>
+            <th className="px-4 py-3 font-semibold">Último login</th>
             <th className="px-4 py-3 w-32"></th>
           </tr>
         </thead>
@@ -59,7 +59,7 @@ export default function UsuariosTable({
             return (
               <tr key={u.id} className="border-b" style={{ borderColor: 'var(--border-soft)' }}>
                 <td className="px-4 py-3 text-app">{u.email}</td>
-                <td className="px-4 py-3 text-app-secondary font-mono text-xs">{u.username ?? '—'}</td>
+                <td className="px-4 py-3 text-app-secondary">{u.username ?? '—'}</td>
                 <td className="px-4 py-3 text-app">{u.full_name || '—'}</td>
                 <td className="px-4 py-3">
                   <span
@@ -78,7 +78,9 @@ export default function UsuariosTable({
                   )}
                 </td>
                 <td className="px-4 py-3 text-app-secondary">{u.is_active ? 'Sí' : 'No'}</td>
-                <td className="px-4 py-3 text-xs text-app-muted">{fmtDateTime(u.created_at)}</td>
+                <td className="px-4 py-3 text-app-muted">
+                  {u.last_login_at ? fmtDate(u.last_login_at) : <span className="text-app-faint">—</span>}
+                </td>
                 <td className="px-4 py-3 text-right whitespace-nowrap">
                   <button
                     onClick={() => onResetPassword(u)}

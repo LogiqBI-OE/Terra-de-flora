@@ -59,6 +59,7 @@ def _to_out(u: User, db: Session) -> UserOut:
         permissions=list(u.permissions or []),
         effective_permissions=sorted(effective_permissions(db, u.level, list(u.permissions or []))),
         is_active=u.is_active,
+        last_login_at=u.last_login_at,
         created_at=u.created_at,
     )
 

@@ -59,6 +59,10 @@ def _run_lightweight_migrations() -> None:
             with engine.begin() as conn:
                 conn.execute(text("ALTER TABLE users ADD COLUMN username VARCHAR(80)"))
                 conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_username ON users (username)"))
+        if "last_login_at" not in cols:
+            print("  + migracion: agregando columna users.last_login_at")
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE users ADD COLUMN last_login_at TIMESTAMP WITH TIME ZONE"))
 
     if "proyectos" in insp.get_table_names():
         cols = {c["name"] for c in insp.get_columns("proyectos")}

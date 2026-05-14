@@ -27,3 +27,11 @@ export function fmtDateTime(isoDate: string): string {
     minute: '2-digit',
   })
 }
+
+export function fmtDate(isoDate: string): string {
+  return new Date(isoDate).toLocaleDateString(LOCALE, {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  })
+}

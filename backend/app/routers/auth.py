@@ -93,6 +93,11 @@ def login(
         db=db,
     )
 
+    # Marca el ultimo login exitoso (para mostrar en /usuarios)
+    from datetime import datetime, timezone
+    user.last_login_at = datetime.now(timezone.utc)
+    db.commit()
+
     _log_attempt(db, identifier=identifier, user_id=user.id, success=True,
                  failure_reason=None, request=request)
 
