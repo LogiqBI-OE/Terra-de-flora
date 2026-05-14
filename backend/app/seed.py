@@ -103,12 +103,13 @@ def upsert_user(
     full_name = compose_full_name(first_name, last_name_paterno, last_name_materno)
     existing = db.query(User).filter(User.email == email).first()
     if existing:
-        # Sincroniza nivel/permisos/username del seed por si cambiaron en código.
-        # Password: por default NO se toca; solo si force_password_reset=True.
-        existing.first_name = first_name
-        existing.last_name_paterno = last_name_paterno
-        existing.last_name_materno = last_name_materno
-        existing.full_name = full_name
+        # IMPORTANTE: NO sobreescribimos campos editables por el usuario
+        # (first_name, last_name_paterno, last_name_materno, full_name).
+        # Solo aseguramos:
+        #  - level/permissions/role: para que el admin del seed NO pueda
+        #    quedar accidentalmente demoteado a nivel bajo sin recuperación.
+        #  - username: solo se setea si esta NULL (no pisa si el usuario ya tiene uno).
+        #  - hashed_password: solo si force_password_reset=True (env var bootstrap).
         existing.level = level
         existing.permissions = permissions or []
         existing.role = role_for_level(level)
@@ -118,7 +119,7 @@ def upsert_user(
             existing.hashed_password = hash_password(password)
             print(f"  ! password RESET para {email} (SEED_RESET_ADMIN_PASSWORD=true)")
         db.commit()
-        print(f"  - usuario sincronizado: {email} (level {level})")
+        print(f"  - usuario sincronizado: {email} (level {level}, nombre preservado)")
         return
     db.add(
         User(
