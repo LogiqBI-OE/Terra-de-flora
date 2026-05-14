@@ -12,7 +12,6 @@ import {
   materialesApi,
   recetasApi,
   type Material,
-  type Receta,
   type RecetaCatalog,
   type RecetaItemIn,
   type RecetaSummary,
