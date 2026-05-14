@@ -36,7 +36,7 @@ interface Props {
   error: string | null
 }
 
-type TabKey = 'datos' | 'permisos' | 'password' | 'actividad'
+type TabKey = 'datos' | 'permisos' | 'actividad'
 
 export default function UsuarioFormDrawer({
   open, value, onChange, onSave, onClose, catalog, busy, error,
@@ -48,7 +48,6 @@ export default function UsuarioFormDrawer({
   const tabs: { key: TabKey; label: string }[] = [
     { key: 'datos', label: 'Datos generales' },
     { key: 'permisos', label: 'Permisos' },
-    { key: 'password', label: isCreate ? 'Contraseña' : 'Cambiar contraseña' },
     ...(isCreate ? [] : [{ key: 'actividad' as TabKey, label: 'Actividad' }]),
   ]
 
@@ -60,8 +59,8 @@ export default function UsuarioFormDrawer({
     if (!value.username.trim()) { setTab('datos'); setLocalError('Falta el nombre de usuario.'); return }
     if (!value.first_name.trim()) { setTab('datos'); setLocalError('Falta el nombre.'); return }
     if (isCreate && !value.password.trim()) {
-      setTab('password')
-      setLocalError('Falta la contraseña inicial — define una antes de crear.')
+      setTab('datos')
+      setLocalError('Falta la contraseña inicial — define una al final del formulario.')
       return
     }
     onSave(value)
@@ -90,9 +89,6 @@ export default function UsuarioFormDrawer({
         )}
         {tab === 'permisos' && (
           <PermisosTab value={value} onChange={onChange} catalog={catalog} />
-        )}
-        {tab === 'password' && (
-          <PasswordTab value={value} onChange={onChange} isCreate={isCreate} />
         )}
         {tab === 'actividad' && value.id !== null && (
           <ActividadTab userId={value.id} />
@@ -197,6 +193,30 @@ function DatosTab({
           Usuario activo
         </label>
       )}
+
+      {/* ── Contraseña al final ────────────────────────────────────── */}
+      <div className="pt-4 mt-2 border-t" style={{ borderColor: 'var(--border-soft)' }}>
+        <div className="text-[11px] font-bold tracking-[0.2em] uppercase text-app-secondary mb-2">
+          {isCreate ? 'Contraseña inicial' : 'Cambiar contraseña'}
+        </div>
+        <TextField
+          label={isCreate ? 'Contraseña' : 'Nueva contraseña'}
+          type="password"
+          required={isCreate}
+          value={value.password}
+          onChange={(e) => onChange({ ...value, password: e.target.value })}
+          placeholder="••••••••"
+          hint={isCreate
+            ? 'Definela ahora. El usuario puede cambiarla despues.'
+            : 'Deja en blanco para no cambiar la contraseña actual.'}
+        />
+        {!isCreate && (
+          <div className="text-[11px] text-app-muted mt-2">
+            Tip: desde la tabla puedes resetear directo al <strong>standard password</strong> sin
+            escribir nada (ver "Configuración general").
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -257,39 +277,6 @@ function PermisosTab({
           )
         })}
       </div>
-    </div>
-  )
-}
-
-// ── Tab: Contraseña ──────────────────────────────────────────────────────────
-function PasswordTab({
-  value, onChange, isCreate,
-}: {
-  value: UserFormValue
-  onChange: (v: UserFormValue) => void
-  isCreate: boolean
-}) {
-  return (
-    <div className="space-y-3">
-      <div className="text-xs text-app-muted">
-        {isCreate
-          ? 'Define la contraseña inicial del usuario.'
-          : 'Deja en blanco para no cambiar la contraseña actual.'}
-      </div>
-      <TextField
-        label={isCreate ? 'Contraseña' : 'Nueva contraseña'}
-        type="password"
-        required={isCreate}
-        value={value.password}
-        onChange={(e) => onChange({ ...value, password: e.target.value })}
-        placeholder="••••••••"
-      />
-      {!isCreate && (
-        <div className="text-[11px] text-app-muted">
-          Tip: desde la tabla puedes resetear directo al <strong>standard password</strong> sin
-          escribir nada (ver “Configuración general”).
-        </div>
-      )}
     </div>
   )
 }
