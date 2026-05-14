@@ -76,9 +76,9 @@ export default function Login() {
         <div
           className="px-9 md:px-12 py-8 md:py-10 flex flex-col"
           style={{
-            background: 'rgba(255, 255, 255, 0.85)',
-            backdropFilter: 'blur(24px) saturate(160%)',
-            WebkitBackdropFilter: 'blur(24px) saturate(160%)',
+            background: 'rgba(255, 255, 255, 0.72)',
+            backdropFilter: 'blur(28px) saturate(170%)',
+            WebkitBackdropFilter: 'blur(28px) saturate(170%)',
             color: '#0F172A',
           }}
         >
@@ -204,14 +204,16 @@ export default function Login() {
             </form>
           </div>
 
-          {/* Footer LOGIQ — al pie, mas pequeno y suave */}
+          {/* Footer LOGIQ — al pie derecho, separado del form */}
           <div
-            className="mt-6 pt-3 border-t flex items-center justify-between text-[10px]"
-            style={{ borderColor: 'rgba(15, 23, 42, 0.06)' }}
+            className="mt-10 pt-3 text-right text-[10px]"
           >
-            <span style={{ color: '#94A3B8' }}>Powered by</span>
-            <span className="font-semibold tracking-wider" style={{ color: '#94A3B8' }}>
-              LOGIQ <span className="font-normal" style={{ color: '#CBD5E1' }}>· Business Intelligence</span>
+            <span style={{ color: '#64748B' }}>
+              Powered by{' '}
+              <span className="font-bold tracking-wider" style={{ color: '#475569' }}>
+                LOGIQ
+              </span>
+              <span className="font-normal" style={{ color: '#64748B' }}> · Business Intelligence</span>
             </span>
           </div>
         </div>
@@ -220,9 +222,9 @@ export default function Login() {
         <div
           className="hidden md:flex relative px-9 py-10 flex-col justify-between overflow-hidden"
           style={{
-            background: 'linear-gradient(135deg, rgba(10, 20, 40, 0.82) 0%, rgba(26, 46, 90, 0.78) 60%, rgba(10, 20, 40, 0.82) 100%)',
-            backdropFilter: 'blur(24px) saturate(160%)',
-            WebkitBackdropFilter: 'blur(24px) saturate(160%)',
+            background: 'linear-gradient(135deg, rgba(10, 20, 40, 0.68) 0%, rgba(26, 46, 90, 0.62) 60%, rgba(10, 20, 40, 0.68) 100%)',
+            backdropFilter: 'blur(28px) saturate(170%)',
+            WebkitBackdropFilter: 'blur(28px) saturate(170%)',
           }}
         >
           <div
