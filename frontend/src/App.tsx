@@ -5,6 +5,7 @@ import UsuariosPage from './pages/usuarios/UsuariosPage'
 import ConfiguracionPage from './pages/configuracion/ConfiguracionPage'
 import ProyectosPage from './pages/proyectos/ProyectosPage'
 import NuevoProyectoPage from './pages/proyectos/NuevoProyectoPage'
+import MaterialesPage from './pages/catalogos/MaterialesPage'
 import AppShell from './components/layout/AppShell'
 import EmptyState from './components/ui/EmptyState'
 import { useAuth } from './lib/auth'
@@ -52,6 +53,9 @@ export default function App() {
       {/* PROYECTOS */}
       <Route path="/proyectos" element={<AnyAuthRoute><ProyectosPage /></AnyAuthRoute>} />
       <Route path="/proyectos/nuevo" element={<AnyAuthRoute><NuevoProyectoPage /></AnyAuthRoute>} />
+
+      {/* CATÁLOGOS */}
+      <Route path="/materiales" element={<AnyAuthRoute><MaterialesPage /></AnyAuthRoute>} />
 
       {/* CONFIGURACIÓN */}
       <Route path="/usuarios" element={<MinLevelRoute min={5}><UsuariosPage /></MinLevelRoute>} />

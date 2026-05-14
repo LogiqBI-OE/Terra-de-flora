@@ -4,6 +4,7 @@ from app.models.system_config import SystemConfig
 from app.models.level import Level
 from app.models.level_permission import LevelPermission
 from app.models.login_event import LoginEvent
+from app.models.proveedor import Proveedor
 
 __all__ = [
     "User",
@@ -12,4 +13,5 @@ __all__ = [
     "Level",
     "LevelPermission",
     "LoginEvent",
+    "Proveedor",
 ]

@@ -17,4 +17,7 @@ export type {
   LoginEvent,
 } from './users'
 
+export { proveedoresApi } from './proveedores'
+export type { Proveedor, ProveedorCreatePayload, ProveedorUpdatePayload } from './proveedores'
+
 export { ApiError, API_URL } from './client'
