@@ -213,14 +213,22 @@ export default function Login() {
                 disabled={loading}
                 className="w-full font-semibold py-2.5 rounded-lg shadow-lg transition disabled:opacity-60 disabled:cursor-not-allowed"
                 style={{
-                  background: '#1A2E5A',
+                  background: 'linear-gradient(135deg, #272859 0%, #3a3d92 50%, #272859 100%)',
                   color: '#FFFFFF',
-                  boxShadow: '0 10px 24px rgba(26, 46, 90, 0.30)',
+                  boxShadow: '0 10px 24px rgba(46, 48, 131, 0.35)',
                 }}
-                onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = '#11203F' }}
-                onMouseLeave={(e) => { if (!loading) e.currentTarget.style.background = '#1A2E5A' }}
+                onMouseEnter={(e) => {
+                  if (!loading)
+                    e.currentTarget.style.background =
+                      'linear-gradient(135deg, #1F2055 0%, #2F3280 50%, #1F2055 100%)'
+                }}
+                onMouseLeave={(e) => {
+                  if (!loading)
+                    e.currentTarget.style.background =
+                      'linear-gradient(135deg, #272859 0%, #3a3d92 50%, #272859 100%)'
+                }}
               >
-                {loading ? 'INGRESANDO...' : 'INICIAR SESIÓN'}
+                {loading ? 'Entrando...' : 'Entrar al Workspace'}
               </button>
 
               <p className="text-center text-sm pt-1 font-medium" style={{ color: '#334155' }}>
