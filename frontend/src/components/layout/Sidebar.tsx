@@ -6,6 +6,7 @@
 //
 // El sidebar consume tokens --sidebar-* fijos.
 
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../lib/auth'
 import { NAV_SECTIONS } from './navConfig'
 import NewProjectButton from './NewProjectButton'
@@ -26,6 +27,7 @@ const STYLES = {
 
 export default function Sidebar() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   if (!user) return null
 
   return (
@@ -40,7 +42,7 @@ export default function Sidebar() {
 
       {/* CTA Nuevo Proyecto */}
       <div className="px-3 pt-3 pb-2">
-        <NewProjectButton onClick={() => { /* TODO: navegar a /proyectos/nuevo cuando exista */ }} />
+        <NewProjectButton onClick={() => navigate('/proyectos/nuevo')} />
       </div>
 
       {/* Navegación por secciones */}

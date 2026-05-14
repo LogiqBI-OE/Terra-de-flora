@@ -175,6 +175,41 @@ export function IconUserCircle({ size, className, style }: IconProps) {
   )
 }
 
+export function IconSearch({ size, className, style }: IconProps) {
+  return (
+    <svg {...svgBase(size)} className={className} style={style}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="M21 21l-4.35-4.35" />
+    </svg>
+  )
+}
+
+export function IconChevronRight({ size, className, style }: IconProps) {
+  return (
+    <svg {...svgBase(size)} className={className} style={style}>
+      <polyline points="9 6 15 12 9 18" />
+    </svg>
+  )
+}
+
+export function IconBuilding({ size, className, style }: IconProps) {
+  return (
+    <svg {...svgBase(size)} className={className} style={style}>
+      <rect x="4" y="3" width="16" height="18" rx="1" />
+      <path d="M8 7h2M14 7h2M8 11h2M14 11h2M8 15h2M14 15h2" />
+    </svg>
+  )
+}
+
+export function IconX({ size, className, style }: IconProps) {
+  return (
+    <svg {...svgBase(size)} className={className} style={style}>
+      <line x1="6" y1="6" x2="18" y2="18" />
+      <line x1="6" y1="18" x2="18" y2="6" />
+    </svg>
+  )
+}
+
 export function IconBox({ size, className, style }: IconProps) {
   return (
     <svg {...svgBase(size)} className={className} style={style}>

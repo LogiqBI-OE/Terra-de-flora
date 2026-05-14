@@ -46,7 +46,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     title: 'Proyectos',
     items: [
-      { to: '/proyectos', label: 'Gestor de proyectos', icon: <IconBriefcase />, disabled: true, hint: 'Próximamente' },
+      { to: '/proyectos', label: 'Gestor de proyectos', icon: <IconBriefcase /> },
     ],
   },
   {

@@ -3,6 +3,8 @@ import { type JSX } from 'react'
 import Login from './pages/Login'
 import UsuariosPage from './pages/usuarios/UsuariosPage'
 import ConfiguracionPage from './pages/configuracion/ConfiguracionPage'
+import ProyectosPage from './pages/proyectos/ProyectosPage'
+import NuevoProyectoPage from './pages/proyectos/NuevoProyectoPage'
 import AppShell from './components/layout/AppShell'
 import EmptyState from './components/ui/EmptyState'
 import { useAuth } from './lib/auth'
@@ -46,6 +48,10 @@ export default function App() {
       <Route path="/login" element={<Login />} />
 
       <Route path="/" element={<AnyAuthRoute><HomePage /></AnyAuthRoute>} />
+
+      {/* PROYECTOS */}
+      <Route path="/proyectos" element={<AnyAuthRoute><ProyectosPage /></AnyAuthRoute>} />
+      <Route path="/proyectos/nuevo" element={<AnyAuthRoute><NuevoProyectoPage /></AnyAuthRoute>} />
 
       {/* CONFIGURACIÓN */}
       <Route path="/usuarios" element={<MinLevelRoute min={5}><UsuariosPage /></MinLevelRoute>} />
