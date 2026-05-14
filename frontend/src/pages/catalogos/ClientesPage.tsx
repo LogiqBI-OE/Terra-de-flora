@@ -25,8 +25,11 @@ interface FormValue {
   email: string
   direccion: string
   notas: string
+  como_nos_contacto: string  // valor final (uno de FUENTES_CONTACTO o texto libre)
   is_active: boolean
 }
+
+const FUENTES_CONTACTO = ['Instagram', 'Facebook', 'Recomendado', 'De otro evento', 'Otros']
 
 const EMPTY: FormValue = {
   id: null,
@@ -38,6 +41,7 @@ const EMPTY: FormValue = {
   email: '',
   direccion: '',
   notas: '',
+  como_nos_contacto: '',
   is_active: true,
 }
 
@@ -78,6 +82,7 @@ export default function ClientesPage() {
       email: c.email ?? '',
       direccion: c.direccion ?? '',
       notas: c.notas ?? '',
+      como_nos_contacto: c.como_nos_contacto ?? '',
       is_active: c.is_active,
     })
   }
@@ -94,6 +99,7 @@ export default function ClientesPage() {
         email: v.email || null,
         direccion: v.direccion || null,
         notas: v.notas || null,
+        como_nos_contacto: v.como_nos_contacto || null,
       }
       if (v.id === null) {
         await clientesApi.create(payload)
@@ -368,6 +374,11 @@ function ClienteFormDrawer({
           />
         </label>
 
+        <ComoNosContactoField
+          value={value.como_nos_contacto}
+          onChange={(v) => onChange({ ...value, como_nos_contacto: v })}
+        />
+
         <label className="block">
           <div className="text-[11px] font-semibold tracking-widest uppercase mb-1 text-app-secondary">
             Notas internas
@@ -413,5 +424,63 @@ function SegButton({ active, onClick, children }: { active: boolean; onClick: ()
     >
       {children}
     </button>
+  )
+}
+
+/**
+ * Campo "¿Cómo nos contactó?" con select de fuentes preset + input libre
+ * cuando se elige "Otros". El padre solo maneja un string final (que puede
+ * ser una de las fuentes preset o el texto libre).
+ */
+function ComoNosContactoField({
+  value, onChange,
+}: {
+  value: string
+  onChange: (v: string) => void
+}) {
+  const isPreset = FUENTES_CONTACTO.filter(f => f !== 'Otros').includes(value)
+  const isEmpty = !value
+  const initialSel = isEmpty ? '' : (isPreset ? value : 'Otros')
+  const [sel, setSel] = useState<string>(initialSel)
+  const [otro, setOtro] = useState<string>(isPreset || isEmpty ? '' : value)
+
+  function handleSelectChange(next: string) {
+    setSel(next)
+    if (next === '') onChange('')
+    else if (next === 'Otros') onChange(otro.trim() || 'Otros')
+    else onChange(next)
+  }
+  function handleOtroChange(next: string) {
+    setOtro(next)
+    if (sel === 'Otros') onChange(next.trim() || 'Otros')
+  }
+
+  return (
+    <div>
+      <div className="text-[11px] font-semibold tracking-widest uppercase mb-1 text-app-secondary">
+        ¿Cómo nos contactó?
+      </div>
+      <select
+        value={sel}
+        onChange={(e) => handleSelectChange(e.target.value)}
+        className="w-full px-3 py-2 rounded-lg border text-sm cursor-pointer"
+        style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+      >
+        <option value="">— Selecciona —</option>
+        {FUENTES_CONTACTO.map((f) => (
+          <option key={f} value={f}>{f}</option>
+        ))}
+      </select>
+      {sel === 'Otros' && (
+        <input
+          type="text"
+          value={otro}
+          onChange={(e) => handleOtroChange(e.target.value)}
+          placeholder="Especifica cómo nos contactó"
+          className="w-full mt-2 px-3 py-2 rounded-lg border text-sm"
+          style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+        />
+      )}
+    </div>
   )
 }

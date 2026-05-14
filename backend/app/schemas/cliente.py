@@ -15,6 +15,7 @@ class ClienteCreate(BaseModel):
     email: str | None = None
     direccion: str | None = None
     notas: str | None = None
+    como_nos_contacto: str | None = None
 
 
 class ClienteUpdate(BaseModel):
@@ -26,6 +27,7 @@ class ClienteUpdate(BaseModel):
     email: str | None = None
     direccion: str | None = None
     notas: str | None = None
+    como_nos_contacto: str | None = None
     is_active: bool | None = None
 
 
@@ -39,6 +41,7 @@ class ClienteOut(BaseModel):
     email: str | None
     direccion: str | None
     notas: str | None
+    como_nos_contacto: str | None
     is_active: bool
     created_at: datetime
     updated_at: datetime

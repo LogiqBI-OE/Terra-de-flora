@@ -27,6 +27,9 @@ class Cliente(Base):
     email: Mapped[str | None] = mapped_column(String(160))
     direccion: Mapped[str | None] = mapped_column(Text)
     notas: Mapped[str | None] = mapped_column(Text)
+    # Cómo nos contactó. Puede ser uno de los presets (Instagram, Facebook,
+    # Recomendado, De otro evento) o un texto libre cuando el usuario elige "Otros".
+    como_nos_contacto: Mapped[str | None] = mapped_column(String(120))
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

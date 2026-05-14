@@ -13,6 +13,7 @@ export interface Cliente {
   email: string | null
   direccion: string | null
   notas: string | null
+  como_nos_contacto: string | null
   is_active: boolean
   created_at: string
   updated_at: string
@@ -27,6 +28,7 @@ export interface ClienteCreatePayload {
   email?: string | null
   direccion?: string | null
   notas?: string | null
+  como_nos_contacto?: string | null
 }
 
 export interface ClienteUpdatePayload extends Partial<ClienteCreatePayload> {

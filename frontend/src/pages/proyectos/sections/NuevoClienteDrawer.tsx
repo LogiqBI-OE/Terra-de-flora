@@ -13,6 +13,8 @@ interface Props {
   onCreated: (c: Cliente) => void
 }
 
+const FUENTES_CONTACTO = ['Instagram', 'Facebook', 'Recomendado', 'De otro evento', 'Otros']
+
 export default function NuevoClienteDrawer({ open, onClose, onCreated }: Props) {
   const [tipo, setTipo] = useState<TipoCliente>('PF')
   const [nombre, setNombre] = useState('')
@@ -20,12 +22,21 @@ export default function NuevoClienteDrawer({ open, onClose, onCreated }: Props) 
   const [rfc, setRfc] = useState('')
   const [telefono, setTelefono] = useState('')
   const [email, setEmail] = useState('')
+  const [contactoFuente, setContactoFuente] = useState<string>('')
+  const [contactoOtro, setContactoOtro] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   function reset() {
     setNombre(''); setRazon(''); setRfc(''); setTelefono(''); setEmail('')
+    setContactoFuente(''); setContactoOtro('')
     setError(null)
+  }
+
+  function resolveContacto(): string | null {
+    if (!contactoFuente) return null
+    if (contactoFuente === 'Otros') return contactoOtro.trim() || 'Otros'
+    return contactoFuente
   }
 
   async function handleSave() {
@@ -42,6 +53,7 @@ export default function NuevoClienteDrawer({ open, onClose, onCreated }: Props) 
         rfc: rfc.trim() || null,
         telefono: telefono.trim() || null,
         email: email.trim() || null,
+        como_nos_contacto: resolveContacto(),
       })
       onCreated(created)
       reset()
@@ -117,6 +129,33 @@ export default function NuevoClienteDrawer({ open, onClose, onCreated }: Props) 
             onChange={(e) => setEmail(e.target.value)}
             placeholder="cliente@ejemplo.com"
           />
+        </div>
+
+        <div>
+          <div className="text-[11px] font-semibold tracking-widest uppercase mb-1 text-app-secondary">
+            ¿Cómo nos contactó?
+          </div>
+          <select
+            value={contactoFuente}
+            onChange={(e) => setContactoFuente(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg border text-sm cursor-pointer"
+            style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+          >
+            <option value="">— Selecciona —</option>
+            {FUENTES_CONTACTO.map((f) => (
+              <option key={f} value={f}>{f}</option>
+            ))}
+          </select>
+          {contactoFuente === 'Otros' && (
+            <input
+              type="text"
+              value={contactoOtro}
+              onChange={(e) => setContactoOtro(e.target.value)}
+              placeholder="Especifica cómo nos contactó"
+              className="w-full mt-2 px-3 py-2 rounded-lg border text-sm"
+              style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+            />
+          )}
         </div>
 
         {error && <div className="text-xs text-danger">{error}</div>}

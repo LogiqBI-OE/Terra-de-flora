@@ -64,6 +64,13 @@ def _run_lightweight_migrations() -> None:
             with engine.begin() as conn:
                 conn.execute(text("ALTER TABLE users ADD COLUMN last_login_at TIMESTAMP WITH TIME ZONE"))
 
+    if "clientes" in insp.get_table_names():
+        cols = {c["name"] for c in insp.get_columns("clientes")}
+        if "como_nos_contacto" not in cols:
+            print("  + migracion: agregando columna clientes.como_nos_contacto")
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE clientes ADD COLUMN como_nos_contacto VARCHAR(120)"))
+
     if "proyectos" in insp.get_table_names():
         cols = {c["name"] for c in insp.get_columns("proyectos")}
         with engine.begin() as conn:
