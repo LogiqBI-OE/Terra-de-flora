@@ -4,6 +4,15 @@ import { request } from './client'
 export type TipoProyecto = 'boda' | 'iglesia' | 'bautizo' | 'cumple' | 'xv' | 'corporativo' | 'otro'
 export type EstadoProyecto = 'cotizando' | 'aprobado' | 'produccion' | 'montaje' | 'entregado' | 'cancelado'
 
+export interface ProyectoLocation {
+  tipo: string
+  nombre: string
+  hora_evento: string | null
+  hora_montaje: string | null
+  hora_desmontaje: string | null
+  notas: string | null
+}
+
 export interface ProyectoRow {
   id: number
   codigo: string
@@ -21,6 +30,11 @@ export interface ProyectoRow {
   fecha_evento: string | null
   direccion_evento: string | null
   valor_estimado: number | string
+  cant_invitados: number | null
+  planner_nombre: string | null
+  planner_telefono: string | null
+  planner_email: string | null
+  locations: ProyectoLocation[]
   notas: string | null
   is_active: boolean
   created_at: string
@@ -37,6 +51,11 @@ export interface ProyectoCreatePayload {
   fecha_evento?: string | null
   direccion_evento?: string | null
   valor_estimado?: number
+  cant_invitados?: number | null
+  planner_nombre?: string | null
+  planner_telefono?: string | null
+  planner_email?: string | null
+  locations?: ProyectoLocation[]
   notas?: string | null
 }
 
@@ -52,6 +71,7 @@ export interface ProyectoCatalog {
   tipos: TipoMeta[]
   estados: EstadoMeta[]
   vendedores: VendedorOption[]
+  tipos_lugar: string[]
 }
 
 export const proyectosApi = {

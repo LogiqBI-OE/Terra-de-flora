@@ -7,7 +7,7 @@ import enum
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Numeric, String, Text, func
+from sqlalchemy import JSON, Boolean, Date, DateTime, Enum, ForeignKey, Integer, Numeric, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -56,6 +56,17 @@ class Proyecto(Base):
     fecha_evento: Mapped[date | None] = mapped_column(Date)
     direccion_evento: Mapped[str | None] = mapped_column(Text)
     valor_estimado: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, default=0)
+    cant_invitados: Mapped[int | None] = mapped_column(Integer)
+
+    # Contacto del event planner (puede ser del cliente o intermediario)
+    planner_nombre: Mapped[str | None] = mapped_column(String(160))
+    planner_telefono: Mapped[str | None] = mapped_column(String(40))
+    planner_email: Mapped[str | None] = mapped_column(String(160))
+
+    # Lista de lugares con horarios. Cada entry:
+    #   { tipo: 'Iglesia'|'Civil'|'Recepción'|'Otro',
+    #     nombre: str, hora_evento: 'HH:MM', hora_montaje: 'HH:MM', hora_desmontaje: 'HH:MM' }
+    locations: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
 
     notas: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

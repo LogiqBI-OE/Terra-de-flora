@@ -7,6 +7,16 @@ from pydantic import BaseModel, Field
 from app.models.proyecto import EstadoProyecto, TipoProyecto
 
 
+class ProyectoLocation(BaseModel):
+    """Un lugar del evento (iglesia, civil, recepcion, otro)."""
+    tipo: str = "Recepción"
+    nombre: str = ""
+    hora_evento: str | None = None
+    hora_montaje: str | None = None
+    hora_desmontaje: str | None = None
+    notas: str | None = None
+
+
 class ProyectoCreate(BaseModel):
     nombre: str = Field(..., min_length=1, max_length=200)
     descripcion: str | None = None
@@ -17,6 +27,11 @@ class ProyectoCreate(BaseModel):
     fecha_evento: date | None = None
     direccion_evento: str | None = None
     valor_estimado: Decimal = Field(default=Decimal("0"), ge=Decimal("0"))
+    cant_invitados: int | None = Field(None, ge=0)
+    planner_nombre: str | None = None
+    planner_telefono: str | None = None
+    planner_email: str | None = None
+    locations: list[ProyectoLocation] = []
     notas: str | None = None
 
 
@@ -30,13 +45,18 @@ class ProyectoUpdate(BaseModel):
     fecha_evento: date | None = None
     direccion_evento: str | None = None
     valor_estimado: Decimal | None = None
+    cant_invitados: int | None = None
+    planner_nombre: str | None = None
+    planner_telefono: str | None = None
+    planner_email: str | None = None
+    locations: list[ProyectoLocation] | None = None
     notas: str | None = None
     is_active: bool | None = None
 
 
 class ProyectoOut(BaseModel):
     id: int
-    codigo: str                # PROY-{id zero-padded}
+    codigo: str
     nombre: str
     descripcion: str | None
     cliente_id: int
@@ -51,6 +71,11 @@ class ProyectoOut(BaseModel):
     fecha_evento: date | None
     direccion_evento: str | None
     valor_estimado: Decimal
+    cant_invitados: int | None
+    planner_nombre: str | None
+    planner_telefono: str | None
+    planner_email: str | None
+    locations: list[ProyectoLocation]
     notas: str | None
     is_active: bool
     created_at: datetime
@@ -58,7 +83,6 @@ class ProyectoOut(BaseModel):
 
 
 class VendedorOption(BaseModel):
-    """Vendedor disponible (User L5+) para los dropdowns."""
     id: int
     nombre: str
     username: str | None
@@ -66,6 +90,7 @@ class VendedorOption(BaseModel):
 
 
 class ProyectoCatalog(BaseModel):
-    tipos: list[dict]      # [{id, label, emoji}]
-    estados: list[dict]    # [{id, label, emoji}]
+    tipos: list[dict]
+    estados: list[dict]
     vendedores: list[VendedorOption]
+    tipos_lugar: list[str]   # ["Iglesia", "Civil", "Recepción", "Otro"]

@@ -24,6 +24,21 @@ def _run_lightweight_migrations() -> None:
                 conn.execute(text("ALTER TABLE users ADD COLUMN username VARCHAR(80)"))
                 conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_username ON users (username)"))
 
+    if "proyectos" in insp.get_table_names():
+        cols = {c["name"] for c in insp.get_columns("proyectos")}
+        with engine.begin() as conn:
+            if "cant_invitados" not in cols:
+                print("  + migracion: agregando columna proyectos.cant_invitados")
+                conn.execute(text("ALTER TABLE proyectos ADD COLUMN cant_invitados INTEGER"))
+            if "planner_nombre" not in cols:
+                print("  + migracion: agregando columnas proyectos.planner_*")
+                conn.execute(text("ALTER TABLE proyectos ADD COLUMN planner_nombre VARCHAR(160)"))
+                conn.execute(text("ALTER TABLE proyectos ADD COLUMN planner_telefono VARCHAR(40)"))
+                conn.execute(text("ALTER TABLE proyectos ADD COLUMN planner_email VARCHAR(160)"))
+            if "locations" not in cols:
+                print("  + migracion: agregando columna proyectos.locations (JSON)")
+                conn.execute(text("ALTER TABLE proyectos ADD COLUMN locations JSON DEFAULT '[]'::json NOT NULL"))
+
 
 def upsert_user(
     db: Session,

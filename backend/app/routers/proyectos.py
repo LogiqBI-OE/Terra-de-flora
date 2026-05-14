@@ -10,6 +10,7 @@ from app.models.user import User
 from app.schemas.proyecto import (
     ProyectoCatalog,
     ProyectoCreate,
+    ProyectoLocation,
     ProyectoOut,
     ProyectoUpdate,
     VendedorOption,
@@ -37,6 +38,8 @@ ESTADOS_META = [
     {"id": "cancelado", "label": "Cancelado", "emoji": "✖️"},
 ]
 
+TIPOS_LUGAR = ["Iglesia", "Civil", "Recepción", "Brunch", "Sesión de fotos", "Otro"]
+
 
 def _codigo(pid: int) -> str:
     return f"PROY-{pid:04d}"
@@ -45,6 +48,7 @@ def _codigo(pid: int) -> str:
 def _to_out(p: Proyecto, db: Session) -> ProyectoOut:
     cli = db.get(Cliente, p.cliente_id)
     vend = db.get(User, p.vendedor_id) if p.vendedor_id else None
+    locations = [ProyectoLocation(**loc) for loc in (p.locations or [])]
     return ProyectoOut(
         id=p.id,
         codigo=_codigo(p.id),
@@ -62,6 +66,11 @@ def _to_out(p: Proyecto, db: Session) -> ProyectoOut:
         fecha_evento=p.fecha_evento,
         direccion_evento=p.direccion_evento,
         valor_estimado=p.valor_estimado,
+        cant_invitados=p.cant_invitados,
+        planner_nombre=p.planner_nombre,
+        planner_telefono=p.planner_telefono,
+        planner_email=p.planner_email,
+        locations=locations,
         notas=p.notas,
         is_active=p.is_active,
         created_at=p.created_at,
@@ -84,6 +93,7 @@ def catalog(
     return ProyectoCatalog(
         tipos=TIPOS_META,
         estados=ESTADOS_META,
+        tipos_lugar=TIPOS_LUGAR,
         vendedores=[
             VendedorOption(
                 id=u.id,
@@ -127,7 +137,10 @@ def crear(
         raise HTTPException(400, "Cliente no existe")
     if payload.vendedor_id is not None and not db.get(User, payload.vendedor_id):
         raise HTTPException(400, "Vendedor no existe")
-    p = Proyecto(**payload.model_dump())
+    data = payload.model_dump()
+    # locations es list[ProyectoLocation] — convertir a list[dict] para JSON column
+    data["locations"] = [loc if isinstance(loc, dict) else loc.model_dump() for loc in payload.locations]
+    p = Proyecto(**data)
     db.add(p)
     db.commit()
     db.refresh(p)

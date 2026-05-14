@@ -36,6 +36,7 @@ export type {
 export { proyectosApi } from './proyectos'
 export type {
   ProyectoRow, ProyectoCreatePayload, ProyectoUpdatePayload, ProyectoCatalog,
+  ProyectoLocation,
   TipoProyecto, EstadoProyecto, TipoMeta, EstadoMeta, VendedorOption,
 } from './proyectos'
 
