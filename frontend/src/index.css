@@ -152,10 +152,10 @@
      no blanco. */
   html {
     background-color: var(--bg-page);
-    /* Reduce el tamaño base ~6% (16px -> 15px). Como Tailwind usa rem,
-       esto comprime texto y espaciados de manera uniforme — look más
-       refinado / compacto estilo Linear. Subir a 16px si se siente apretado. */
-    font-size: 15px;
+    /* Base 14px (~12% más compacto que el default 16px). Como Tailwind usa
+       rem, esto comprime texto y espaciados uniformemente — look refinado
+       estilo Linear. Subir a 15-16px si se siente apretado. */
+    font-size: 14px;
   }
   body {
     font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
