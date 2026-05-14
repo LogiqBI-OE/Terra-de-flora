@@ -39,26 +39,16 @@ export interface NavSection {
 
 export const NAV_SECTIONS: NavSection[] = [
   {
-    title: 'Navegación',
-    items: [
-      { to: '/', label: 'Inicio', icon: <IconHome /> },
-    ],
-  },
-  {
-    title: 'Proyectos',
-    items: [
-      { to: '/proyectos', label: 'Gestor de proyectos', icon: <IconBriefcase /> },
-    ],
-  },
-  {
     title: 'Gestión',
     items: [
+      { to: '/', label: 'Inicio', icon: <IconHome /> },
+      { to: '/proyectos', label: 'Gestor de proyectos', icon: <IconBriefcase /> },
       { to: '/calendario', label: 'Calendario', icon: <IconCalendar />, disabled: true, hint: 'Próximamente' },
       { to: '/reportes', label: 'Reportes', icon: <IconChart />, disabled: true, hint: 'Próximamente' },
     ],
   },
   {
-    title: 'Community',
+    title: 'Community Management',
     items: [
       { to: '/redes', label: 'Redes', icon: <IconNetwork />, disabled: true, hint: 'Próximamente' },
       { to: '/campanas', label: 'Campañas', icon: <IconMegaphone />, disabled: true, hint: 'Próximamente' },
