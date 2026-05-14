@@ -2,11 +2,23 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ApiError } from '../lib/api/index'
 import { useAuth } from '../lib/auth'
-import { useTheme } from '../lib/theme'
+import BackgroundCarousel from '../components/BackgroundCarousel'
 
 // "Recuérdame": guardamos solo el email (NUNCA el password) para precargar
 // el form la próxima vez. Si el usuario lo desmarca, borramos.
 const REMEMBER_KEY = 'terradeflora.remember_email'
+
+// Imágenes del carrusel de fondo — viven en /public/carousel/
+const CAROUSEL_IMAGES = [
+  '/carousel/event-1.jpg',
+  '/carousel/event-2.jpg',
+  '/carousel/tons-love-1.jpg',
+  '/carousel/rosa-bella.jpg',
+  '/carousel/you-and-i.jpg',
+  '/carousel/valentine.jpg',
+  '/carousel/love-you.jpg',
+  '/carousel/tons-love-2.jpg',
+]
 
 function loadRememberedEmail(): string {
   try {
@@ -19,8 +31,6 @@ function loadRememberedEmail(): string {
 export default function Login() {
   const navigate = useNavigate()
   const { login, loading } = useAuth()
-  const { theme } = useTheme()
-  const formLogoSrc = theme === 'dark' ? '/logo-seal-white.png' : '/logo-seal-navy.png'
 
   const rememberedEmail = loadRememberedEmail()
   const [email, setEmail] = useState(rememberedEmail)
@@ -51,40 +61,58 @@ export default function Login() {
   }
 
   return (
-    <div className="bg-hero min-h-screen flex items-center justify-center p-4">
+    <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
+      {/* Fondo carrusel cubre todo el viewport, detras de la tarjeta del login */}
+      <BackgroundCarousel images={CAROUSEL_IMAGES} />
+
       <div
-        className="w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2 border"
-        style={{ background: 'var(--bg-card-soft)', borderColor: 'var(--border-soft)', backdropFilter: 'blur(20px)' }}
+        className="relative w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2"
+        style={{ boxShadow: '0 40px 80px rgba(0, 0, 0, 0.45)' }}
       >
-        {/* LEFT — FORM */}
+        {/* LEFT — FORM (siempre blanco) */}
         <div
           className="p-10 md:p-14 flex flex-col justify-center"
-          style={{ background: 'var(--bg-card)' }}
+          style={{ background: '#FFFFFF', color: '#0F172A' }}
         >
           {/* Logo */}
           <div className="flex items-center gap-3 mb-10">
-            <img src={formLogoSrc} alt="Terra de Flora" className="h-12 w-auto" />
-            <span className="text-2xl font-semibold tracking-wide uppercase text-accent">Terra de Flora</span>
+            <img src="/logo-seal-navy.png" alt="Terra de Flora" className="h-12 w-auto" />
+            <span className="text-2xl font-semibold tracking-wide uppercase" style={{ color: '#1A2E5A' }}>
+              Terra de Flora
+            </span>
           </div>
 
-          <h1 className="text-4xl font-bold text-app mb-2 tracking-tight">Bienvenido</h1>
-          <p className="text-sm text-app-secondary mb-6">Ingresa tus credenciales para continuar.</p>
+          <h1 className="text-4xl font-bold mb-2 tracking-tight" style={{ color: '#0F172A' }}>Bienvenido</h1>
+          <p className="text-sm mb-6" style={{ color: '#475569' }}>Ingresa tus credenciales para continuar.</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-[11px] font-semibold tracking-widest uppercase text-app-secondary">Correo</label>
+              <label className="text-[11px] font-semibold tracking-widest uppercase" style={{ color: '#475569' }}>Correo</label>
               <input
                 type="email"
                 required
                 placeholder="usuario@terradeflora.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="oleo-input"
+                className="mt-1 w-full px-4 py-3 rounded-lg border transition focus:outline-none"
+                style={{
+                  background: '#F8FAFC',
+                  borderColor: '#E2E8F0',
+                  color: '#0F172A',
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = '#1A2E5A'
+                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(26, 46, 90, 0.15)'
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = '#E2E8F0'
+                  e.currentTarget.style.boxShadow = 'none'
+                }}
               />
             </div>
 
             <div>
-              <label className="text-[11px] font-semibold tracking-widest uppercase text-app-secondary">Contraseña</label>
+              <label className="text-[11px] font-semibold tracking-widest uppercase" style={{ color: '#475569' }}>Contraseña</label>
               <div className="relative mt-1">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -92,13 +120,26 @@ export default function Login() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="oleo-input pr-12"
-                  style={{ marginTop: 0 }}
+                  className="w-full px-4 py-3 pr-12 rounded-lg border transition focus:outline-none"
+                  style={{
+                    background: '#F8FAFC',
+                    borderColor: '#E2E8F0',
+                    color: '#0F172A',
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = '#1A2E5A'
+                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(26, 46, 90, 0.15)'
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = '#E2E8F0'
+                    e.currentTarget.style.boxShadow = 'none'
+                  }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-app-muted hover:text-app p-1"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1"
+                  style={{ color: '#64748B' }}
                   aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -109,42 +150,53 @@ export default function Login() {
             </div>
 
             <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-sm text-app-secondary">
+              <label className="flex items-center gap-2 text-sm" style={{ color: '#475569' }}>
                 <input
                   type="checkbox"
                   checked={remember}
                   onChange={(e) => setRemember(e.target.checked)}
                   className="w-4 h-4"
-                  style={{ accentColor: 'var(--accent)' }}
+                  style={{ accentColor: '#1A2E5A' }}
                 />
                 Recuérdame
               </label>
-              <a href="#" className="text-sm font-semibold text-accent hover:underline">¿Olvidaste tu contraseña?</a>
+              <a href="#" className="text-sm font-semibold hover:underline" style={{ color: '#1A2E5A' }}>¿Olvidaste tu contraseña?</a>
             </div>
 
             {error && (
               <div
                 className="rounded-lg border px-4 py-3 text-sm"
-                style={{ borderColor: 'var(--danger-border)', background: 'var(--danger-bg)', color: 'var(--danger)' }}
+                style={{ borderColor: 'rgba(220, 38, 38, 0.30)', background: 'rgba(220, 38, 38, 0.08)', color: '#DC2626' }}
               >
                 {error}
               </div>
             )}
 
-            <button type="submit" disabled={loading} className="btn-oleo mt-2">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full font-semibold py-3 rounded-lg shadow-lg transition mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              style={{
+                background: '#1A2E5A',
+                color: '#FFFFFF',
+                boxShadow: '0 10px 24px rgba(26, 46, 90, 0.30)',
+              }}
+              onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = '#11203F' }}
+              onMouseLeave={(e) => { if (!loading) e.currentTarget.style.background = '#1A2E5A' }}
+            >
               {loading ? 'INGRESANDO...' : 'INICIAR SESIÓN'}
             </button>
 
-            <p className="text-center text-sm text-app-muted pt-2">
+            <p className="text-center text-sm pt-2" style={{ color: '#64748B' }}>
               ¿Necesitas ayuda?{' '}
-              <a href="#" className="font-semibold text-accent hover:underline">Contacta a soporte</a>
+              <a href="#" className="font-semibold hover:underline" style={{ color: '#1A2E5A' }}>Contacta a soporte</a>
             </p>
           </form>
 
-          <div className="mt-8 pt-5 border-t flex items-center justify-between text-[11px]" style={{ borderColor: 'var(--border-soft)' }}>
-            <span className="text-app-muted">Powered by</span>
-            <span className="font-bold tracking-wider text-app-secondary">
-              LOGIQ <span className="font-normal text-app-muted">· Business Intelligence</span>
+          <div className="mt-8 pt-5 border-t flex items-center justify-between text-[11px]" style={{ borderColor: '#F1F5F9' }}>
+            <span style={{ color: '#64748B' }}>Powered by</span>
+            <span className="font-bold tracking-wider" style={{ color: '#475569' }}>
+              LOGIQ <span className="font-normal" style={{ color: '#64748B' }}>· Business Intelligence</span>
             </span>
           </div>
         </div>
@@ -163,10 +215,19 @@ export default function Login() {
             style={{ background: 'var(--brand-hero-accent-bg-soft)' }}
           />
 
-          <div className="relative flex items-center gap-2 text-xs font-bold tracking-[0.3em]">
+          <div className="relative flex items-center gap-2 text-[11px] font-bold tracking-[0.35em]">
             <span className="w-8 h-px" style={{ background: 'var(--brand-hero-divider)' }} />
             <span style={{ color: 'var(--brand-hero-text-secondary)' }}>TERRA DE FLORA</span>
-            <span style={{ color: 'var(--brand-hero-accent)' }}>WORKSPACE</span>
+            <span
+              className="px-2 py-0.5 rounded"
+              style={{
+                color: '#0A1428',
+                background: 'var(--brand-hero-accent)',
+                letterSpacing: '0.3em',
+              }}
+            >
+              WORKSPACE
+            </span>
           </div>
 
           <div className="relative flex flex-col items-center justify-center text-center">
@@ -179,7 +240,7 @@ export default function Login() {
               <div className="h-px w-10" style={{ background: 'var(--brand-hero-divider)' }} />
               <div
                 className="tracking-[0.3em] text-xs font-semibold"
-                style={{ color: 'var(--brand-hero-text-secondary)' }}
+                style={{ color: 'var(--brand-hero-accent)' }}
               >
                 WORKSPACE
               </div>
