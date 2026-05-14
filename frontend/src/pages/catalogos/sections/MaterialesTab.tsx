@@ -42,15 +42,21 @@ const EMPTY: FormValue = {
   is_active: true,
 }
 
+// Emoji por nombre conocido. Los tipos custom (que el L9 cree desde la
+// tab "Tipos y unidades") muestran el fallback ✨.
 const FAMILIA_EMOJI: Record<string, string> = {
   'Flor': '🌷',
+  'Material': '📦',
   'Base': '🏺',
   'Oasis': '🟢',
   'Mecánico': '🔧',
   'Vela': '🕯️',
   'Consumible': '📦',
+  'Servicio externo': '🤝',
+  'Terra de Flora': '🌸',
   'Otro': '✨',
 }
+const emojiFor = (familia: string): string => FAMILIA_EMOJI[familia] ?? '✨'
 
 export default function MaterialesTab() {
   const [rows, setRows] = useState<Material[]>([])
@@ -156,7 +162,7 @@ export default function MaterialesTab() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <input
           type="text"
-          placeholder="Buscar por nombre, código, familia, proveedor…"
+          placeholder="Buscar por nombre, código, tipo, proveedor…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="flex-1 max-w-md px-3 py-2 rounded-lg border text-sm"
@@ -176,7 +182,7 @@ export default function MaterialesTab() {
         {familias.map((f) => (
           <FilterPill
             key={f}
-            label={`${FAMILIA_EMOJI[f] ?? ''} ${f} (${familiaCounts.get(f) ?? 0})`}
+            label={`${emojiFor(f)} ${f} (${familiaCounts.get(f) ?? 0})`}
             active={familiaFilter === f}
             onClick={() => setFamiliaFilter(f)}
           />
@@ -197,7 +203,7 @@ export default function MaterialesTab() {
               >
                 <th className="px-4 py-3 font-semibold">Código</th>
                 <th className="px-4 py-3 font-semibold">Material</th>
-                <th className="px-4 py-3 font-semibold">Familia</th>
+                <th className="px-4 py-3 font-semibold">Tipo</th>
                 <th className="px-4 py-3 font-semibold">Proveedor</th>
                 <th className="px-4 py-3 font-semibold text-right">Paquete</th>
                 <th className="px-4 py-3 font-semibold text-right">Precio paq.</th>
@@ -215,7 +221,7 @@ export default function MaterialesTab() {
                       className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs"
                       style={{ background: 'var(--bg-toggle)', color: 'var(--text-secondary)' }}
                     >
-                      {FAMILIA_EMOJI[m.familia] ?? ''} {m.familia}
+                      {emojiFor(m.familia)} {m.familia}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-app-secondary">{m.proveedor_nombre ?? '—'}</td>
@@ -338,7 +344,7 @@ function MaterialFormDrawer({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <div className="text-[11px] font-semibold tracking-widest uppercase mb-1 text-app-secondary">
-              Familia <span style={{ color: 'var(--danger)' }}>*</span>
+              Tipo <span style={{ color: 'var(--danger)' }}>*</span>
             </div>
             <select
               value={value.familia}
@@ -347,7 +353,7 @@ function MaterialFormDrawer({
               style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
             >
               {catalog.familias.map((f) => (
-                <option key={f} value={f}>{FAMILIA_EMOJI[f] ?? ''} {f}</option>
+                <option key={f} value={f}>{emojiFor(f)} {f}</option>
               ))}
             </select>
           </div>

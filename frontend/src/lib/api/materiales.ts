@@ -39,6 +39,26 @@ export interface MaterialCatalog {
   unidades: string[]
 }
 
+export interface CatalogItem {
+  id: number
+  nombre: string
+  orden: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface CatalogItemCreatePayload {
+  nombre: string
+  orden?: number
+}
+
+export interface CatalogItemUpdatePayload {
+  nombre?: string
+  orden?: number
+  is_active?: boolean
+}
+
 export const materialesApi = {
   list: () => request<Material[]>('/materiales'),
   catalog: () => request<MaterialCatalog>('/materiales/_catalog'),
@@ -47,4 +67,20 @@ export const materialesApi = {
   update: (id: number, p: MaterialUpdatePayload) =>
     request<Material>(`/materiales/${id}`, { method: 'PATCH', body: JSON.stringify(p) }),
   delete: (id: number) => request<void>(`/materiales/${id}`, { method: 'DELETE' }),
+
+  // Familias (Tipos)
+  listFamilias: () => request<CatalogItem[]>('/materiales/familias'),
+  createFamilia: (p: CatalogItemCreatePayload) =>
+    request<CatalogItem>('/materiales/familias', { method: 'POST', body: JSON.stringify(p) }),
+  updateFamilia: (id: number, p: CatalogItemUpdatePayload) =>
+    request<CatalogItem>(`/materiales/familias/${id}`, { method: 'PATCH', body: JSON.stringify(p) }),
+  deleteFamilia: (id: number) => request<void>(`/materiales/familias/${id}`, { method: 'DELETE' }),
+
+  // Unidades
+  listUnidades: () => request<CatalogItem[]>('/materiales/unidades'),
+  createUnidad: (p: CatalogItemCreatePayload) =>
+    request<CatalogItem>('/materiales/unidades', { method: 'POST', body: JSON.stringify(p) }),
+  updateUnidad: (id: number, p: CatalogItemUpdatePayload) =>
+    request<CatalogItem>(`/materiales/unidades/${id}`, { method: 'PATCH', body: JSON.stringify(p) }),
+  deleteUnidad: (id: number) => request<void>(`/materiales/unidades/${id}`, { method: 'DELETE' }),
 }

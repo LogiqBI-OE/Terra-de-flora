@@ -6,9 +6,45 @@ from app.core.config import settings
 from app.core.security import hash_password
 from app.db import Base, SessionLocal, engine
 from app.models import User
+from app.models.material_catalog import MaterialFamilia, MaterialUnidad
 from app.models.user import compose_full_name, role_for_level
 from app.services.levels_service import ensure_levels_seeded
 from app.services.system_config_service import ensure_defaults
+
+
+DEFAULT_FAMILIAS = [
+    ("Flor", 10),
+    ("Material", 20),
+    ("Vela", 30),
+    ("Mecánico", 40),
+    ("Servicio externo", 50),
+    ("Terra de Flora", 60),
+    ("Otro", 99),
+]
+
+DEFAULT_UNIDADES = [
+    ("Paquete", 10),
+    ("Pieza", 20),
+    ("Tallo", 30),
+    ("Metro", 40),
+    ("Kg", 50),
+    ("Litro", 60),
+    ("Servicio", 70),
+]
+
+
+def ensure_material_catalogs(db: Session) -> None:
+    """Pobla familias y unidades si las tablas están vacías. NO sobreescribe
+    si el usuario ya editó la lista."""
+    if db.query(MaterialFamilia).count() == 0:
+        for nombre, orden in DEFAULT_FAMILIAS:
+            db.add(MaterialFamilia(nombre=nombre, orden=orden))
+        print(f"  + tipos de material: {len(DEFAULT_FAMILIAS)} cargados")
+    if db.query(MaterialUnidad).count() == 0:
+        for nombre, orden in DEFAULT_UNIDADES:
+            db.add(MaterialUnidad(nombre=nombre, orden=orden))
+        print(f"  + unidades de material: {len(DEFAULT_UNIDADES)} cargadas")
+    db.commit()
 
 
 def _run_lightweight_migrations() -> None:
@@ -133,6 +169,9 @@ def run() -> None:
 
         print("-> Niveles + matriz de permisos (defaults iniciales)...")
         ensure_levels_seeded(db)
+
+        print("-> Catálogos de materiales (tipos y unidades)...")
+        ensure_material_catalogs(db)
     finally:
         db.close()
     print("-> Seed listo.")

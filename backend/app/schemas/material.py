@@ -1,20 +1,15 @@
-"""Schemas para CRUD de materiales."""
+"""Schemas para CRUD de materiales + catalogos de tipos y unidades."""
 from datetime import datetime
 from decimal import Decimal
 
 from pydantic import BaseModel, Field
 
 
-# Sugerencias del frontend (no enum estricto en DB para flexibilidad).
-FAMILIAS = ["Flor", "Base", "Oasis", "Mecánico", "Vela", "Consumible", "Otro"]
-UNIDADES = ["pieza", "paquete", "metro", "kg", "litro"]
-
-
 class MaterialCreate(BaseModel):
     codigo: str | None = None
     nombre: str = Field(..., min_length=1, max_length=200)
     familia: str = Field("Flor", min_length=1, max_length=60)
-    unidad: str = Field("pieza", min_length=1, max_length=20)
+    unidad: str = Field("pieza", min_length=1, max_length=40)
     contenido_por_paquete: Decimal = Field(default=Decimal("1"), gt=Decimal("0"))
     precio_paquete: Decimal = Field(default=Decimal("0"), ge=Decimal("0"))
     proveedor_id: int | None = None
@@ -43,14 +38,38 @@ class MaterialOut(BaseModel):
     precio_paquete: Decimal
     precio_unitario: Decimal  # calculado
     proveedor_id: int | None
-    proveedor_nombre: str | None  # join lite
+    proveedor_nombre: str | None
     notas: str | None
     is_active: bool
     created_at: datetime
     updated_at: datetime
 
 
+# ── Catalogos editables ───────────────────────────────────────────────────
+
+class CatalogItemCreate(BaseModel):
+    nombre: str = Field(..., min_length=1, max_length=60)
+    orden: int = 0
+
+
+class CatalogItemUpdate(BaseModel):
+    nombre: str | None = None
+    orden: int | None = None
+    is_active: bool | None = None
+
+
+class CatalogItemOut(BaseModel):
+    id: int
+    nombre: str
+    orden: int
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class MaterialCatalog(BaseModel):
-    """Listas sugeridas para los dropdowns del UI."""
+    """Listas dinamicas para los dropdowns del MaterialesTab."""
     familias: list[str]
     unidades: list[str]

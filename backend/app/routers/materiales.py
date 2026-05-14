@@ -1,21 +1,24 @@
-"""Router: CRUD de materiales + catalogo de sugerencias para dropdowns."""
+"""Router: CRUD de materiales + catálogos editables de tipos/unidades."""
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.deps import require_level_5
 from app.db import get_db
 from app.models.material import Material
+from app.models.material_catalog import MaterialFamilia, MaterialUnidad
 from app.models.proveedor import Proveedor
 from app.models.user import User
 from app.schemas.material import (
-    FAMILIAS,
+    CatalogItemCreate,
+    CatalogItemOut,
+    CatalogItemUpdate,
     MaterialCatalog,
     MaterialCreate,
     MaterialOut,
     MaterialUpdate,
-    UNIDADES,
 )
 
 router = APIRouter(prefix="/materiales", tags=["materiales"])
@@ -50,9 +53,31 @@ def _to_out(m: Material, db: Session) -> MaterialOut:
 
 
 @router.get("/_catalog", response_model=MaterialCatalog)
-def catalog(_: User = Depends(require_level_5)) -> MaterialCatalog:
-    return MaterialCatalog(familias=FAMILIAS, unidades=UNIDADES)
+def catalog(
+    db: Session = Depends(get_db),
+    _: User = Depends(require_level_5),
+) -> MaterialCatalog:
+    """Devuelve los nombres de los tipos y unidades activos para los dropdowns.
+    Lee de las tablas catalog (editables por el usuario)."""
+    familias = (
+        db.query(MaterialFamilia)
+        .filter(MaterialFamilia.is_active == True)  # noqa: E712
+        .order_by(MaterialFamilia.orden, MaterialFamilia.nombre)
+        .all()
+    )
+    unidades = (
+        db.query(MaterialUnidad)
+        .filter(MaterialUnidad.is_active == True)  # noqa: E712
+        .order_by(MaterialUnidad.orden, MaterialUnidad.nombre)
+        .all()
+    )
+    return MaterialCatalog(
+        familias=[f.nombre for f in familias],
+        unidades=[u.nombre for u in unidades],
+    )
 
+
+# ── CRUD Materiales ───────────────────────────────────────────────────────
 
 @router.get("", response_model=list[MaterialOut])
 def listar(
@@ -110,4 +135,134 @@ def eliminar(
     if not m:
         raise HTTPException(404, "Material no encontrado")
     db.delete(m)
+    db.commit()
+
+
+# ── CRUD Tipos / Familias ─────────────────────────────────────────────────
+
+@router.get("/familias", response_model=list[CatalogItemOut])
+def listar_familias(
+    db: Session = Depends(get_db),
+    _: User = Depends(require_level_5),
+) -> list[CatalogItemOut]:
+    rows = db.query(MaterialFamilia).order_by(MaterialFamilia.orden, MaterialFamilia.nombre).all()
+    return [CatalogItemOut.model_validate(r) for r in rows]
+
+
+@router.post("/familias", response_model=CatalogItemOut, status_code=201)
+def crear_familia(
+    payload: CatalogItemCreate,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_level_5),
+) -> CatalogItemOut:
+    f = MaterialFamilia(nombre=payload.nombre.strip(), orden=payload.orden)
+    db.add(f)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "Ya existe un tipo con ese nombre.")
+    db.refresh(f)
+    return CatalogItemOut.model_validate(f)
+
+
+@router.patch("/familias/{familia_id}", response_model=CatalogItemOut)
+def actualizar_familia(
+    familia_id: int,
+    payload: CatalogItemUpdate,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_level_5),
+) -> CatalogItemOut:
+    f = db.get(MaterialFamilia, familia_id)
+    if not f:
+        raise HTTPException(404, "Tipo no encontrado")
+    data = payload.model_dump(exclude_unset=True)
+    if "nombre" in data:
+        data["nombre"] = data["nombre"].strip()
+    for k, v in data.items():
+        setattr(f, k, v)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "Ya existe un tipo con ese nombre.")
+    db.refresh(f)
+    return CatalogItemOut.model_validate(f)
+
+
+@router.delete("/familias/{familia_id}", status_code=204)
+def eliminar_familia(
+    familia_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_level_5),
+) -> None:
+    f = db.get(MaterialFamilia, familia_id)
+    if not f:
+        raise HTTPException(404, "Tipo no encontrado")
+    db.delete(f)
+    db.commit()
+
+
+# ── CRUD Unidades ─────────────────────────────────────────────────────────
+
+@router.get("/unidades", response_model=list[CatalogItemOut])
+def listar_unidades(
+    db: Session = Depends(get_db),
+    _: User = Depends(require_level_5),
+) -> list[CatalogItemOut]:
+    rows = db.query(MaterialUnidad).order_by(MaterialUnidad.orden, MaterialUnidad.nombre).all()
+    return [CatalogItemOut.model_validate(r) for r in rows]
+
+
+@router.post("/unidades", response_model=CatalogItemOut, status_code=201)
+def crear_unidad(
+    payload: CatalogItemCreate,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_level_5),
+) -> CatalogItemOut:
+    u = MaterialUnidad(nombre=payload.nombre.strip(), orden=payload.orden)
+    db.add(u)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "Ya existe una unidad con ese nombre.")
+    db.refresh(u)
+    return CatalogItemOut.model_validate(u)
+
+
+@router.patch("/unidades/{unidad_id}", response_model=CatalogItemOut)
+def actualizar_unidad(
+    unidad_id: int,
+    payload: CatalogItemUpdate,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_level_5),
+) -> CatalogItemOut:
+    u = db.get(MaterialUnidad, unidad_id)
+    if not u:
+        raise HTTPException(404, "Unidad no encontrada")
+    data = payload.model_dump(exclude_unset=True)
+    if "nombre" in data:
+        data["nombre"] = data["nombre"].strip()
+    for k, v in data.items():
+        setattr(u, k, v)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "Ya existe una unidad con ese nombre.")
+    db.refresh(u)
+    return CatalogItemOut.model_validate(u)
+
+
+@router.delete("/unidades/{unidad_id}", status_code=204)
+def eliminar_unidad(
+    unidad_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_level_5),
+) -> None:
+    u = db.get(MaterialUnidad, unidad_id)
+    if not u:
+        raise HTTPException(404, "Unidad no encontrada")
+    db.delete(u)
     db.commit()

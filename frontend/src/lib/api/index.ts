@@ -25,7 +25,10 @@ export { clientesApi } from './clientes'
 export type { Cliente, ClienteCreatePayload, ClienteUpdatePayload, TipoCliente } from './clientes'
 
 export { materialesApi } from './materiales'
-export type { Material, MaterialCreatePayload, MaterialUpdatePayload, MaterialCatalog } from './materiales'
+export type {
+  Material, MaterialCreatePayload, MaterialUpdatePayload, MaterialCatalog,
+  CatalogItem, CatalogItemCreatePayload, CatalogItemUpdatePayload,
+} from './materiales'
 
 export { recetasApi } from './recetas'
 export type {
