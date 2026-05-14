@@ -133,7 +133,7 @@ export default function UsuariosPage() {
           <div>
             <h2 className="text-2xl font-bold text-app">Usuarios</h2>
             <p className="text-sm text-app-secondary">
-              Solo nivel 9 ve esta página. Aquí defines niveles + permisos custom.
+              Visible desde nivel 5. Crear, editar o eliminar requiere nivel 9.
             </p>
           </div>
           <Button onClick={startNew}>
