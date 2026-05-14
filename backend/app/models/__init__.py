@@ -5,6 +5,8 @@ from app.models.level import Level
 from app.models.level_permission import LevelPermission
 from app.models.login_event import LoginEvent
 from app.models.proveedor import Proveedor
+from app.models.cliente import Cliente, TipoCliente
+from app.models.material import Material
 
 __all__ = [
     "User",
@@ -14,4 +16,7 @@ __all__ = [
     "LevelPermission",
     "LoginEvent",
     "Proveedor",
+    "Cliente",
+    "TipoCliente",
+    "Material",
 ]

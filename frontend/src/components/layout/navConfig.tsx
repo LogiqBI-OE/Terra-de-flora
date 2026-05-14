@@ -66,7 +66,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     title: 'Catálogos',
     items: [
-      { to: '/clientes', label: 'Clientes', icon: <IconUserCircle />, disabled: true, hint: 'Próximamente' },
+      { to: '/clientes', label: 'Clientes', icon: <IconUserCircle /> },
       { to: '/materiales', label: 'Materiales y proveedores', icon: <IconBox /> },
     ],
   },

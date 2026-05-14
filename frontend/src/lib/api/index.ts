@@ -20,4 +20,10 @@ export type {
 export { proveedoresApi } from './proveedores'
 export type { Proveedor, ProveedorCreatePayload, ProveedorUpdatePayload } from './proveedores'
 
+export { clientesApi } from './clientes'
+export type { Cliente, ClienteCreatePayload, ClienteUpdatePayload, TipoCliente } from './clientes'
+
+export { materialesApi } from './materiales'
+export type { Material, MaterialCreatePayload, MaterialUpdatePayload, MaterialCatalog } from './materiales'
+
 export { ApiError, API_URL } from './client'

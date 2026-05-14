@@ -1,10 +1,11 @@
-// Pagina catalogo: Proveedores | Materiales (Materiales pendiente).
+// Pagina catalogo: Proveedores | Materiales.
 
 import { useState } from 'react'
 import AppShell from '../../components/layout/AppShell'
 import Card from '../../components/ui/Card'
 import Tabs from '../../components/ui/Tabs'
 import ProveedoresTab from './sections/ProveedoresTab'
+import MaterialesTab from './sections/MaterialesTab'
 
 type TabKey = 'proveedores' | 'materiales'
 
@@ -32,24 +33,10 @@ export default function MaterialesPage() {
           </div>
           <div className="p-5">
             {tab === 'proveedores' && <ProveedoresTab />}
-            {tab === 'materiales' && <MaterialesPlaceholder />}
+            {tab === 'materiales' && <MaterialesTab />}
           </div>
         </Card>
       </div>
     </AppShell>
-  )
-}
-
-function MaterialesPlaceholder() {
-  return (
-    <div className="py-16 text-center">
-      <div className="text-4xl mb-3">🌷</div>
-      <h3 className="text-base font-semibold text-app mb-1">Catálogo de materiales</h3>
-      <p className="text-sm text-app-muted max-w-md mx-auto">
-        Aquí vivirá el catálogo de flores, bases, oasis, velas y demás insumos.
-        Cuando lo construyamos, podrás importar desde Excel o capturarlos manualmente,
-        y cada uno se vinculará a un proveedor de la agenda para generar pedidos automáticos.
-      </p>
-    </div>
   )
 }
