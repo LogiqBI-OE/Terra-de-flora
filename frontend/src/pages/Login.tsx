@@ -63,7 +63,11 @@ export default function Login() {
   return (
     <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
       {/* Fondo carrusel cubre todo el viewport, detras de la tarjeta del login */}
-      <BackgroundCarousel images={CAROUSEL_IMAGES} intervalMs={4500} />
+      <BackgroundCarousel
+        images={CAROUSEL_IMAGES}
+        intervalMs={4500}
+        overlay="rgba(10, 20, 40, 0.28)"
+      />
 
       <div
         className="relative w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2 border"
@@ -76,9 +80,9 @@ export default function Login() {
         <div
           className="px-9 md:px-12 pt-5 pb-3 md:pt-6 md:pb-3 flex flex-col"
           style={{
-            background: 'rgba(255, 255, 255, 0.52)',
-            backdropFilter: 'blur(34px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(34px) saturate(180%)',
+            background: 'rgba(255, 255, 255, 0.32)',
+            backdropFilter: 'blur(14px) saturate(135%)',
+            WebkitBackdropFilter: 'blur(14px) saturate(135%)',
             color: '#0F172A',
           }}
         >
@@ -214,9 +218,9 @@ export default function Login() {
         <div
           className="hidden md:flex relative px-9 pt-6 pb-3 flex-col justify-between overflow-hidden"
           style={{
-            background: 'linear-gradient(135deg, rgba(10, 20, 40, 0.48) 0%, rgba(26, 46, 90, 0.42) 60%, rgba(10, 20, 40, 0.48) 100%)',
-            backdropFilter: 'blur(34px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(34px) saturate(180%)',
+            background: 'linear-gradient(135deg, rgba(10, 20, 40, 0.42) 0%, rgba(26, 46, 90, 0.34) 60%, rgba(10, 20, 40, 0.42) 100%)',
+            backdropFilter: 'blur(14px) saturate(135%)',
+            WebkitBackdropFilter: 'blur(14px) saturate(135%)',
           }}
         >
           <div
