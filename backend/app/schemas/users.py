@@ -6,6 +6,7 @@ from pydantic import BaseModel, EmailStr
 
 class UserCreate(BaseModel):
     email: EmailStr
+    username: str | None = None
     first_name: str
     last_name_paterno: str = ""
     last_name_materno: str = ""
@@ -15,6 +16,7 @@ class UserCreate(BaseModel):
 
 
 class UserUpdate(BaseModel):
+    username: str | None = None
     first_name: str | None = None
     last_name_paterno: str | None = None
     last_name_materno: str | None = None
@@ -27,6 +29,7 @@ class UserUpdate(BaseModel):
 class UserOut(BaseModel):
     id: int
     email: EmailStr
+    username: str | None
     first_name: str | None
     last_name_paterno: str | None
     last_name_materno: str | None
@@ -53,3 +56,16 @@ class PasswordReset(BaseModel):
     """Respuesta del reset: indica si usó el standard del sistema."""
     user_id: int
     used_standard: bool
+
+
+class LoginEventOut(BaseModel):
+    """Evento de login para mostrar en UI."""
+    id: int
+    identifier_used: str
+    success: bool
+    failure_reason: str | None
+    ip: str | None
+    user_agent: str | None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}

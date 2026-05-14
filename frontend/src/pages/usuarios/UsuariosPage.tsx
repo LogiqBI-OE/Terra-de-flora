@@ -42,6 +42,7 @@ export default function UsuariosPage() {
       if (value.id === null) {
         await usersApi.create({
           email: value.email,
+          username: value.username || null,
           first_name: value.first_name,
           last_name_paterno: value.last_name_paterno || undefined,
           last_name_materno: value.last_name_materno || undefined,
@@ -52,6 +53,7 @@ export default function UsuariosPage() {
         flash('Usuario creado')
       } else {
         await usersApi.update(value.id, {
+          username: value.username || null,
           first_name: value.first_name,
           last_name_paterno: value.last_name_paterno,
           last_name_materno: value.last_name_materno,
@@ -97,6 +99,7 @@ export default function UsuariosPage() {
     setEditing({
       id: null,
       email: '',
+      username: '',
       first_name: '',
       last_name_paterno: '',
       last_name_materno: '',
@@ -112,6 +115,7 @@ export default function UsuariosPage() {
     setEditing({
       id: row.id,
       email: row.email,
+      username: row.username ?? '',
       first_name: row.first_name ?? '',
       last_name_paterno: row.last_name_paterno ?? '',
       last_name_materno: row.last_name_materno ?? '',

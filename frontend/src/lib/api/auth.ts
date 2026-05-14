@@ -3,7 +3,8 @@ import { request } from './client'
 export type Role = 'admin' | 'cliente'
 
 export interface LoginPayload {
-  email: string
+  // Acepta email o username. Backend resuelve.
+  identifier: string
   password: string
   // El toggle del frontend se quitó. Ya no enviamos role.
   role?: Role
@@ -14,6 +15,7 @@ export interface LoginResponse {
   token_type: string
   role: Role
   email: string
+  username: string | null
   full_name: string | null
   level: number
   level_label: string

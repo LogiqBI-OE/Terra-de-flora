@@ -9,7 +9,8 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     JWT_SECRET: str = "change-me-in-production-please-32chars+"
     JWT_ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    # Token JWT: 30 dias por default — sesion persistente sin re-login frecuente
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 30  # 43200
     CORS_ORIGINS: str = "http://localhost:5173"
 
     SEED_ADMIN_EMAIL: str = "orlando@logiqbi.com"

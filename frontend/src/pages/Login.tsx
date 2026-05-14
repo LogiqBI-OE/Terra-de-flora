@@ -6,7 +6,7 @@ import BackgroundCarousel from '../components/BackgroundCarousel'
 
 // "Recuérdame": guardamos solo el email (NUNCA el password) para precargar
 // el form la próxima vez. Si el usuario lo desmarca, borramos.
-const REMEMBER_KEY = 'terradeflora.remember_email'
+const REMEMBER_KEY = 'terradeflora.remember_identifier'
 
 // Imágenes del carrusel de fondo — viven en /public/carousel/
 const CAROUSEL_IMAGES = [
@@ -20,7 +20,7 @@ const CAROUSEL_IMAGES = [
   '/carousel/tons-love-2.jpg',
 ]
 
-function loadRememberedEmail(): string {
+function loadRememberedIdentifier(): string {
   try {
     return localStorage.getItem(REMEMBER_KEY) ?? ''
   } catch {
@@ -32,24 +32,24 @@ export default function Login() {
   const navigate = useNavigate()
   const { login, loading } = useAuth()
 
-  const rememberedEmail = loadRememberedEmail()
-  const [email, setEmail] = useState(rememberedEmail)
+  const rememberedIdentifier = loadRememberedIdentifier()
+  const [identifier, setIdentifier] = useState(rememberedIdentifier)
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  // Si había email guardado, asumimos que el usuario quiere seguir recordándolo.
-  const [remember, setRemember] = useState(rememberedEmail !== '')
+  // Si había identifier guardado, asumimos que el usuario quiere seguir recordándolo.
+  const [remember, setRemember] = useState(rememberedIdentifier !== '')
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
     try {
-      const cleanEmail = email.trim().toLowerCase()
-      await login({ email: cleanEmail, password })
+      const cleanIdentifier = identifier.trim().toLowerCase()
+      await login({ identifier: cleanIdentifier, password })
 
-      // Persistir/limpiar email según la elección del usuario.
+      // Persistir/limpiar identifier según la elección del usuario.
       try {
-        if (remember) localStorage.setItem(REMEMBER_KEY, cleanEmail)
+        if (remember) localStorage.setItem(REMEMBER_KEY, cleanIdentifier)
         else localStorage.removeItem(REMEMBER_KEY)
       } catch { /* ignore */ }
 
@@ -109,13 +109,14 @@ export default function Login() {
 
             <form onSubmit={handleSubmit} className="space-y-3.5">
               <div>
-                <label className="text-[11px] font-bold tracking-widest uppercase" style={{ color: '#1E293B' }}>Correo</label>
+                <label className="text-[11px] font-bold tracking-widest uppercase" style={{ color: '#1E293B' }}>Correo o usuario</label>
                 <input
-                  type="email"
+                  type="text"
                   required
-                  placeholder="usuario@terradeflora.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="username"
+                  placeholder="correo@terradeflora.com  o  usuario"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   className="mt-1 w-full px-4 py-2.5 rounded-lg border transition focus:outline-none"
                   style={{
                     background: 'rgba(248, 250, 252, 0.85)',

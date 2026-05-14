@@ -1,19 +1,21 @@
 // Drawer (slide-in derecha) para crear/editar usuario.
-// 3 tabs:
-//   · Datos generales — email, nombre(s), apellidos, nivel
+// 4 tabs:
+//   · Datos generales — email, usuario, nombre(s), apellidos, nivel
 //   · Permisos       — switches (defaults del nivel locked + custom)
 //   · Contraseña     — password (al crear) o cambiar pwd (al editar)
+//   · Actividad      — últimos 50 logins (solo en edición)
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Drawer from '../../../components/ui/Drawer'
 import Button from '../../../components/ui/Button'
 import TextField from '../../../components/ui/TextField'
 import Tabs from '../../../components/ui/Tabs'
-import type { PermissionsCatalog } from '../../../lib/api'
+import { usersApi, type LoginEvent, type PermissionsCatalog } from '../../../lib/api'
 
 export interface UserFormValue {
   id: number | null
   email: string
+  username: string
   first_name: string
   last_name_paterno: string
   last_name_materno: string
@@ -34,7 +36,7 @@ interface Props {
   error: string | null
 }
 
-type TabKey = 'datos' | 'permisos' | 'password'
+type TabKey = 'datos' | 'permisos' | 'password' | 'actividad'
 
 export default function UsuarioFormDrawer({
   open, value, onChange, onSave, onClose, catalog, busy, error,
@@ -46,6 +48,7 @@ export default function UsuarioFormDrawer({
     { key: 'datos', label: 'Datos generales' },
     { key: 'permisos', label: 'Permisos' },
     { key: 'password', label: isCreate ? 'Contraseña' : 'Cambiar contraseña' },
+    ...(isCreate ? [] : [{ key: 'actividad' as TabKey, label: 'Actividad' }]),
   ]
 
   return (
@@ -75,6 +78,9 @@ export default function UsuarioFormDrawer({
         {tab === 'password' && (
           <PasswordTab value={value} onChange={onChange} isCreate={isCreate} />
         )}
+        {tab === 'actividad' && value.id !== null && (
+          <ActividadTab userId={value.id} />
+        )}
       </div>
 
       {error && <div className="text-xs text-danger mt-4">{error}</div>}
@@ -101,6 +107,15 @@ function DatosTab({
         onChange={(e) => onChange({ ...value, email: e.target.value })}
         placeholder="usuario@terradeflora.com"
       />
+      <TextField
+        label="Usuario (opcional)"
+        value={value.username}
+        onChange={(e) => onChange({ ...value, username: e.target.value })}
+        placeholder="orlando"
+      />
+      <div className="text-[11px] text-app-muted -mt-2">
+        Si se asigna, el usuario podrá ingresar con correo <em>o</em> usuario. Debe ser único.
+      </div>
       <TextField
         label="Nombre(s)"
         value={value.first_name}
@@ -246,6 +261,62 @@ function PasswordTab({
           escribir nada (ver “Configuración general”).
         </div>
       )}
+    </div>
+  )
+}
+
+// ── Tab: Actividad (últimos logins) ──────────────────────────────────────────
+function ActividadTab({ userId }: { userId: number }) {
+  const [events, setEvents] = useState<LoginEvent[] | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    usersApi.loginEvents(userId, 50)
+      .then((data) => { if (alive) setEvents(data) })
+      .catch((e) => { if (alive) setError(e?.message ?? 'Error al cargar') })
+    return () => { alive = false }
+  }, [userId])
+
+  if (error) return <div className="text-xs text-danger">{error}</div>
+  if (events === null) return <div className="text-xs text-app-muted">Cargando…</div>
+  if (events.length === 0) return <div className="text-xs text-app-muted">Sin actividad registrada.</div>
+
+  return (
+    <div className="space-y-1">
+      <div className="text-xs text-app-muted mb-2">
+        Últimos {events.length} intentos (más recientes arriba).
+      </div>
+      {events.map((e) => (
+        <div
+          key={e.id}
+          className="flex items-start justify-between px-3 py-2 rounded-lg border"
+          style={{ borderColor: 'var(--border-soft)', background: 'var(--bg-elevated)' }}
+        >
+          <div className="flex flex-col text-xs gap-0.5">
+            <div className="flex items-center gap-2">
+              <span
+                className="inline-block w-1.5 h-1.5 rounded-full"
+                style={{ background: e.success ? '#16A34A' : 'var(--danger)' }}
+              />
+              <span className="text-app font-semibold">
+                {e.success ? 'Login exitoso' : 'Fallido'}
+              </span>
+              {!e.success && e.failure_reason && (
+                <span className="text-[10px] text-app-muted uppercase tracking-wider">
+                  · {e.failure_reason}
+                </span>
+              )}
+            </div>
+            <div className="text-app-secondary">
+              {new Date(e.created_at).toLocaleString()}
+            </div>
+            <div className="text-app-muted">
+              {e.identifier_used} {e.ip && <>· {e.ip}</>}
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

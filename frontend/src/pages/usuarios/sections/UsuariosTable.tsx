@@ -35,6 +35,7 @@ export default function UsuariosTable({ rows, onEdit, onDelete, onResetPassword 
             style={{ borderColor: 'var(--border-soft)' }}
           >
             <th className="px-4 py-3 font-semibold">Correo</th>
+            <th className="px-4 py-3 font-semibold">Usuario</th>
             <th className="px-4 py-3 font-semibold">Nombre</th>
             <th className="px-4 py-3 font-semibold">Nivel</th>
             <th className="px-4 py-3 font-semibold">Permisos</th>
@@ -47,6 +48,7 @@ export default function UsuariosTable({ rows, onEdit, onDelete, onResetPassword 
           {rows.map((u) => (
             <tr key={u.id} className="border-b" style={{ borderColor: 'var(--border-soft)' }}>
               <td className="px-4 py-3 text-app">{u.email}</td>
+              <td className="px-4 py-3 text-app-secondary font-mono text-xs">{u.username ?? '—'}</td>
               <td className="px-4 py-3 text-app">{u.full_name || '—'}</td>
               <td className="px-4 py-3">
                 <span

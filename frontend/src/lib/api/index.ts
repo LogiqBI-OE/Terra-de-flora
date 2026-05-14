@@ -14,6 +14,7 @@ export type {
   UserDetail,
   UserCreatePayload,
   UserUpdatePayload,
+  LoginEvent,
 } from './users'
 
 export { ApiError, API_URL } from './client'

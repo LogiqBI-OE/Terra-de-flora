@@ -3,6 +3,7 @@ import { authApi, type LoginPayload, type Role } from './api'
 
 interface AuthUser {
   email: string
+  username: string | null
   full_name: string | null
   role: Role
   level: number
@@ -55,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await authApi.login(payload)
       const u: AuthUser = {
         email: res.email,
+        username: res.username ?? null,
         full_name: res.full_name,
         role: res.role,
         level: res.level,

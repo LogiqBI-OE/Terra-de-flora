@@ -17,6 +17,7 @@ export interface PermissionsCatalog {
 export interface UserDetail {
   id: number
   email: string
+  username: string | null
   first_name: string | null
   last_name_paterno: string | null
   last_name_materno: string | null
@@ -32,6 +33,7 @@ export interface UserDetail {
 
 export interface UserCreatePayload {
   email: string
+  username?: string | null
   first_name: string
   last_name_paterno?: string
   last_name_materno?: string
@@ -41,6 +43,7 @@ export interface UserCreatePayload {
 }
 
 export interface UserUpdatePayload {
+  username?: string | null
   first_name?: string
   last_name_paterno?: string
   last_name_materno?: string
@@ -48,6 +51,16 @@ export interface UserUpdatePayload {
   level?: number
   permissions?: string[]
   is_active?: boolean
+}
+
+export interface LoginEvent {
+  id: number
+  identifier_used: string
+  success: boolean
+  failure_reason: string | null
+  ip: string | null
+  user_agent: string | null
+  created_at: string
 }
 
 const json = (body: unknown) => ({ method: 'POST', body: JSON.stringify(body) })
@@ -61,4 +74,6 @@ export const usersApi = {
   delete: (id: number) => request<void>(`/users/${id}`, { method: 'DELETE' }),
   resetPassword: (id: number) =>
     request<{ user_id: number; used_standard: boolean }>(`/users/${id}/reset-password`, { method: 'POST' }),
+  loginEvents: (id: number, limit = 50) =>
+    request<LoginEvent[]>(`/users/${id}/login-events?limit=${limit}`),
 }
