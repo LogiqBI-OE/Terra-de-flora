@@ -80,9 +80,9 @@ export default function Login() {
         <div
           className="px-9 md:px-12 pt-7 pb-4 md:pt-9 md:pb-4 flex flex-col"
           style={{
-            background: 'rgba(255, 255, 255, 0.32)',
-            backdropFilter: 'blur(14px) saturate(135%)',
-            WebkitBackdropFilter: 'blur(14px) saturate(135%)',
+            background: 'rgba(255, 255, 255, 0.48)',
+            backdropFilter: 'blur(16px) saturate(140%)',
+            WebkitBackdropFilter: 'blur(16px) saturate(140%)',
             color: '#0F172A',
           }}
         >
@@ -263,7 +263,9 @@ export default function Login() {
         <div
           className="hidden md:flex relative px-9 pt-8 pb-4 flex-col justify-between overflow-hidden"
           style={{
-            background: 'linear-gradient(135deg, #0A1428 0%, #1A2E5A 60%, #0A1428 100%)',
+            background: 'linear-gradient(135deg, rgba(10, 20, 40, 0.88) 0%, rgba(26, 46, 90, 0.84) 60%, rgba(10, 20, 40, 0.88) 100%)',
+            backdropFilter: 'blur(12px) saturate(130%)',
+            WebkitBackdropFilter: 'blur(12px) saturate(130%)',
           }}
         >
           <div
