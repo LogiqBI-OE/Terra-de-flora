@@ -109,7 +109,9 @@ export default function Login() {
 
             <form onSubmit={handleSubmit} className="space-y-3.5">
               <div>
-                <label className="text-[11px] font-bold tracking-widest uppercase" style={{ color: '#1E293B' }}>Correo o usuario</label>
+                <label className="text-[11px] font-bold tracking-widest uppercase" style={{ color: '#1E293B' }}>
+                  Correo o usuario <span style={{ color: '#DC2626' }}>*</span>
+                </label>
                 <input
                   type="text"
                   required
@@ -135,7 +137,9 @@ export default function Login() {
               </div>
 
               <div>
-                <label className="text-[11px] font-bold tracking-widest uppercase" style={{ color: '#1E293B' }}>Contraseña</label>
+                <label className="text-[11px] font-bold tracking-widest uppercase" style={{ color: '#1E293B' }}>
+                  Contraseña <span style={{ color: '#DC2626' }}>*</span>
+                </label>
                 <div className="relative mt-1">
                   <input
                     type={showPassword ? 'text' : 'password'}

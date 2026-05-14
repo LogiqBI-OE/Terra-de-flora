@@ -42,7 +42,7 @@ export default function UsuariosPage() {
       if (value.id === null) {
         await usersApi.create({
           email: value.email,
-          username: value.username || null,
+          username: value.username,
           first_name: value.first_name,
           last_name_paterno: value.last_name_paterno || undefined,
           last_name_materno: value.last_name_materno || undefined,
@@ -53,7 +53,7 @@ export default function UsuariosPage() {
         flash('Usuario creado')
       } else {
         await usersApi.update(value.id, {
-          username: value.username || null,
+          username: value.username || undefined,
           first_name: value.first_name,
           last_name_paterno: value.last_name_paterno,
           last_name_materno: value.last_name_materno,

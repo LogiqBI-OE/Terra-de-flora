@@ -33,7 +33,7 @@ export interface UserDetail {
 
 export interface UserCreatePayload {
   email: string
-  username?: string | null
+  username: string  // obligatorio, debe ser único
   first_name: string
   last_name_paterno?: string
   last_name_materno?: string
@@ -43,7 +43,7 @@ export interface UserCreatePayload {
 }
 
 export interface UserUpdatePayload {
-  username?: string | null
+  username?: string
   first_name?: string
   last_name_paterno?: string
   last_name_materno?: string

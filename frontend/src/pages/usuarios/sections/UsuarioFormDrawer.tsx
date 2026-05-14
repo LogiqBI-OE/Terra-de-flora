@@ -102,22 +102,23 @@ function DatosTab({
       <TextField
         label="Correo"
         type="email"
+        required
         value={value.email}
         disabled={!isCreate}
         onChange={(e) => onChange({ ...value, email: e.target.value })}
         placeholder="usuario@terradeflora.com"
       />
       <TextField
-        label="Usuario (opcional)"
+        label="Usuario"
+        required
         value={value.username}
         onChange={(e) => onChange({ ...value, username: e.target.value })}
         placeholder="orlando"
+        hint="Debe ser único. Solo letras, números, '.', '_' o '-'. El usuario podrá ingresar con correo o usuario."
       />
-      <div className="text-[11px] text-app-muted -mt-2">
-        Si se asigna, el usuario podrá ingresar con correo <em>o</em> usuario. Debe ser único.
-      </div>
       <TextField
         label="Nombre(s)"
+        required
         value={value.first_name}
         onChange={(e) => onChange({ ...value, first_name: e.target.value })}
         placeholder="Juan Carlos"
@@ -251,6 +252,7 @@ function PasswordTab({
       <TextField
         label={isCreate ? 'Contraseña' : 'Nueva contraseña'}
         type="password"
+        required={isCreate}
         value={value.password}
         onChange={(e) => onChange({ ...value, password: e.target.value })}
         placeholder="••••••••"
