@@ -6,6 +6,7 @@ import LogUsuariosPage from './pages/usuarios/LogUsuariosPage'
 import ConfiguracionPage from './pages/configuracion/ConfiguracionPage'
 import ProyectosPage from './pages/proyectos/ProyectosPage'
 import NuevoProyectoPage from './pages/proyectos/NuevoProyectoPage'
+import ProyectoDetailPage from './pages/proyectos/ProyectoDetailPage'
 import MaterialesPage from './pages/catalogos/MaterialesPage'
 import ClientesPage from './pages/catalogos/ClientesPage'
 import RecetasPage from './pages/catalogos/RecetasPage'
@@ -56,6 +57,7 @@ export default function App() {
       {/* PROYECTOS */}
       <Route path="/proyectos" element={<AnyAuthRoute><ProyectosPage /></AnyAuthRoute>} />
       <Route path="/proyectos/nuevo" element={<AnyAuthRoute><NuevoProyectoPage /></AnyAuthRoute>} />
+      <Route path="/proyectos/:id" element={<AnyAuthRoute><ProyectoDetailPage /></AnyAuthRoute>} />
 
       {/* CATÁLOGOS */}
       <Route path="/clientes" element={<AnyAuthRoute><ClientesPage /></AnyAuthRoute>} />
