@@ -154,9 +154,11 @@ export default function UsuariosPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="secondary" onClick={() => navigate('/usuarios/log')}>
-              <IconHistory size={14} /> Log de usuarios
-            </Button>
+            {currentLevel >= 6 && (
+              <Button variant="secondary" onClick={() => navigate('/usuarios/log')}>
+                <IconHistory size={14} /> Log de usuarios
+              </Button>
+            )}
             <Button onClick={startNew}>
               <IconPlus size={14} /> Nuevo usuario
             </Button>

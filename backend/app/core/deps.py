@@ -53,3 +53,10 @@ def require_level_5(user: User = Depends(get_current_user)) -> User:
     if user.level < 5:
         raise HTTPException(status_code=403, detail="Requiere nivel 5 o superior")
     return user
+
+
+def require_level_6(user: User = Depends(get_current_user)) -> User:
+    """Reservado para vistas más sensibles (ej. bitácora completa de logins)."""
+    if user.level < 6:
+        raise HTTPException(status_code=403, detail="Requiere nivel 6 o superior")
+    return user

@@ -64,7 +64,7 @@ export default function App() {
 
       {/* CONFIGURACIÓN */}
       <Route path="/usuarios" element={<MinLevelRoute min={5}><UsuariosPage /></MinLevelRoute>} />
-      <Route path="/usuarios/log" element={<MinLevelRoute min={5}><LogUsuariosPage /></MinLevelRoute>} />
+      <Route path="/usuarios/log" element={<MinLevelRoute min={6}><LogUsuariosPage /></MinLevelRoute>} />
       <Route path="/configuracion" element={<Level9Route><ConfiguracionPage /></Level9Route>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.deps import require_level_5
+from app.core.deps import require_level_5, require_level_6
 from app.core.permissions import (
     LEVELS,
     PERMISSIONS,
@@ -251,7 +251,7 @@ def all_login_events(
     limit: int = Query(200, ge=1, le=1000),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
-    _: User = Depends(require_level_5),
+    _: User = Depends(require_level_6),
 ) -> list[LoginEventOut]:
     """Timeline global de eventos de login. Filtros opcionales."""
     q = db.query(LoginEvent)
