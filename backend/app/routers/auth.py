@@ -87,7 +87,10 @@ def login(
 
     perms = sorted(effective_permissions(db, user.level, list(user.permissions or [])))
     token = create_access_token(
-        subject=user.email, role=user.role.value, extra={"level": user.level}
+        subject=user.email,
+        role=user.role.value,
+        extra={"level": user.level},
+        db=db,
     )
 
     _log_attempt(db, identifier=identifier, user_id=user.id, success=True,

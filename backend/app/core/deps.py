@@ -46,3 +46,10 @@ def require_level_9(user: User = Depends(get_current_user)) -> User:
     if user.level < 9:
         raise HTTPException(status_code=403, detail="Requiere nivel 9 (System Admin)")
     return user
+
+
+def require_level_5(user: User = Depends(get_current_user)) -> User:
+    """Mandos medios+ — pueden VER la pagina de usuarios y actividad."""
+    if user.level < 5:
+        raise HTTPException(status_code=403, detail="Requiere nivel 5 o superior")
+    return user

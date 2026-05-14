@@ -12,15 +12,15 @@ import GeneralesTab from './sections/GeneralesTab'
 import NivelesTab from './sections/NivelesTab'
 import PermisosTab from './sections/PermisosTab'
 
-type TabKey = 'generales' | 'niveles' | 'permisos'
+type TabKey = 'niveles' | 'permisos' | 'generales'
 
 export default function ConfiguracionPage() {
-  const [tab, setTab] = useState<TabKey>('generales')
+  const [tab, setTab] = useState<TabKey>('niveles')
 
   const tabs: { key: TabKey; label: string }[] = [
-    { key: 'generales', label: 'Generales' },
     { key: 'niveles', label: 'Niveles' },
     { key: 'permisos', label: 'Permisos' },
+    { key: 'generales', label: 'Generales' },
   ]
 
   return (

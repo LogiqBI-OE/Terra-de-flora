@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.deps import require_level_9
+from app.core.deps import require_level_5, require_level_9
 from app.core.permissions import (
     LEVELS,
     PERMISSIONS,
@@ -72,7 +72,7 @@ def _validate_payload(level: int, perms: list[str]) -> None:
 @router.get("/_catalog", response_model=PermissionsCatalog)
 def catalogo(
     db: Session = Depends(get_db),
-    _: User = Depends(require_level_9),
+    _: User = Depends(require_level_5),
 ) -> PermissionsCatalog:
     matrix = all_permissions_matrix(db)
     return PermissionsCatalog(
@@ -89,7 +89,7 @@ def catalogo(
 @router.get("", response_model=list[UserOut])
 def listar(
     db: Session = Depends(get_db),
-    _: User = Depends(require_level_9),
+    _: User = Depends(require_level_5),
 ) -> list[UserOut]:
     rows = db.query(User).order_by(User.level.desc(), User.email).all()
     return [_to_out(u, db) for u in rows]
@@ -193,7 +193,7 @@ def login_events(
     user_id: int,
     limit: int = Query(50, ge=1, le=200),
     db: Session = Depends(get_db),
-    _: User = Depends(require_level_9),
+    _: User = Depends(require_level_5),
 ) -> list[LoginEventOut]:
     """Ultimos N intentos de login de un usuario (exitosos y fallidos)."""
     if not db.get(User, user_id):

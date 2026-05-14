@@ -20,6 +20,13 @@ function Level9Route({ children }: { children: JSX.Element }) {
   return children
 }
 
+function MinLevelRoute({ min, children }: { min: number; children: JSX.Element }) {
+  const { user } = useAuth()
+  if (!user) return <Navigate to="/login" replace />
+  if (user.level < min) return <Navigate to="/" replace />
+  return children
+}
+
 function HomePage() {
   return (
     <AppShell title="Inicio">
@@ -41,7 +48,7 @@ export default function App() {
       <Route path="/" element={<AnyAuthRoute><HomePage /></AnyAuthRoute>} />
 
       {/* CONFIGURACIÓN */}
-      <Route path="/usuarios" element={<Level9Route><UsuariosPage /></Level9Route>} />
+      <Route path="/usuarios" element={<MinLevelRoute min={5}><UsuariosPage /></MinLevelRoute>} />
       <Route path="/configuracion" element={<Level9Route><ConfiguracionPage /></Level9Route>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />

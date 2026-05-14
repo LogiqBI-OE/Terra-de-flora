@@ -31,6 +31,16 @@ SYSTEM_CONFIG_KEYS: list[ConfigKey] = [
         description="Se aplica al usuario cuando un admin presiona “Resetear contraseña”.",
         secret=False,  # admin L9 debe poder verlo, sino no sabe cuál setear
     ),
+    ConfigKey(
+        key="token_lifetime_days",
+        default="30",
+        label="Duración de la sesión (días)",
+        description=(
+            "Cuántos días dura el JWT de login antes de expirar. "
+            "Después de ese tiempo, el usuario debe volver a iniciar sesión."
+        ),
+        secret=False,
+    ),
 ]
 
 
