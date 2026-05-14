@@ -55,12 +55,23 @@ export interface UserUpdatePayload {
 
 export interface LoginEvent {
   id: number
+  user_id: number | null
+  user_email: string | null
+  user_full_name: string | null
   identifier_used: string
   success: boolean
   failure_reason: string | null
   ip: string | null
   user_agent: string | null
   created_at: string
+}
+
+export interface LoginEventsFilters {
+  user_id?: number
+  success?: boolean
+  failure_reason?: string
+  limit?: number
+  offset?: number
 }
 
 const json = (body: unknown) => ({ method: 'POST', body: JSON.stringify(body) })
@@ -76,4 +87,13 @@ export const usersApi = {
     request<{ user_id: number; used_standard: boolean }>(`/users/${id}/reset-password`, { method: 'POST' }),
   loginEvents: (id: number, limit = 50) =>
     request<LoginEvent[]>(`/users/${id}/login-events?limit=${limit}`),
+  allLoginEvents: (filters: LoginEventsFilters = {}) => {
+    const params = new URLSearchParams()
+    if (filters.user_id !== undefined) params.set('user_id', String(filters.user_id))
+    if (filters.success !== undefined) params.set('success', String(filters.success))
+    if (filters.failure_reason) params.set('failure_reason', filters.failure_reason)
+    params.set('limit', String(filters.limit ?? 200))
+    params.set('offset', String(filters.offset ?? 0))
+    return request<LoginEvent[]>(`/users/_login-events?${params}`)
+  },
 }

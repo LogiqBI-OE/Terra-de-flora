@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { type JSX } from 'react'
 import Login from './pages/Login'
 import UsuariosPage from './pages/usuarios/UsuariosPage'
+import LogUsuariosPage from './pages/usuarios/LogUsuariosPage'
 import ConfiguracionPage from './pages/configuracion/ConfiguracionPage'
 import ProyectosPage from './pages/proyectos/ProyectosPage'
 import NuevoProyectoPage from './pages/proyectos/NuevoProyectoPage'
@@ -63,6 +64,7 @@ export default function App() {
 
       {/* CONFIGURACIÓN */}
       <Route path="/usuarios" element={<MinLevelRoute min={5}><UsuariosPage /></MinLevelRoute>} />
+      <Route path="/usuarios/log" element={<MinLevelRoute min={5}><LogUsuariosPage /></MinLevelRoute>} />
       <Route path="/configuracion" element={<Level9Route><ConfiguracionPage /></Level9Route>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -227,6 +227,49 @@ def reset_password(
     return PasswordReset(user_id=u.id, used_standard=True)
 
 
+def _event_to_out(e: LoginEvent, db: Session) -> LoginEventOut:
+    u = db.get(User, e.user_id) if e.user_id else None
+    return LoginEventOut(
+        id=e.id,
+        user_id=e.user_id,
+        user_email=u.email if u else None,
+        user_full_name=u.full_name if u else None,
+        identifier_used=e.identifier_used,
+        success=e.success,
+        failure_reason=e.failure_reason,
+        ip=e.ip,
+        user_agent=e.user_agent,
+        created_at=e.created_at,
+    )
+
+
+@router.get("/_login-events", response_model=list[LoginEventOut])
+def all_login_events(
+    user_id: int | None = Query(None, description="Filtrar por user_id"),
+    success: bool | None = Query(None, description="True solo exitosos, False solo fallidos"),
+    failure_reason: str | None = Query(None, description="Filtrar por razón exacta de fallo"),
+    limit: int = Query(200, ge=1, le=1000),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+    _: User = Depends(require_level_5),
+) -> list[LoginEventOut]:
+    """Timeline global de eventos de login. Filtros opcionales."""
+    q = db.query(LoginEvent)
+    if user_id is not None:
+        q = q.filter(LoginEvent.user_id == user_id)
+    if success is not None:
+        q = q.filter(LoginEvent.success == success)
+    if failure_reason:
+        q = q.filter(LoginEvent.failure_reason == failure_reason)
+    rows = (
+        q.order_by(LoginEvent.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+    return [_event_to_out(r, db) for r in rows]
+
+
 @router.get("/{user_id}/login-events", response_model=list[LoginEventOut])
 def login_events(
     user_id: int,
@@ -244,7 +287,7 @@ def login_events(
         .limit(limit)
         .all()
     )
-    return [LoginEventOut.model_validate(r) for r in rows]
+    return [_event_to_out(r, db) for r in rows]
 
 
 @router.delete("/{user_id}", status_code=204)

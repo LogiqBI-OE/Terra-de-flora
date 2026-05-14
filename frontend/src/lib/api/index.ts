@@ -15,6 +15,7 @@ export type {
   UserCreatePayload,
   UserUpdatePayload,
   LoginEvent,
+  LoginEventsFilters,
 } from './users'
 
 export { proveedoresApi } from './proveedores'

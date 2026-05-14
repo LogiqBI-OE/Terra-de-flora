@@ -84,6 +84,9 @@ class PasswordReset(BaseModel):
 class LoginEventOut(BaseModel):
     """Evento de login para mostrar en UI."""
     id: int
+    user_id: int | None = None
+    user_email: str | None = None
+    user_full_name: str | None = None
     identifier_used: str
     success: bool
     failure_reason: str | None

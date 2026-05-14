@@ -2,10 +2,11 @@
 // Drawer slide-in para form + tabla con acciones (edit · reset password · delete).
 
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import AppShell from '../../components/layout/AppShell'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
-import { IconPlus } from '../../components/icons/Icons'
+import { IconHistory, IconPlus } from '../../components/icons/Icons'
 import {
   ApiError,
   usersApi,
@@ -18,6 +19,7 @@ import UsuarioFormDrawer, { type UserFormValue } from './sections/UsuarioFormDra
 
 export default function UsuariosPage() {
   const { user: currentUser } = useAuth()
+  const navigate = useNavigate()
   const currentLevel = currentUser?.level ?? 0
   const [rows, setRows] = useState<UserDetail[]>([])
   const [catalog, setCatalog] = useState<PermissionsCatalog | null>(null)
@@ -151,9 +153,14 @@ export default function UsuariosPage() {
               Visible desde nivel 5. Cada usuario solo puede gestionar a otros de su nivel para abajo.
             </p>
           </div>
-          <Button onClick={startNew}>
-            <IconPlus size={14} /> Nuevo usuario
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" onClick={() => navigate('/usuarios/log')}>
+              <IconHistory size={14} /> Log de usuarios
+            </Button>
+            <Button onClick={startNew}>
+              <IconPlus size={14} /> Nuevo usuario
+            </Button>
+          </div>
         </div>
 
         <Card>
