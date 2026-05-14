@@ -1,32 +1,53 @@
-// Gestor de Proyectos — pagina principal /proyectos.
+// Gestor de Proyectos — /proyectos. Backend real.
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AppShell from '../../components/layout/AppShell'
 import Card from '../../components/ui/Card'
 import { IconChevronRight, IconPlus } from '../../components/icons/Icons'
 import { useAuth } from '../../lib/auth'
+import {
+  proyectosApi,
+  type EstadoProyecto,
+  type ProyectoCatalog,
+  type ProyectoRow,
+} from '../../lib/api'
 import KpiCards from './sections/KpiCards'
 import ProyectosFilters from './sections/ProyectosFilters'
 import ProyectosTable from './sections/ProyectosTable'
-import { MOCK_PROYECTOS, type EstadoProyecto } from './data/mockData'
 
 export default function ProyectosPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
 
+  const [rows, setRows] = useState<ProyectoRow[]>([])
+  const [catalog, setCatalog] = useState<ProyectoCatalog | null>(null)
+  const [loading, setLoading] = useState(true)
+
   const [vendedor, setVendedor] = useState<string | 'todos'>('todos')
   const [tipo, setTipo] = useState<string | 'todos'>('todos')
   const [estado, setEstado] = useState<EstadoProyecto | 'todos'>('todos')
 
+  async function reload() {
+    try {
+      const [r, c] = await Promise.all([proyectosApi.list(), proyectosApi.catalog()])
+      setRows(r); setCatalog(c)
+    } catch (e) { console.error(e) }
+    finally { setLoading(false) }
+  }
+  useEffect(() => { reload() }, [])
+
   const filtered = useMemo(() => {
-    return MOCK_PROYECTOS.filter((p) => {
-      if (vendedor !== 'todos' && p.vendedor_handle !== vendedor) return false
+    return rows.filter((p) => {
+      if (vendedor !== 'todos' && p.vendedor_username !== vendedor) return false
       if (tipo !== 'todos' && p.tipo !== tipo) return false
       if (estado !== 'todos' && p.estado !== estado) return false
       return true
     })
-  }, [vendedor, tipo, estado])
+  }, [rows, vendedor, tipo, estado])
+
+  // KPIs calculadas en vivo
+  const kpis = useMemo(() => computeKpis(rows), [rows])
 
   const firstName = (user?.full_name?.split(' ')[0] ?? user?.username ?? user?.email?.split('@')[0] ?? 'usuario')
 
@@ -67,7 +88,7 @@ export default function ProyectosPage() {
           </div>
 
           <div className="mt-5">
-            <KpiCards />
+            <KpiCards kpis={kpis} />
           </div>
         </div>
 
@@ -75,15 +96,63 @@ export default function ProyectosPage() {
         <Card>
           <div className="p-5 space-y-4">
             <ProyectosFilters
-              totalCount={MOCK_PROYECTOS.length}
+              totalCount={rows.length}
               vendedor={vendedor} setVendedor={setVendedor}
               tipo={tipo} setTipo={setTipo}
               estado={estado} setEstado={setEstado}
+              catalog={catalog}
             />
-            <ProyectosTable rows={filtered} />
+            {loading ? (
+              <div className="py-12 text-center text-sm text-app-muted">Cargando…</div>
+            ) : rows.length === 0 ? (
+              <div className="py-16 text-center">
+                <div className="text-4xl mb-2">📋</div>
+                <h3 className="text-base font-semibold text-app mb-1">Sin proyectos todavía</h3>
+                <p className="text-sm text-app-muted mb-4">
+                  Crea tu primer evento para empezar a cotizar.
+                </p>
+                <button
+                  onClick={() => navigate('/proyectos/nuevo')}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition"
+                  style={{ background: 'var(--accent)', color: 'var(--text-on-accent)' }}
+                >
+                  <IconPlus size={14} /> Nuevo proyecto
+                </button>
+              </div>
+            ) : (
+              <ProyectosTable rows={filtered} onClick={(p) => navigate(`/proyectos/${p.id}`)} />
+            )}
           </div>
         </Card>
       </div>
     </AppShell>
   )
+}
+
+// ── KPIs calc ─────────────────────────────────────────────────────────────
+function computeKpis(rows: ProyectoRow[]) {
+  const now = new Date()
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+
+  const activos = rows.filter(r => !['entregado', 'cancelado'].includes(r.estado))
+  const cotizando = rows.filter(r => r.estado === 'cotizando')
+  const aprobadosMes = rows.filter(r =>
+    r.estado === 'aprobado' && new Date(r.updated_at) >= monthStart
+  )
+  const entregadosMes = rows.filter(r =>
+    r.estado === 'entregado' && new Date(r.updated_at) >= monthStart
+  )
+  const pipelineValor = cotizando.reduce((acc, r) => acc + Number(r.valor_estimado), 0)
+  const aprobadoValor = aprobadosMes.reduce((acc, r) => acc + Number(r.valor_estimado), 0)
+  const entregadoValor = entregadosMes.reduce((acc, r) => acc + Number(r.valor_estimado), 0)
+
+  return {
+    activos: activos.length,
+    cotizando: cotizando.length,
+    pipelineValor,
+    aprobadosCount: aprobadosMes.length,
+    aprobadoValor,
+    entregadosCount: entregadosMes.length,
+    entregadoValor,
+  }
 }

@@ -32,4 +32,10 @@ export type {
   RecetaCreatePayload, RecetaUpdatePayload, RecetaCatalog,
 } from './recetas'
 
+export { proyectosApi } from './proyectos'
+export type {
+  ProyectoRow, ProyectoCreatePayload, ProyectoUpdatePayload, ProyectoCatalog,
+  TipoProyecto, EstadoProyecto, TipoMeta, EstadoMeta, VendedorOption,
+} from './proyectos'
+
 export { ApiError, API_URL } from './client'

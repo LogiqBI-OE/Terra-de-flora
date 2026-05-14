@@ -8,6 +8,7 @@ from app.models.proveedor import Proveedor
 from app.models.cliente import Cliente, TipoCliente
 from app.models.material import Material
 from app.models.receta import Receta, RecetaItem
+from app.models.proyecto import Proyecto, EstadoProyecto, TipoProyecto
 
 __all__ = [
     "User",
@@ -22,4 +23,7 @@ __all__ = [
     "Material",
     "Receta",
     "RecetaItem",
+    "Proyecto",
+    "EstadoProyecto",
+    "TipoProyecto",
 ]

@@ -1,70 +1,83 @@
-// KPI cards del gestor de proyectos. Layout responsive 1/2/5 columnas.
+// KPI cards del gestor — alimentadas con KPIs reales calculadas en el page.
 
 import type { ReactNode } from 'react'
 
-interface Kpi {
-  topBar: string  // gradient o color de la barrita arriba
-  iconBg: string  // bg del cuadro del icono (tinted)
+interface KpisInput {
+  activos: number
+  cotizando: number
+  pipelineValor: number
+  aprobadosCount: number
+  aprobadoValor: number
+  entregadosCount: number
+  entregadoValor: number
+}
+
+function fmtMoney(n: number): string {
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`
+  return `$${n.toLocaleString('es-MX', { minimumFractionDigits: 0 })}`
+}
+
+interface KpiSpec {
+  topBar: string
+  iconBg: string
   icon: ReactNode
   value: string
   title: string
   sub: string
 }
 
-const KPIS: Kpi[] = [
-  {
-    topBar: 'linear-gradient(90deg, #60A5FA 0%, #3B82F6 100%)',
-    iconBg: 'rgba(59, 130, 246, 0.12)',
-    icon: <BuildingMini color="#3B82F6" />,
-    value: '23',
-    title: 'Proyectos Activos',
-    sub: 'En curso ahora',
-  },
-  {
-    topBar: 'linear-gradient(90deg, #FB923C 0%, #F97316 100%)',
-    iconBg: 'rgba(249, 115, 22, 0.12)',
-    icon: <FireMini color="#F97316" />,
-    value: '8',
-    title: 'En Cotización',
-    sub: 'Calientes',
-  },
-  {
-    topBar: 'linear-gradient(90deg, #34D399 0%, #10B981 100%)',
-    iconBg: 'rgba(16, 185, 129, 0.12)',
-    icon: <DollarMini color="#10B981" />,
-    value: '$4.5M',
-    title: 'Pipeline',
-    sub: '8 propuestas',
-  },
-  {
-    topBar: 'linear-gradient(90deg, #A78BFA 0%, #8B5CF6 100%)',
-    iconBg: 'rgba(139, 92, 246, 0.12)',
-    icon: <CheckMini color="#8B5CF6" />,
-    value: '$1.8M',
-    title: '6 Aprobados',
-    sub: 'Este mes',
-  },
-  {
-    topBar: 'linear-gradient(90deg, #4ADE80 0%, #22C55E 100%)',
-    iconBg: 'rgba(34, 197, 94, 0.12)',
-    icon: <CheckCircleMini color="#22C55E" />,
-    value: '$950K',
-    title: '4 Entregados',
-    sub: 'Este mes',
-  },
-]
+export default function KpiCards({ kpis }: { kpis: KpisInput }) {
+  const items: KpiSpec[] = [
+    {
+      topBar: 'linear-gradient(90deg, #60A5FA 0%, #3B82F6 100%)',
+      iconBg: 'rgba(59, 130, 246, 0.12)',
+      icon: <BuildingMini color="#3B82F6" />,
+      value: String(kpis.activos),
+      title: 'Proyectos Activos',
+      sub: 'En curso ahora',
+    },
+    {
+      topBar: 'linear-gradient(90deg, #FB923C 0%, #F97316 100%)',
+      iconBg: 'rgba(249, 115, 22, 0.12)',
+      icon: <FireMini color="#F97316" />,
+      value: String(kpis.cotizando),
+      title: 'En Cotización',
+      sub: 'Calientes',
+    },
+    {
+      topBar: 'linear-gradient(90deg, #34D399 0%, #10B981 100%)',
+      iconBg: 'rgba(16, 185, 129, 0.12)',
+      icon: <DollarMini color="#10B981" />,
+      value: fmtMoney(kpis.pipelineValor),
+      title: 'Pipeline',
+      sub: `${kpis.cotizando} ${kpis.cotizando === 1 ? 'propuesta' : 'propuestas'}`,
+    },
+    {
+      topBar: 'linear-gradient(90deg, #A78BFA 0%, #8B5CF6 100%)',
+      iconBg: 'rgba(139, 92, 246, 0.12)',
+      icon: <CheckMini color="#8B5CF6" />,
+      value: fmtMoney(kpis.aprobadoValor),
+      title: `${kpis.aprobadosCount} ${kpis.aprobadosCount === 1 ? 'Aprobado' : 'Aprobados'}`,
+      sub: 'Este mes',
+    },
+    {
+      topBar: 'linear-gradient(90deg, #4ADE80 0%, #22C55E 100%)',
+      iconBg: 'rgba(34, 197, 94, 0.12)',
+      icon: <CheckCircleMini color="#22C55E" />,
+      value: fmtMoney(kpis.entregadoValor),
+      title: `${kpis.entregadosCount} ${kpis.entregadosCount === 1 ? 'Entregado' : 'Entregados'}`,
+      sub: 'Este mes',
+    },
+  ]
 
-export default function KpiCards() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-      {KPIS.map((k, i) => (
+      {items.map((k, i) => (
         <div
           key={i}
           className="relative rounded-xl border overflow-hidden"
-          style={{
-            background: 'var(--bg-card)',
-            borderColor: 'var(--border)',
-          }}
+          style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
         >
           <div className="h-1" style={{ background: k.topBar }} />
           <div className="p-4 flex items-start gap-3">
@@ -86,7 +99,6 @@ export default function KpiCards() {
   )
 }
 
-// Mini iconos inline (colorables)
 function BuildingMini({ color }: { color: string }) {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">

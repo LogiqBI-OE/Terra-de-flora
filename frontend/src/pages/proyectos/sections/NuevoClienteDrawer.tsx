@@ -1,12 +1,11 @@
 // Drawer "Nuevo Cliente" — abre desde el formulario de nuevo proyecto.
-// Inspirado en el patron de Dinox: persona fisica / moral toggle + form.
-// Por ahora solo retorna un cliente "creado" en memoria (no persiste).
+// Crea el cliente contra el backend real (POST /clientes) y devuelve el resultado.
 
 import { useState } from 'react'
 import Drawer from '../../../components/ui/Drawer'
 import Button from '../../../components/ui/Button'
 import TextField from '../../../components/ui/TextField'
-import type { Cliente } from '../data/mockData'
+import { ApiError, clientesApi, type Cliente, type TipoCliente } from '../../../lib/api'
 
 interface Props {
   open: boolean
@@ -14,53 +13,64 @@ interface Props {
   onCreated: (c: Cliente) => void
 }
 
-type TipoCliente = 'PF' | 'PM'
-
 export default function NuevoClienteDrawer({ open, onClose, onCreated }: Props) {
   const [tipo, setTipo] = useState<TipoCliente>('PF')
   const [nombre, setNombre] = useState('')
-  const [apellidos, setApellidos] = useState('')
-  const [razon, setRazon] = useState('')  // si PM
+  const [razon, setRazon] = useState('')
   const [rfc, setRfc] = useState('')
   const [telefono, setTelefono] = useState('')
   const [email, setEmail] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  function handleSave() {
-    const fullName = tipo === 'PF'
-      ? `${nombre} ${apellidos}`.trim()
-      : razon.trim()
-    if (!fullName || !telefono.trim()) return
-    const newCliente: Cliente = {
-      id: Date.now(),
-      nombre: fullName,
-      tipo,
-      telefono: telefono.trim(),
-      email: email.trim() || undefined,
-      rfc: rfc.trim() || undefined,
+  function reset() {
+    setNombre(''); setRazon(''); setRfc(''); setTelefono(''); setEmail('')
+    setError(null)
+  }
+
+  async function handleSave() {
+    if (!nombre.trim()) {
+      setError('El nombre es obligatorio.')
+      return
     }
-    onCreated(newCliente)
-    // Reset
-    setNombre(''); setApellidos(''); setRazon(''); setRfc(''); setTelefono(''); setEmail('')
+    setBusy(true); setError(null)
+    try {
+      const created = await clientesApi.create({
+        nombre: nombre.trim(),
+        tipo,
+        razon_social: tipo === 'PM' ? (razon.trim() || null) : null,
+        rfc: rfc.trim() || null,
+        telefono: telefono.trim() || null,
+        email: email.trim() || null,
+      })
+      onCreated(created)
+      reset()
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Error al crear cliente')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
     <Drawer
       open={open}
-      onClose={onClose}
+      onClose={() => { onClose(); reset() }}
       title="Nuevo Cliente"
       width={560}
       footer={
         <>
-          <Button variant="secondary" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleSave}>Guardar cliente</Button>
+          <Button variant="secondary" onClick={() => { onClose(); reset() }} disabled={busy}>Cancelar</Button>
+          <Button onClick={handleSave} disabled={busy || !nombre.trim()}>
+            {busy ? 'Guardando…' : 'Guardar cliente'}
+          </Button>
         </>
       }
     >
       <div className="space-y-5">
-        {/* Tipo cliente segmented */}
         <div>
           <div className="text-[11px] font-semibold tracking-widest uppercase mb-2 text-app-secondary">
-            Tipo de cliente
+            Tipo de cliente <span style={{ color: 'var(--danger)' }}>*</span>
           </div>
           <div className="inline-flex rounded-lg p-1" style={{ background: 'var(--bg-toggle)' }}>
             <SegButton active={tipo === 'PF'} onClick={() => setTipo('PF')}>
@@ -72,45 +82,30 @@ export default function NuevoClienteDrawer({ open, onClose, onCreated }: Props) 
           </div>
         </div>
 
-        {/* Datos básicos */}
-        {tipo === 'PF' ? (
-          <div className="grid grid-cols-2 gap-3">
-            <TextField
-              label="Nombre(s)"
-              required
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              placeholder="Carlos"
-            />
-            <TextField
-              label="Apellidos"
-              required
-              value={apellidos}
-              onChange={(e) => setApellidos(e.target.value)}
-              placeholder="Sada Martínez"
-            />
-          </div>
-        ) : (
+        <TextField
+          label={tipo === 'PF' ? 'Nombre completo' : 'Nombre comercial'}
+          required
+          value={nombre}
+          onChange={(e) => setNombre(e.target.value)}
+          placeholder={tipo === 'PF' ? 'Carlos Sada Martínez' : 'Hotel Quinta Real'}
+        />
+        {tipo === 'PM' && (
           <TextField
             label="Razón social"
-            required
             value={razon}
             onChange={(e) => setRazon(e.target.value)}
             placeholder="Hotel Quinta Real S.A. de C.V."
           />
         )}
-
         <TextField
           label="RFC"
           value={rfc}
           onChange={(e) => setRfc(e.target.value.toUpperCase())}
-          placeholder={tipo === 'PF' ? 'SADC850412XXX' : 'IME000101ABC'}
+          placeholder={tipo === 'PF' ? 'SADC850412XXX' : 'QRH000101ABC'}
         />
-
         <div className="grid grid-cols-2 gap-3">
           <TextField
             label="Teléfono"
-            required
             value={telefono}
             onChange={(e) => setTelefono(e.target.value)}
             placeholder="818-234-5678"
@@ -124,9 +119,11 @@ export default function NuevoClienteDrawer({ open, onClose, onCreated }: Props) 
           />
         </div>
 
+        {error && <div className="text-xs text-danger">{error}</div>}
+
         <div className="text-[11px] text-app-muted">
-          Estos datos son mínimos. Una vez creado el cliente podrás completar dirección,
-          notas internas y otra información desde el catálogo de clientes.
+          Más adelante puedes completar dirección, notas internas y otra
+          información desde el catálogo de Clientes.
         </div>
       </div>
     </Drawer>

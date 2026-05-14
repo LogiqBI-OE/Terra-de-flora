@@ -1,11 +1,6 @@
 // Barra de filtros: selects (Vendedores, Tipo) + segmented por estado.
 
-import {
-  ESTADOS_PROYECTO,
-  MOCK_VENDEDORES,
-  TIPOS_PROYECTO,
-  type EstadoProyecto,
-} from '../data/mockData'
+import type { EstadoProyecto, ProyectoCatalog } from '../../../lib/api'
 
 interface Props {
   totalCount: number
@@ -15,6 +10,7 @@ interface Props {
   setTipo: (v: string | 'todos') => void
   estado: EstadoProyecto | 'todos'
   setEstado: (v: EstadoProyecto | 'todos') => void
+  catalog: ProyectoCatalog | null
 }
 
 export default function ProyectosFilters({
@@ -22,7 +18,12 @@ export default function ProyectosFilters({
   vendedor, setVendedor,
   tipo, setTipo,
   estado, setEstado,
+  catalog,
 }: Props) {
+  const tipos = catalog?.tipos ?? []
+  const estados = catalog?.estados ?? []
+  const vendedores = catalog?.vendedores ?? []
+
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex items-baseline gap-2">
@@ -31,48 +32,33 @@ export default function ProyectosFilters({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        {/* Vendedor */}
         <select
           value={vendedor}
           onChange={(e) => setVendedor(e.target.value)}
           className="px-3 py-1.5 rounded-lg border text-sm cursor-pointer"
-          style={{
-            background: 'var(--bg-input)',
-            borderColor: 'var(--border)',
-            color: 'var(--text-primary)',
-          }}
+          style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
         >
           <option value="todos">Vendedores</option>
-          {MOCK_VENDEDORES.map((v) => (
-            <option key={v.handle} value={v.handle}>{v.nombre}</option>
+          {vendedores.map((v) => (
+            <option key={v.id} value={v.username ?? ''}>{v.nombre}</option>
           ))}
         </select>
 
-        {/* Tipo */}
         <select
           value={tipo}
           onChange={(e) => setTipo(e.target.value)}
           className="px-3 py-1.5 rounded-lg border text-sm cursor-pointer"
-          style={{
-            background: 'var(--bg-input)',
-            borderColor: 'var(--border)',
-            color: 'var(--text-primary)',
-          }}
+          style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
         >
           <option value="todos">Tipo</option>
-          {TIPOS_PROYECTO.map((t) => (
+          {tipos.map((t) => (
             <option key={t.id} value={t.id}>{t.emoji} {t.label}</option>
           ))}
         </select>
 
-        {/* Estado pills */}
         <div className="flex flex-wrap gap-1.5">
-          <EstadoPill
-            label="Todos"
-            active={estado === 'todos'}
-            onClick={() => setEstado('todos')}
-          />
-          {ESTADOS_PROYECTO.map((e) => (
+          <EstadoPill label="Todos" active={estado === 'todos'} onClick={() => setEstado('todos')} />
+          {estados.map((e) => (
             <EstadoPill
               key={e.id}
               label={`${e.emoji} ${e.label}`}

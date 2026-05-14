@@ -1,50 +1,71 @@
-// Nuevo Proyecto — formulario inspirado en Dinox.
-// Layout 2 columnas:
-//   - LEFT: seleccion de cliente (search typeahead + crear nuevo via drawer)
-//   - RIGHT: datos del proyecto (nombre, tipo, vendedor, fecha, valor, lugar, descripcion)
+// Nuevo Proyecto — backend real.
+// LEFT: cliente search (real, contra /clientes) + drawer Nuevo Cliente (real)
+// RIGHT: form de proyecto que persiste contra /proyectos
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AppShell from '../../components/layout/AppShell'
 import Button from '../../components/ui/Button'
 import TextField from '../../components/ui/TextField'
 import { IconBuilding, IconChevronRight, IconPlus, IconSearch, IconX } from '../../components/icons/Icons'
 import {
-  MOCK_CLIENTES,
-  MOCK_VENDEDORES,
-  TIPOS_PROYECTO,
+  ApiError,
+  clientesApi,
+  proyectosApi,
   type Cliente,
-} from './data/mockData'
+  type ProyectoCatalog,
+  type TipoProyecto,
+} from '../../lib/api'
 import NuevoClienteDrawer from './sections/NuevoClienteDrawer'
 
 export default function NuevoProyectoPage() {
   const navigate = useNavigate()
 
+  const [clientes, setClientes] = useState<Cliente[]>([])
+  const [catalog, setCatalog] = useState<ProyectoCatalog | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+
   // Cliente
-  const [clientes, setClientes] = useState<Cliente[]>(MOCK_CLIENTES)
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Cliente | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   // Proyecto
   const [nombre, setNombre] = useState('')
-  const [tipo, setTipo] = useState<string>('boda')
-  const [vendedor, setVendedor] = useState<string>(MOCK_VENDEDORES[0].handle)
+  const [tipo, setTipo] = useState<TipoProyecto>('boda')
+  const [vendedor, setVendedor] = useState<number | ''>('')
   const [fechaEvento, setFechaEvento] = useState<string>('')
   const [valor, setValor] = useState<string>('')
-  const [calle, setCalle] = useState('')
-  const [colonia, setColonia] = useState('')
-  const [municipio, setMunicipio] = useState('Monterrey')
-  const [cp, setCp] = useState('')
+  const [direccion, setDireccion] = useState('')
   const [descripcion, setDescripcion] = useState('')
+
+  async function reload() {
+    try {
+      const [cs, cat] = await Promise.all([
+        clientesApi.list(),
+        proyectosApi.catalog(),
+      ])
+      setClientes(cs); setCatalog(cat)
+      // preselecciona el primer vendedor si hay
+      if (cat.vendedores.length > 0) setVendedor(cat.vendedores[0].id)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
+  }
+  useEffect(() => { reload() }, [])
 
   const results = useMemo(() => {
     const q = search.trim().toLowerCase()
     if (!q) return clientes.slice(0, 4)
     return clientes.filter((c) =>
       c.nombre.toLowerCase().includes(q) ||
-      c.telefono.includes(q) ||
-      (c.rfc ?? '').toLowerCase().includes(q)
+      (c.telefono ?? '').includes(q) ||
+      (c.rfc ?? '').toLowerCase().includes(q) ||
+      (c.email ?? '').toLowerCase().includes(q)
     ).slice(0, 6)
   }, [search, clientes])
 
@@ -54,13 +75,29 @@ export default function NuevoProyectoPage() {
     setDrawerOpen(false)
   }
 
-  function handleSubmit() {
-    // Por ahora solo navega de regreso al gestor (no persiste a backend)
-    alert(`Proyecto "${nombre}" creado en demo (no persistido).\nCliente: ${selected?.nombre}\nTipo: ${tipo}\nFecha: ${fechaEvento}`)
-    navigate('/proyectos')
+  async function handleSubmit() {
+    if (!selected || !nombre.trim() || !fechaEvento || vendedor === '') return
+    setBusy(true); setError(null)
+    try {
+      const p = await proyectosApi.create({
+        nombre: nombre.trim(),
+        descripcion: descripcion || null,
+        cliente_id: selected.id,
+        vendedor_id: typeof vendedor === 'number' ? vendedor : null,
+        tipo,
+        fecha_evento: fechaEvento,
+        direccion_evento: direccion || null,
+        valor_estimado: Number(valor) || 0,
+      })
+      navigate(`/proyectos/${p.id}`)
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Error al crear el proyecto')
+    } finally {
+      setBusy(false)
+    }
   }
 
-  const canSubmit = selected !== null && nombre.trim() && fechaEvento && vendedor
+  const canSubmit = selected !== null && nombre.trim() && fechaEvento && vendedor !== ''
 
   return (
     <AppShell title="Nuevo proyecto">
@@ -87,7 +124,7 @@ export default function NuevoProyectoPage() {
             <Button variant="secondary" onClick={() => navigate('/proyectos')}>Cancelar</Button>
             <button
               onClick={handleSubmit}
-              disabled={!canSubmit}
+              disabled={!canSubmit || busy}
               className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
                 background: 'var(--accent)',
@@ -95,12 +132,23 @@ export default function NuevoProyectoPage() {
                 boxShadow: '0 6px 20px var(--accent-shadow)',
               }}
             >
-              Crear proyecto
+              {busy ? 'Creando…' : 'Crear proyecto'}
             </button>
           </div>
         </div>
 
-        {/* Grid 2 columnas */}
+        {error && (
+          <div
+            className="rounded-lg border px-4 py-3 text-sm"
+            style={{ borderColor: 'var(--danger-border)', background: 'var(--danger-bg)', color: 'var(--danger)' }}
+          >
+            {error}
+          </div>
+        )}
+
+        {loading ? (
+          <div className="py-12 text-center text-sm text-app-muted">Cargando catálogos…</div>
+        ) : (
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
           {/* LEFT — cliente */}
           <div
@@ -114,7 +162,6 @@ export default function NuevoProyectoPage() {
               </div>
             </div>
 
-            {/* Selected cliente card */}
             {selected ? (
               <div
                 className="rounded-lg border p-3 flex items-start justify-between"
@@ -130,7 +177,7 @@ export default function NuevoProyectoPage() {
                   <div>
                     <div className="font-semibold text-app">{selected.nombre}</div>
                     <div className="text-xs text-app-secondary">
-                      {selected.telefono}
+                      {selected.telefono ?? '—'}
                       {selected.email && <> · {selected.email}</>}
                     </div>
                     {selected.rfc && (
@@ -148,12 +195,8 @@ export default function NuevoProyectoPage() {
               </div>
             ) : (
               <>
-                {/* Search input */}
                 <div className="relative">
-                  <span
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted"
-                    aria-hidden
-                  >
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted" aria-hidden>
                     <IconSearch size={16} />
                   </span>
                   <input
@@ -162,27 +205,23 @@ export default function NuevoProyectoPage() {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 rounded-lg border text-sm"
-                    style={{
-                      background: 'var(--bg-input)',
-                      borderColor: 'var(--border)',
-                      color: 'var(--text-primary)',
-                    }}
+                    style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                   />
                 </div>
 
-                {/* Resultados */}
                 <div className="mt-3 space-y-1.5">
                   {results.length === 0 ? (
-                    <div className="text-xs text-app-muted py-4 text-center">Sin coincidencias.</div>
+                    <div className="text-xs text-app-muted py-4 text-center">
+                      {clientes.length === 0
+                        ? 'Aún no hay clientes. Crea el primero.'
+                        : 'Sin coincidencias.'}
+                    </div>
                   ) : results.map((c) => (
                     <button
                       key={c.id}
                       onClick={() => setSelected(c)}
                       className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg border transition text-left hover:border-[var(--accent)]"
-                      style={{
-                        borderColor: 'var(--border-soft)',
-                        background: 'var(--bg-elevated)',
-                      }}
+                      style={{ borderColor: 'var(--border-soft)', background: 'var(--bg-elevated)' }}
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <div
@@ -194,7 +233,7 @@ export default function NuevoProyectoPage() {
                         <div className="min-w-0">
                           <div className="text-sm font-medium text-app truncate">{c.nombre}</div>
                           <div className="text-[11px] text-app-muted truncate">
-                            {c.telefono} {c.rfc && <>· <span className="font-mono">{c.rfc}</span></>}
+                            {c.telefono ?? '—'} {c.rfc && <>· <span className="font-mono">{c.rfc}</span></>}
                           </div>
                         </div>
                       </div>
@@ -205,15 +244,10 @@ export default function NuevoProyectoPage() {
                   ))}
                 </div>
 
-                {/* Crear nuevo */}
                 <button
                   onClick={() => setDrawerOpen(true)}
                   className="mt-3 w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border-2 border-dashed text-xs font-semibold transition"
-                  style={{
-                    borderColor: 'var(--accent)',
-                    color: 'var(--accent-text)',
-                    background: 'transparent',
-                  }}
+                  style={{ borderColor: 'var(--accent)', color: 'var(--accent-text)', background: 'transparent' }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--accent-bg-soft)' }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
                 >
@@ -241,13 +275,12 @@ export default function NuevoProyectoPage() {
                 placeholder="Ej: Boda Sada — Ceremonia & Recepción"
               />
 
-              {/* Tipo de proyecto — cards */}
               <div>
                 <div className="text-[11px] font-semibold tracking-widest uppercase mb-2 text-app-secondary">
                   Tipo de proyecto <span style={{ color: 'var(--danger)' }}>*</span>
                 </div>
                 <div className="grid grid-cols-4 gap-1.5">
-                  {TIPOS_PROYECTO.map((t) => {
+                  {(catalog?.tipos ?? []).map((t) => {
                     const active = tipo === t.id
                     return (
                       <button
@@ -279,16 +312,15 @@ export default function NuevoProyectoPage() {
                 </div>
                 <select
                   value={vendedor}
-                  onChange={(e) => setVendedor(e.target.value)}
+                  onChange={(e) => setVendedor(e.target.value ? Number(e.target.value) : '')}
                   className="w-full px-3 py-2 rounded-lg border text-sm cursor-pointer"
-                  style={{
-                    background: 'var(--bg-input)',
-                    borderColor: 'var(--border)',
-                    color: 'var(--text-primary)',
-                  }}
+                  style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                 >
-                  {MOCK_VENDEDORES.map((v) => (
-                    <option key={v.handle} value={v.handle}>{v.nombre} (@{v.handle})</option>
+                  <option value="">— Selecciona vendedor —</option>
+                  {(catalog?.vendedores ?? []).map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.nombre}{v.username ? ` (@${v.username})` : ''}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -313,47 +345,14 @@ export default function NuevoProyectoPage() {
                 <div className="text-[11px] font-semibold tracking-widest uppercase mb-1 text-app-secondary">
                   Lugar del evento
                 </div>
-                <div className="space-y-2">
-                  <input
-                    type="text"
-                    placeholder="Calle y número"
-                    value={calle}
-                    onChange={(e) => setCalle(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border text-sm"
-                    style={{
-                      background: 'var(--bg-input)',
-                      borderColor: 'var(--border)',
-                      color: 'var(--text-primary)',
-                    }}
-                  />
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      type="text"
-                      placeholder="Colonia"
-                      value={colonia}
-                      onChange={(e) => setColonia(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg border text-sm"
-                      style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
-                    />
-                    <input
-                      type="text"
-                      placeholder="C.P."
-                      value={cp}
-                      onChange={(e) => setCp(e.target.value)}
-                      maxLength={5}
-                      className="w-full px-3 py-2 rounded-lg border text-sm"
-                      style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
-                    />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Municipio"
-                    value={municipio}
-                    onChange={(e) => setMunicipio(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border text-sm"
-                    style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
-                  />
-                </div>
+                <textarea
+                  rows={2}
+                  value={direccion}
+                  onChange={(e) => setDireccion(e.target.value)}
+                  placeholder="Calle, colonia, CP, municipio"
+                  className="w-full px-3 py-2 rounded-lg border text-sm resize-none"
+                  style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+                />
               </div>
 
               <div>
@@ -367,16 +366,13 @@ export default function NuevoProyectoPage() {
                   onChange={(e) => setDescripcion(e.target.value)}
                   placeholder="Alcance, requerimientos del cliente, particularidades..."
                   className="w-full px-3 py-2 rounded-lg border text-sm resize-none"
-                  style={{
-                    background: 'var(--bg-input)',
-                    borderColor: 'var(--border)',
-                    color: 'var(--text-primary)',
-                  }}
+                  style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                 />
               </div>
             </div>
           </div>
         </div>
+        )}
       </div>
 
       <NuevoClienteDrawer
