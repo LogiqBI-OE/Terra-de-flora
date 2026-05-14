@@ -232,7 +232,9 @@ export default function NuevoProyectoPage() {
                   type="date"
                   value={fechaEvento}
                   onChange={(e) => setFechaEvento(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border text-sm"
+                  onClick={(e) => (e.currentTarget as HTMLInputElement).showPicker?.()}
+                  onFocus={(e) => (e.currentTarget as HTMLInputElement).showPicker?.()}
+                  className="w-full px-3 py-2 rounded-lg border text-sm cursor-pointer"
                   style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                 />
               </Field>
@@ -391,7 +393,8 @@ export default function NuevoProyectoPage() {
                             type="time"
                             value={loc.hora_evento ?? ''}
                             onChange={(e) => updateLocation(idx, { hora_evento: e.target.value || null })}
-                            className="w-full px-1 py-1 rounded border text-xs"
+                            onClick={(e) => (e.currentTarget as HTMLInputElement).showPicker?.()}
+                            className="w-full px-1 py-1 rounded border text-xs cursor-pointer"
                             style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                           />
                         </td>
@@ -400,7 +403,8 @@ export default function NuevoProyectoPage() {
                             type="time"
                             value={loc.hora_montaje ?? ''}
                             onChange={(e) => updateLocation(idx, { hora_montaje: e.target.value || null })}
-                            className="w-full px-1 py-1 rounded border text-xs"
+                            onClick={(e) => (e.currentTarget as HTMLInputElement).showPicker?.()}
+                            className="w-full px-1 py-1 rounded border text-xs cursor-pointer"
                             style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                           />
                         </td>
@@ -409,7 +413,8 @@ export default function NuevoProyectoPage() {
                             type="time"
                             value={loc.hora_desmontaje ?? ''}
                             onChange={(e) => updateLocation(idx, { hora_desmontaje: e.target.value || null })}
-                            className="w-full px-1 py-1 rounded border text-xs"
+                            onClick={(e) => (e.currentTarget as HTMLInputElement).showPicker?.()}
+                            className="w-full px-1 py-1 rounded border text-xs cursor-pointer"
                             style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                           />
                         </td>
