@@ -78,6 +78,10 @@ def upsert_user(
 
 
 def run() -> None:
+    print("-> Config seed:")
+    print(f"     SEED_ADMIN_EMAIL = {settings.SEED_ADMIN_EMAIL}")
+    print(f"     SEED_PASSWORD length = {len(settings.SEED_PASSWORD)}")
+    print(f"     SEED_RESET_ADMIN_PASSWORD = {settings.SEED_RESET_ADMIN_PASSWORD}")
     print("-> Asegurando esquema...")
     Base.metadata.create_all(bind=engine)
     print("-> Migraciones ligeras...")
