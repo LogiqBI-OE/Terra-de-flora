@@ -86,6 +86,22 @@ export default function Login() {
             color: '#0F172A',
           }}
         >
+          {/* Top: TERRA DE FLORA · WORKSPACE chip */}
+          <div className="flex items-center gap-2 text-[11px] font-bold tracking-[0.35em] mb-6">
+            <span className="w-8 h-px" style={{ background: 'rgba(15, 23, 42, 0.20)' }} />
+            <span style={{ color: '#475569' }}>TERRA DE FLORA</span>
+            <span
+              className="px-2 py-0.5 rounded"
+              style={{
+                color: '#0A1428',
+                background: '#D4B996',
+                letterSpacing: '0.3em',
+              }}
+            >
+              WORKSPACE
+            </span>
+          </div>
+
           {/* Form section grows to fill */}
           <div className="flex-1 flex flex-col justify-center">
             <h1 className="text-2xl font-bold mb-0.5 tracking-tight" style={{ color: '#0F172A' }}>Bienvenido</h1>
@@ -200,9 +216,9 @@ export default function Login() {
             </form>
           </div>
 
-          {/* Footer LOGIQ — pegado al pie derecho */}
+          {/* Footer LOGIQ — pegado al pie izquierdo */}
           <div
-            className="mt-8 text-right text-[10px]"
+            className="mt-8 text-left text-[10px]"
           >
             <span style={{ color: '#64748B' }}>
               Powered by{' '}
@@ -229,22 +245,6 @@ export default function Login() {
             className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full blur-3xl pointer-events-none"
             style={{ background: 'var(--brand-hero-accent-bg-soft)' }}
           />
-
-          {/* Top: TERRA DE FLORA · WORKSPACE chip */}
-          <div className="relative flex items-center gap-2 text-[11px] font-bold tracking-[0.35em]">
-            <span className="w-8 h-px" style={{ background: 'var(--brand-hero-divider)' }} />
-            <span style={{ color: 'var(--brand-hero-text-secondary)' }}>TERRA DE FLORA</span>
-            <span
-              className="px-2 py-0.5 rounded"
-              style={{
-                color: '#0A1428',
-                background: 'var(--brand-hero-accent)',
-                letterSpacing: '0.3em',
-              }}
-            >
-              WORKSPACE
-            </span>
-          </div>
 
           {/* Centered logo + workspace divider */}
           <div className="relative flex flex-col items-center justify-center text-center flex-1">
