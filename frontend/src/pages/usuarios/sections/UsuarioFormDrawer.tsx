@@ -42,6 +42,7 @@ export default function UsuarioFormDrawer({
   open, value, onChange, onSave, onClose, catalog, busy, error,
 }: Props) {
   const [tab, setTab] = useState<TabKey>('datos')
+  const [localError, setLocalError] = useState<string | null>(null)
   const isCreate = value.id === null
 
   const tabs: { key: TabKey; label: string }[] = [
@@ -50,6 +51,21 @@ export default function UsuarioFormDrawer({
     { key: 'password', label: isCreate ? 'Contraseña' : 'Cambiar contraseña' },
     ...(isCreate ? [] : [{ key: 'actividad' as TabKey, label: 'Actividad' }]),
   ]
+
+  // Validacion previa al submit: identifica el primer campo faltante,
+  // salta a la tab correspondiente y muestra un mensaje claro.
+  function handleSaveAttempt() {
+    setLocalError(null)
+    if (!value.email.trim()) { setTab('datos'); setLocalError('Falta el correo.'); return }
+    if (!value.username.trim()) { setTab('datos'); setLocalError('Falta el nombre de usuario.'); return }
+    if (!value.first_name.trim()) { setTab('datos'); setLocalError('Falta el nombre.'); return }
+    if (isCreate && !value.password.trim()) {
+      setTab('password')
+      setLocalError('Falta la contraseña inicial — define una antes de crear.')
+      return
+    }
+    onSave(value)
+  }
 
   return (
     <Drawer
@@ -60,7 +76,7 @@ export default function UsuarioFormDrawer({
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>Cancelar</Button>
-          <Button onClick={() => onSave(value)} disabled={busy}>
+          <Button onClick={handleSaveAttempt} disabled={busy}>
             {busy ? 'Guardando...' : isCreate ? 'Crear' : 'Guardar'}
           </Button>
         </>
@@ -83,7 +99,18 @@ export default function UsuarioFormDrawer({
         )}
       </div>
 
-      {error && <div className="text-xs text-danger mt-4">{error}</div>}
+      {(localError || error) && (
+        <div
+          className="mt-4 rounded-lg border px-3 py-2 text-xs"
+          style={{
+            borderColor: 'var(--danger-border)',
+            background: 'var(--danger-bg)',
+            color: 'var(--danger)',
+          }}
+        >
+          {localError || error}
+        </div>
+      )}
     </Drawer>
   )
 }
