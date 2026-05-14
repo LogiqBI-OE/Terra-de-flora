@@ -74,7 +74,7 @@ export default function Login() {
       >
         {/* LEFT — FORM (blanco translucido con glassmorphism) */}
         <div
-          className="px-9 md:px-12 py-8 md:py-10 flex flex-col"
+          className="px-9 md:px-12 py-6 md:py-7 flex flex-col"
           style={{
             background: 'rgba(255, 255, 255, 0.72)',
             backdropFilter: 'blur(28px) saturate(170%)',
@@ -83,19 +83,19 @@ export default function Login() {
           }}
         >
           {/* Top: logo */}
-          <div className="flex items-center gap-3 mb-6">
-            <img src="/logo-seal-navy.png" alt="Terra de Flora" className="h-11 w-auto" />
-            <span className="text-xl font-semibold tracking-wide uppercase" style={{ color: '#1A2E5A' }}>
+          <div className="flex items-center gap-3 mb-4">
+            <img src="/logo-seal-navy.png" alt="Terra de Flora" className="h-10 w-auto" />
+            <span className="text-lg font-semibold tracking-wide uppercase" style={{ color: '#1A2E5A' }}>
               Terra de Flora
             </span>
           </div>
 
           {/* Form section grows to fill */}
           <div className="flex-1 flex flex-col justify-center">
-            <h1 className="text-3xl font-bold mb-1 tracking-tight" style={{ color: '#0F172A' }}>Bienvenido</h1>
-            <p className="text-sm mb-5" style={{ color: '#475569' }}>Ingresa tus credenciales para continuar.</p>
+            <h1 className="text-2xl font-bold mb-0.5 tracking-tight" style={{ color: '#0F172A' }}>Bienvenido</h1>
+            <p className="text-sm mb-4" style={{ color: '#475569' }}>Ingresa tus credenciales para continuar.</p>
 
-            <form onSubmit={handleSubmit} className="space-y-3.5">
+            <form onSubmit={handleSubmit} className="space-y-3">
               <div>
                 <label className="text-[11px] font-semibold tracking-widest uppercase" style={{ color: '#475569' }}>Correo</label>
                 <input
@@ -104,7 +104,7 @@ export default function Login() {
                   placeholder="usuario@terradeflora.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="mt-1 w-full px-4 py-2.5 rounded-lg border transition focus:outline-none"
+                  className="mt-1 w-full px-4 py-2 rounded-lg border transition focus:outline-none"
                   style={{
                     background: 'rgba(248, 250, 252, 0.85)',
                     borderColor: '#E2E8F0',
@@ -130,7 +130,7 @@ export default function Login() {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-2.5 pr-12 rounded-lg border transition focus:outline-none"
+                    className="w-full px-4 py-2 pr-12 rounded-lg border transition focus:outline-none"
                     style={{
                       background: 'rgba(248, 250, 252, 0.85)',
                       borderColor: '#E2E8F0',
@@ -185,7 +185,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full font-semibold py-2.5 rounded-lg shadow-lg transition mt-1 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full font-semibold py-2.5 rounded-lg shadow-lg transition disabled:opacity-60 disabled:cursor-not-allowed"
                 style={{
                   background: '#1A2E5A',
                   color: '#FFFFFF',
@@ -206,7 +206,7 @@ export default function Login() {
 
           {/* Footer LOGIQ — al pie derecho, separado del form */}
           <div
-            className="mt-10 pt-3 text-right text-[10px]"
+            className="mt-6 pt-2 text-right text-[10px]"
           >
             <span style={{ color: '#64748B' }}>
               Powered by{' '}
@@ -220,7 +220,7 @@ export default function Login() {
 
         {/* RIGHT — BRAND HERO (navy con glassmorphism) */}
         <div
-          className="hidden md:flex relative px-9 py-10 flex-col justify-between overflow-hidden"
+          className="hidden md:flex relative px-9 py-7 flex-col justify-between overflow-hidden"
           style={{
             background: 'linear-gradient(135deg, rgba(10, 20, 40, 0.68) 0%, rgba(26, 46, 90, 0.62) 60%, rgba(10, 20, 40, 0.68) 100%)',
             backdropFilter: 'blur(28px) saturate(170%)',
@@ -257,7 +257,7 @@ export default function Login() {
             <img
               src="/logo-full-white.png"
               alt="Terra de Flora"
-              className="w-64 md:w-72 h-auto mb-3"
+              className="w-56 md:w-64 h-auto mb-2"
             />
             <div className="mt-1 flex items-center gap-3">
               <div className="h-px w-10" style={{ background: 'var(--brand-hero-divider)' }} />
