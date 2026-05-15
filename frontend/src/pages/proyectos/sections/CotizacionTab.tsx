@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Button from '../../../components/ui/Button'
+import { fmtMoney } from '../../../lib/format'
 import {
   ApiError,
   cotizacionesApi,
@@ -811,7 +812,3 @@ function Stat({ label, value, big, hint }: { label: string; value: string; big?:
   )
 }
 
-function fmtMoney(n: number | string): string {
-  const v = Number(n) || 0
-  return `$${v.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
-}

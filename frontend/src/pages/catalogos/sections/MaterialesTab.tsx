@@ -15,6 +15,7 @@ import {
   type MaterialCreatePayload,
   type Proveedor,
 } from '../../../lib/api'
+import { fmtMoney } from '../../../lib/format'
 
 interface FormValue {
   id: number | null
@@ -228,8 +229,8 @@ export default function MaterialesTab() {
                   <td className="px-4 py-3 text-right text-app-secondary">
                     {Number(m.contenido_por_paquete)} {m.unidad}
                   </td>
-                  <td className="px-4 py-3 text-right text-app">${Number(m.precio_paquete).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
-                  <td className="px-4 py-3 text-right font-semibold text-app">${Number(m.precio_unitario).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+                  <td className="px-4 py-3 text-right text-app">{fmtMoney(m.precio_paquete)}</td>
+                  <td className="px-4 py-3 text-right font-semibold text-app">{fmtMoney(m.precio_unitario)}</td>
                   <td className="px-4 py-3 text-right whitespace-nowrap">
                     <button
                       onClick={() => startEdit(m)}
@@ -404,7 +405,7 @@ function MaterialFormDrawer({
           >
             <span className="text-xs text-app-secondary">Precio unitario calculado:</span>
             <span className="text-lg font-bold" style={{ color: 'var(--accent-text)' }}>
-              ${precioUnit.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+              {fmtMoney(precioUnit)}
             </span>
           </div>
         </div>

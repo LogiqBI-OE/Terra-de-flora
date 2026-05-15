@@ -1,6 +1,7 @@
 // Tabla del gestor de proyectos — alimentada por el backend real.
 
 import type { ProyectoRow } from '../../../lib/api'
+import { fmtMoney } from '../../../lib/format'
 
 interface Props {
   rows: ProyectoRow[]
@@ -33,9 +34,6 @@ const ESTADO_COLORS: Record<string, { bg: string; text: string }> = {
   cancelado: { bg: 'rgba(148, 163, 184, 0.18)', text: '#475569' },
 }
 
-function fmtMoney(n: number | string): string {
-  return `$${Number(n).toLocaleString('es-MX', { minimumFractionDigits: 0 })}`
-}
 function fmtFecha(iso: string | null): string {
   if (!iso) return '—'
   const d = new Date(iso.includes('T') ? iso : iso + 'T00:00:00')

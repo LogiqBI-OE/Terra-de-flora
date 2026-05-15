@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Button from '../../../components/ui/Button'
+import { fmtMoney } from '../../../lib/format'
 import {
   ApiError,
   pagosApi,
@@ -370,7 +371,3 @@ function PagoFila({ row, metodos, etiqueta, isDeposito, onUpdate, onDelete }: Fi
   )
 }
 
-function fmtMoney(n: number | string): string {
-  const v = Number(n) || 0
-  return `$${v.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
-}

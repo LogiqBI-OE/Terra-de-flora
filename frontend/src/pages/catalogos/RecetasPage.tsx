@@ -16,6 +16,7 @@ import {
   type RecetaItemIn,
   type RecetaSummary,
 } from '../../lib/api'
+import { fmtMoney } from '../../lib/format'
 
 interface EditorItem {
   material_id: number | null
@@ -240,7 +241,7 @@ export default function RecetasPage() {
                         {r.item_count} {r.item_count === 1 ? 'insumo' : 'insumos'}
                       </div>
                       <div className="text-sm font-bold" style={{ color: 'var(--accent-text)' }}>
-                        ${Number(r.costo_estimado).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                        {fmtMoney(r.costo_estimado)}
                       </div>
                     </div>
                     <div className="flex justify-end gap-1 mt-1">
@@ -512,7 +513,7 @@ function RecetaEditor({
               </div>
             </div>
             <div className="text-xl font-bold" style={{ color: 'var(--accent-text)' }}>
-              ${costo.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+              {fmtMoney(costo)}
             </div>
           </div>
         </div>

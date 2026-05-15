@@ -13,9 +13,10 @@ interface KpisInput {
 }
 
 function fmtMoney(n: number): string {
+  // KPIs grandes se abrevian para que el card no se desborde.
   if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
   if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`
-  return `$${n.toLocaleString('es-MX', { minimumFractionDigits: 0 })}`
+  return `$${n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
 }
 
 interface KpiSpec {
