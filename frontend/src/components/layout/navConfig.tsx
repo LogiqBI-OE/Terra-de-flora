@@ -16,7 +16,6 @@ import {
   IconManual,
   IconMegaphone,
   IconNetwork,
-  IconRecipe,
   IconSettings,
   IconUserCircle,
   IconUsers,
@@ -59,7 +58,9 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { to: '/clientes', label: 'Clientes', icon: <IconUserCircle /> },
       { to: '/materiales', label: 'Materiales y proveedores', icon: <IconBox /> },
-      { to: '/recetas', label: 'Recetas', icon: <IconRecipe /> },
+      // Recetas ahora se crean dentro de cada cotización (apagada en navegación).
+      // La ruta sigue activa en App.tsx por si alguien tiene el link guardado.
+      // { to: '/recetas', label: 'Recetas', icon: <IconRecipe /> },
     ],
   },
   {

@@ -1,5 +1,10 @@
-// Tab Cotizacion — versiones + secciones + items.
-// Vertical slice: Arreglos funcional, Logistica como placeholder.
+// Tab Cotizacion — layout: sidebar de versiones + vistas como pills.
+//
+// Vistas (pills):
+//   Resumen     — vista cliente (Web/PDF toggle)
+//   Consolidado — tabla plana de todos los items de todas las secciones
+//   <sección>   — una pill por cada sección, dentro editas items/recetas
+//   +           — pill final para agregar sección nueva
 
 import { useEffect, useMemo, useState } from 'react'
 import Button from '../../../components/ui/Button'
@@ -10,6 +15,7 @@ import {
   recetasApi,
   type Cotizacion,
   type CotizacionCatalog,
+  type CotizacionSeccion,
   type CotizacionSummary,
   type EstadoCotizacion,
   type ProyectoRow,
@@ -21,13 +27,19 @@ interface Props {
 }
 
 const ESTADO_META: Record<EstadoCotizacion, { label: string; bg: string; text: string }> = {
-  borrador:  { label: 'Borrador',  bg: 'rgba(148, 163, 184, 0.18)', text: '#475569' },
-  enviada:   { label: 'Enviada',   bg: 'rgba(14, 165, 233, 0.18)',  text: '#0284C7' },
-  aprobada:  { label: 'Aprobada',  bg: 'rgba(16, 185, 129, 0.18)',  text: '#059669' },
-  rechazada: { label: 'Rechazada', bg: 'rgba(244, 63, 94, 0.18)',   text: '#E11D48' },
+  borrador:  { label: 'Borrador',  bg: 'rgba(148, 163, 184, 0.20)', text: '#475569' },
+  enviada:   { label: 'Enviada',   bg: 'rgba(14, 165, 233, 0.20)',  text: '#0284C7' },
+  aprobada:  { label: 'Aprobada',  bg: 'rgba(16, 185, 129, 0.20)',  text: '#059669' },
+  rechazada: { label: 'Rechazada', bg: 'rgba(244, 63, 94, 0.20)',   text: '#E11D48' },
 }
 
-type SubTab = 'arreglos' | 'logistica'
+// La vista activa: 'resumen', 'consolidado', o el id (numérico) de una sección.
+type View = 'resumen' | 'consolidado' | { kind: 'seccion'; id: number } | 'agregar'
+
+function viewKey(v: View): string {
+  if (typeof v === 'string') return v
+  return `s-${v.id}`
+}
 
 export default function CotizacionTab({ proyecto }: Props) {
   const [versiones, setVersiones] = useState<CotizacionSummary[]>([])
@@ -36,7 +48,7 @@ export default function CotizacionTab({ proyecto }: Props) {
   const [catalog, setCatalog] = useState<CotizacionCatalog | null>(null)
   const [recetas, setRecetas] = useState<RecetaSummary[]>([])
   const [loading, setLoading] = useState(true)
-  const [subTab, setSubTab] = useState<SubTab>('arreglos')
+  const [view, setView] = useState<View>('resumen')
   const [showCosts, setShowCosts] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -90,6 +102,7 @@ export default function CotizacionTab({ proyecto }: Props) {
       const c = await cotizacionesApi.create(proyecto.id, {})
       await reloadVersions()
       setActiveId(c.id); setCot(c)
+      setView('resumen')
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error al crear versión')
     } finally { setBusy(false) }
@@ -102,6 +115,7 @@ export default function CotizacionTab({ proyecto }: Props) {
       const c = await cotizacionesApi.duplicate(proyecto.id, cot.id)
       await reloadVersions()
       setActiveId(c.id); setCot(c)
+      setView('resumen')
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error al duplicar')
     } finally { setBusy(false) }
@@ -132,10 +146,24 @@ export default function CotizacionTab({ proyecto }: Props) {
   async function handleAddSeccion(nombre: string) {
     if (!cot) return
     try {
-      await cotizacionesApi.createSeccion(cot.id, { nombre, orden: cot.secciones.length })
+      const s = await cotizacionesApi.createSeccion(cot.id, {
+        nombre,
+        orden: cot.secciones.length,
+      })
       await reloadActive(cot.id)
+      setView({ kind: 'seccion', id: s.id })
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error al agregar sección')
+    }
+  }
+
+  async function handleRenameSeccion(sid: number, nombre: string) {
+    if (!cot) return
+    try {
+      await cotizacionesApi.updateSeccion(sid, { nombre })
+      await reloadActive(cot.id)
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Error')
     }
   }
 
@@ -145,6 +173,7 @@ export default function CotizacionTab({ proyecto }: Props) {
     try {
       await cotizacionesApi.deleteSeccion(sid)
       await reloadActive(cot.id)
+      setView('resumen')
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error')
     }
@@ -189,14 +218,14 @@ export default function CotizacionTab({ proyecto }: Props) {
     return <div className="py-12 text-center text-sm text-app-muted">Cargando cotización…</div>
   }
 
-  // Sin versiones todavía: estado vacío con CTA
-  if (versiones.length === 0) {
+  // Estado vacío: sin versiones todavía
+  if (versiones.length === 0 || !cot) {
     return (
       <div className="py-16 text-center">
         <div className="text-5xl mb-3 opacity-70">🧾</div>
         <h3 className="text-lg font-bold text-app mb-1">Sin cotización todavía</h3>
         <p className="text-sm text-app-secondary max-w-md mx-auto mb-5">
-          Crea la primera versión para empezar a cotizar arreglos y logística para este evento.
+          Crea la primera versión para empezar a cotizar arreglos y logística.
         </p>
         <Button onClick={handleCreateFirst} disabled={busy}>
           {busy ? 'Creando…' : '+ Crear versión 1'}
@@ -206,317 +235,630 @@ export default function CotizacionTab({ proyecto }: Props) {
     )
   }
 
-  return (
-    <div className="space-y-4">
-      {/* Barra de versiones */}
-      <div
-        className="flex items-center gap-2 flex-wrap rounded-xl border p-3"
-        style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-soft)' }}
-      >
-        <span className="text-[10px] uppercase tracking-widest text-app-muted font-semibold mr-1">
-          Versiones
-        </span>
-        {versiones.map((v) => {
-          const meta = ESTADO_META[v.estado]
-          const active = v.id === activeId
-          return (
-            <button
-              key={v.id}
-              onClick={() => setActiveId(v.id)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition"
-              style={{
-                background: active ? 'var(--accent)' : 'var(--bg-card)',
-                color: active ? 'var(--text-on-accent)' : 'var(--text-primary)',
-                borderColor: active ? 'var(--accent)' : 'var(--border)',
-              }}
-            >
-              <span>v{v.version}</span>
-              <span
-                className="px-1.5 py-0.5 rounded-full text-[9px]"
-                style={{
-                  background: active ? 'rgba(255,255,255,0.2)' : meta.bg,
-                  color: active ? 'inherit' : meta.text,
-                }}
-              >
-                {meta.label}
-              </span>
-              {v.snapshot_at && <span title="Congelada">🔒</span>}
-            </button>
-          )
-        })}
-        <div className="flex-1" />
-        {cot && (
-          <Button variant="secondary" onClick={handleDuplicate} disabled={busy}>
-            + Nueva versión {isFrozen ? '(desde esta)' : '(duplicar)'}
-          </Button>
-        )}
-      </div>
+  const activeSeccion =
+    typeof view === 'object' && view.kind === 'seccion'
+      ? cot.secciones.find((s) => s.id === view.id) ?? null
+      : null
 
-      {!cot ? (
-        <div className="py-8 text-center text-sm text-app-muted">Cargando versión…</div>
-      ) : (
-        <>
-          {/* Sub-tabs Arreglos / Logistica */}
-          <div
-            className="flex items-center gap-1 border-b"
-            style={{ borderColor: 'var(--border-soft)' }}
+  return (
+    <div className="grid grid-cols-12 gap-4 min-h-[600px]">
+      {/* ── Sidebar versiones (col 1) ───────────────────────────────── */}
+      <aside className="col-span-12 md:col-span-2">
+        <div
+          className="rounded-2xl border p-3 space-y-2 sticky top-4"
+          style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border)' }}
+        >
+          <div className="text-[10px] uppercase tracking-widest text-app-muted font-semibold px-1 pb-1">
+            Versiones
+          </div>
+
+          <button
+            onClick={handleDuplicate}
+            disabled={busy}
+            className="w-full px-3 py-2 rounded-lg text-xs font-semibold transition disabled:opacity-50"
+            style={{ background: 'var(--accent)', color: 'var(--text-on-accent)' }}
           >
-            {(['arreglos', 'logistica'] as SubTab[]).map((t) => {
-              const active = subTab === t
-              const label = t === 'arreglos' ? '💐 Arreglos' : '🚚 Logística'
+            + Duplicar
+          </button>
+
+          <div className="space-y-1 pt-1">
+            {versiones.map((v) => {
+              const meta = ESTADO_META[v.estado]
+              const active = v.id === activeId
               return (
                 <button
-                  key={t}
-                  onClick={() => setSubTab(t)}
-                  className="px-4 py-2 text-sm font-semibold transition"
+                  key={v.id}
+                  onClick={() => setActiveId(v.id)}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold border transition text-left"
                   style={{
-                    color: active ? 'var(--accent-text)' : 'var(--text-secondary)',
-                    borderBottom: active ? '2px solid var(--accent)' : '2px solid transparent',
-                    marginBottom: '-1px',
+                    background: active ? 'var(--accent-bg-soft)' : 'var(--bg-card)',
+                    color: active ? 'var(--accent-text)' : 'var(--text-primary)',
+                    borderColor: active ? 'var(--accent)' : 'var(--border)',
                   }}
                 >
-                  {label}
+                  <span className="font-bold">v{v.version}</span>
+                  <span
+                    className="px-1.5 py-0.5 rounded-full text-[9px] font-semibold"
+                    style={{ background: meta.bg, color: meta.text }}
+                  >
+                    {meta.label}
+                  </span>
+                  {v.snapshot_at && <span className="ml-auto" title="Congelada">🔒</span>}
                 </button>
               )
             })}
-            <div className="flex-1" />
-            <label className="text-xs text-app-secondary inline-flex items-center gap-2 mr-3">
-              <input
-                type="checkbox"
-                checked={showCosts}
-                onChange={(e) => setShowCosts(e.target.checked)}
-              />
-              Mostrar costo interno
-            </label>
+          </div>
+        </div>
+      </aside>
+
+      {/* ── Contenido (col 2) ───────────────────────────────────────── */}
+      <main className="col-span-12 md:col-span-10 space-y-4">
+        {/* Pills de vistas */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Pill
+            label="📄 Resumen"
+            active={view === 'resumen'}
+            onClick={() => setView('resumen')}
+          />
+          <Pill
+            label="📦 Consolidado"
+            active={view === 'consolidado'}
+            onClick={() => setView('consolidado')}
+          />
+          {cot.secciones.map((s) => (
+            <Pill
+              key={s.id}
+              label={s.nombre}
+              count={s.items.length}
+              active={typeof view === 'object' && view.kind === 'seccion' && view.id === s.id}
+              onClick={() => setView({ kind: 'seccion', id: s.id })}
+            />
+          ))}
+          {!isFrozen && (
+            <Pill
+              label="+"
+              dashed
+              active={view === 'agregar'}
+              onClick={() => setView('agregar')}
+            />
+          )}
+        </div>
+
+        {/* Banda de control de la versión (estado, margen, costo toggle) */}
+        <div
+          className="flex items-center gap-3 flex-wrap rounded-xl border p-3"
+          style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-soft)' }}
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase tracking-widest text-app-muted font-semibold">Estado</span>
+            <select
+              value={cot.estado}
+              onChange={(e) => handleChangeEstado(e.target.value as EstadoCotizacion)}
+              disabled={busy}
+              className="px-2 py-1 rounded-md border text-xs"
+              style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+            >
+              <option value="borrador">Borrador</option>
+              <option value="enviada">Enviada</option>
+              <option value="aprobada">Aprobada</option>
+              <option value="rechazada">Rechazada</option>
+            </select>
           </div>
 
-          {/* Controles de la versión (estado + margen) */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase tracking-widest text-app-muted font-semibold">
+              Margen default
+            </span>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              step={1}
+              value={Math.round(Number(cot.margen_default) * 100)}
+              onChange={(e) => handleChangeMargen(Number(e.target.value) / 100)}
+              disabled={busy || isFrozen}
+              className="w-16 px-2 py-1 rounded-md border text-xs text-right"
+              style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+            />
+            <span className="text-xs text-app-secondary">%</span>
+          </div>
+
+          {isFrozen && (
+            <div
+              className="px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-widest"
+              style={{ background: 'var(--bg-toggle)', color: 'var(--text-secondary)' }}
+            >
+              🔒 Congelada · {new Date(cot.snapshot_at!).toLocaleDateString('es-MX')}
+            </div>
+          )}
+
+          <div className="flex-1" />
+
+          <label className="text-xs text-app-secondary inline-flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={showCosts}
+              onChange={(e) => setShowCosts(e.target.checked)}
+            />
+            Mostrar costo interno
+          </label>
+        </div>
+
+        {error && (
           <div
-            className="flex items-center gap-3 flex-wrap rounded-xl border p-3"
-            style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
+            className="rounded-lg border px-4 py-2 text-sm"
+            style={{ borderColor: 'var(--danger-border)', background: 'var(--danger-bg)', color: 'var(--danger)' }}
           >
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase tracking-widest text-app-muted font-semibold">
-                Estado
-              </span>
-              <select
-                value={cot.estado}
-                onChange={(e) => handleChangeEstado(e.target.value as EstadoCotizacion)}
-                disabled={busy}
-                className="px-2 py-1 rounded-md border text-xs"
-                style={{
-                  background: 'var(--bg-input)',
-                  borderColor: 'var(--border)',
-                  color: 'var(--text-primary)',
-                }}
-              >
-                <option value="borrador">Borrador</option>
-                <option value="enviada">Enviada</option>
-                <option value="aprobada">Aprobada</option>
-                <option value="rechazada">Rechazada</option>
-              </select>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase tracking-widest text-app-muted font-semibold">
-                Margen default
-              </span>
-              <input
-                type="number"
-                min={0}
-                max={100}
-                step={1}
-                value={Math.round(Number(cot.margen_default) * 100)}
-                onChange={(e) => handleChangeMargen(Number(e.target.value) / 100)}
-                disabled={busy || isFrozen}
-                className="w-16 px-2 py-1 rounded-md border text-xs text-right"
-                style={{
-                  background: 'var(--bg-input)',
-                  borderColor: 'var(--border)',
-                  color: 'var(--text-primary)',
-                }}
-              />
-              <span className="text-xs text-app-secondary">%</span>
-            </div>
-
-            {isFrozen && (
-              <div
-                className="px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-widest"
-                style={{ background: 'var(--bg-toggle)', color: 'var(--text-secondary)' }}
-              >
-                🔒 Congelada · {new Date(cot.snapshot_at!).toLocaleDateString('es-MX')}
-              </div>
-            )}
-
-            <div className="flex-1" />
-
-            {error && (
-              <span className="text-xs" style={{ color: 'var(--danger)' }}>
-                {error}
-              </span>
-            )}
+            {error}
           </div>
+        )}
 
-          {subTab === 'arreglos' && (
-            <ArreglosView
-              cot={cot}
+        {/* ── Contenido de la vista activa ─────────────────────────── */}
+        <div key={viewKey(view)}>
+          {view === 'resumen' && <ResumenView cot={cot} proyecto={proyecto} showCosts={showCosts} />}
+
+          {view === 'consolidado' && <ConsolidadoView cot={cot} showCosts={showCosts} />}
+
+          {view === 'agregar' && (
+            <AgregarSeccionView
               catalog={catalog}
-              recetas={recetas}
+              onAdd={(nombre) => handleAddSeccion(nombre)}
+            />
+          )}
+
+          {activeSeccion && (
+            <SeccionView
+              key={activeSeccion.id}
+              seccion={activeSeccion}
               showCosts={showCosts}
               isFrozen={isFrozen}
-              onAddSeccion={handleAddSeccion}
-              onDeleteSeccion={handleDeleteSeccion}
-              onAddItem={handleAddItem}
+              recetas={recetas}
+              onRename={(nombre) => handleRenameSeccion(activeSeccion.id, nombre)}
+              onDelete={() => handleDeleteSeccion(activeSeccion.id)}
+              onAddItem={(rid) => handleAddItem(activeSeccion.id, rid)}
               onUpdateItem={handleUpdateItem}
               onDeleteItem={handleDeleteItem}
             />
           )}
+        </div>
 
-          {subTab === 'logistica' && (
-            <div className="py-16 text-center">
-              <div className="text-5xl mb-3 opacity-70">🚚</div>
-              <h3 className="text-lg font-bold text-app mb-1">Logística</h3>
-              <p className="text-sm text-app-secondary max-w-md mx-auto">
-                Aquí cotizamos montaje/desmontaje por jornada: sueldos, comida y transporte.
-                Próximo paso del rollout.
-              </p>
-              <div
-                className="mt-5 inline-block px-3 py-1.5 rounded-full text-[11px] font-semibold uppercase tracking-widest"
-                style={{ background: 'var(--bg-toggle)', color: 'var(--text-secondary)' }}
-              >
-                Próximamente
-              </div>
-            </div>
-          )}
+        {/* Footer sticky de totales */}
+        <TotalsFooter cot={cot} showCosts={showCosts} />
+      </main>
+    </div>
+  )
+}
 
-          {/* Footer sticky con totales */}
-          <TotalsFooter cot={cot} showCosts={showCosts} />
-        </>
+// ─── Pill ────────────────────────────────────────────────────────────────
+function Pill({
+  label, active, onClick, count, dashed,
+}: { label: string; active: boolean; onClick: () => void; count?: number; dashed?: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      className="px-3 py-1.5 rounded-full text-xs font-semibold border transition whitespace-nowrap"
+      style={{
+        background: active ? 'var(--accent)' : 'var(--bg-card)',
+        color: active ? 'var(--text-on-accent)' : 'var(--text-primary)',
+        borderColor: active ? 'var(--accent)' : 'var(--border)',
+        borderStyle: dashed ? 'dashed' : 'solid',
+        opacity: dashed && !active ? 0.7 : 1,
+      }}
+    >
+      {label}
+      {count !== undefined && (
+        <span className="ml-1.5 text-[10px] opacity-70">({count})</span>
+      )}
+    </button>
+  )
+}
+
+// ─── Vista Resumen ───────────────────────────────────────────────────────
+function ResumenView({
+  cot, proyecto, showCosts,
+}: { cot: Cotizacion; proyecto: ProyectoRow; showCosts: boolean }) {
+  const [mode, setMode] = useState<'web' | 'pdf'>('web')
+
+  return (
+    <div className="space-y-3">
+      {/* Toggle Vista Web / Vista PDF */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-bold text-app">Resumen de cotización</h3>
+        <div className="flex items-center gap-1 p-1 rounded-lg border" style={{ borderColor: 'var(--border)', background: 'var(--bg-card)' }}>
+          {(['web', 'pdf'] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className="px-3 py-1.5 rounded-md text-xs font-semibold transition"
+              style={{
+                background: mode === m ? 'var(--accent)' : 'transparent',
+                color: mode === m ? 'var(--text-on-accent)' : 'var(--text-secondary)',
+              }}
+            >
+              {m === 'web' ? '🖥️ Vista Web' : '📄 Vista PDF'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {mode === 'web' ? (
+        <ResumenWeb cot={cot} proyecto={proyecto} showCosts={showCosts} />
+      ) : (
+        <ResumenPdf cot={cot} proyecto={proyecto} />
       )}
     </div>
   )
 }
 
-// ─── Vista Arreglos ──────────────────────────────────────────────────────
-interface ArreglosProps {
-  cot: Cotizacion
-  catalog: CotizacionCatalog | null
-  recetas: RecetaSummary[]
-  showCosts: boolean
-  isFrozen: boolean
-  onAddSeccion: (nombre: string) => void
-  onDeleteSeccion: (sid: number) => void
-  onAddItem: (sid: number, recetaId: number) => void
-  onUpdateItem: (iid: number, patch: { cantidad?: number; precio_venta_unit?: number | null }) => void
-  onDeleteItem: (iid: number) => void
+function ResumenWeb({ cot, proyecto, showCosts }: { cot: Cotizacion; proyecto: ProyectoRow; showCosts: boolean }) {
+  const margenReal = Number(cot.margen_real) * 100
+  return (
+    <div
+      className="rounded-2xl border p-6 space-y-5"
+      style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
+    >
+      <div className="flex items-start justify-between gap-4 pb-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
+        <div>
+          <div className="text-[10px] uppercase tracking-widest text-app-muted font-semibold">
+            Cotización v{cot.version} · {cot.estado}
+          </div>
+          <h2 className="text-2xl font-bold text-app mt-1">{proyecto.nombre}</h2>
+          <div className="text-sm text-app-secondary">
+            Cliente: <strong>{proyecto.cliente_nombre}</strong>
+            {proyecto.fecha_evento && <> · Evento: {new Date(proyecto.fecha_evento + 'T00:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' })}</>}
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="text-[10px] uppercase tracking-widest text-app-muted font-semibold">Total</div>
+          <div className="text-3xl font-bold" style={{ color: 'var(--accent-text)' }}>
+            {fmtMoney(cot.total_venta)}
+          </div>
+        </div>
+      </div>
+
+      {cot.secciones.length === 0 ? (
+        <div className="py-8 text-center text-sm text-app-muted">
+          La cotización está vacía. Agrega secciones desde la pill "+".
+        </div>
+      ) : (
+        cot.secciones.map((s) => (
+          <div key={s.id} className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h4 className="font-semibold text-app">{s.nombre}</h4>
+              <span className="text-sm font-bold text-app">{fmtMoney(s.subtotal_venta)}</span>
+            </div>
+            <div className="space-y-1 pl-3">
+              {s.items.length === 0 ? (
+                <div className="text-xs text-app-muted italic">Sin items.</div>
+              ) : (
+                s.items.map((it) => (
+                  <div key={it.id} className="flex items-center justify-between text-sm">
+                    <span className="text-app-secondary">
+                      {Number(it.cantidad)} × {it.nombre}
+                    </span>
+                    <span className="text-app font-medium">{fmtMoney(it.subtotal_venta)}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        ))
+      )}
+
+      {/* Bloque de utilidad (solo si showCosts) */}
+      {showCosts && (
+        <div className="pt-4 border-t grid grid-cols-3 gap-4" style={{ borderColor: 'var(--border-soft)' }}>
+          <Stat label="Costo total" value={fmtMoney(cot.total_costo)} />
+          <Stat
+            label="Utilidad"
+            value={fmtMoney(Number(cot.total_venta) - Number(cot.total_costo))}
+            hint={`Margen ${margenReal.toFixed(1)}%`}
+          />
+          <Stat label="Precio cliente" value={fmtMoney(cot.total_venta)} big />
+        </div>
+      )}
+    </div>
+  )
 }
 
-function ArreglosView(p: ArreglosProps) {
-  const { cot, catalog, recetas, showCosts, isFrozen } = p
+function ResumenPdf({ cot, proyecto }: { cot: Cotizacion; proyecto: ProyectoRow }) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-end">
+        <Button variant="secondary" onClick={() => window.print()}>
+          📥 Descargar / Imprimir
+        </Button>
+      </div>
+
+      {/* Marco gris simulando un visor de PDF */}
+      <div
+        className="rounded-xl p-6 flex justify-center"
+        style={{ background: '#5b5b5b' }}
+      >
+        {/* Hoja A4 estilo documento */}
+        <div
+          className="shadow-2xl"
+          style={{
+            background: 'white',
+            color: '#1a1a1a',
+            width: '100%',
+            maxWidth: '780px',
+            minHeight: '1000px',
+            padding: '56px 64px',
+            fontFamily: 'Georgia, serif',
+          }}
+        >
+          {/* Header del documento */}
+          <div className="flex items-start justify-between mb-8 pb-4 border-b" style={{ borderColor: '#e5e5e5' }}>
+            <div>
+              <div style={{ fontSize: '10px', letterSpacing: '0.18em', color: '#888', textTransform: 'uppercase' }}>
+                Terra de Flora
+              </div>
+              <h1 style={{ fontSize: '24px', fontWeight: 700, marginTop: '4px', color: '#1A2E5A' }}>
+                Cotización {proyecto.codigo}
+              </h1>
+              <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
+                Versión {cot.version} · {new Date(cot.created_at).toLocaleDateString('es-MX')}
+              </div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '10px', letterSpacing: '0.18em', color: '#888', textTransform: 'uppercase' }}>
+                Para
+              </div>
+              <div style={{ fontSize: '14px', fontWeight: 600, marginTop: '2px' }}>
+                {proyecto.cliente_nombre}
+              </div>
+              {proyecto.fecha_evento && (
+                <div style={{ fontSize: '12px', color: '#666' }}>
+                  Evento: {new Date(proyecto.fecha_evento + 'T00:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '4px', color: '#1A2E5A' }}>
+            {proyecto.nombre}
+          </h2>
+          {cot.notas && (
+            <p style={{ fontSize: '12px', color: '#555', marginBottom: '20px', fontStyle: 'italic' }}>
+              {cot.notas}
+            </p>
+          )}
+
+          {/* Secciones */}
+          {cot.secciones.length === 0 ? (
+            <div style={{ textAlign: 'center', color: '#999', padding: '40px 0', fontStyle: 'italic' }}>
+              Cotización vacía.
+            </div>
+          ) : (
+            cot.secciones.map((s) => (
+              <div key={s.id} style={{ marginBottom: '24px' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'baseline',
+                    paddingBottom: '6px',
+                    borderBottom: '1px solid #e5e5e5',
+                    marginBottom: '8px',
+                  }}
+                >
+                  <span style={{ fontSize: '15px', fontWeight: 700, color: '#1A2E5A' }}>{s.nombre}</span>
+                  <span style={{ fontSize: '14px', fontWeight: 600 }}>{fmtMoney(s.subtotal_venta)}</span>
+                </div>
+                {s.items.map((it) => (
+                  <div key={it.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', padding: '3px 0' }}>
+                    <span style={{ color: '#444' }}>{Number(it.cantidad)} × {it.nombre}</span>
+                    <span style={{ color: '#444' }}>{fmtMoney(it.subtotal_venta)}</span>
+                  </div>
+                ))}
+              </div>
+            ))
+          )}
+
+          {/* Total grande */}
+          <div
+            style={{
+              marginTop: '32px',
+              padding: '16px 20px',
+              background: '#F5F7FA',
+              borderRadius: '6px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <span style={{ fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#1A2E5A' }}>
+              Total
+            </span>
+            <span style={{ fontSize: '24px', fontWeight: 700, color: '#1A2E5A' }}>
+              {fmtMoney(cot.total_venta)}
+            </span>
+          </div>
+
+          <div style={{ marginTop: '40px', fontSize: '10px', color: '#999', textAlign: 'center' }}>
+            Esta cotización es vigente por 30 días a partir de la fecha de emisión.
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Vista Consolidado ───────────────────────────────────────────────────
+function ConsolidadoView({ cot, showCosts }: { cot: Cotizacion; showCosts: boolean }) {
+  const rows = useMemo(() => {
+    const out: { seccion: string; nombre: string; cantidad: number; costoUnit: number; precioUnit: number; subCosto: number; subVenta: number }[] = []
+    for (const s of cot.secciones) {
+      for (const it of s.items) {
+        out.push({
+          seccion: s.nombre,
+          nombre: it.nombre,
+          cantidad: Number(it.cantidad),
+          costoUnit: Number(it.costo_unit),
+          precioUnit: Number(it.precio_venta_calc),
+          subCosto: Number(it.subtotal_costo),
+          subVenta: Number(it.subtotal_venta),
+        })
+      }
+    }
+    return out
+  }, [cot])
+
+  if (rows.length === 0) {
+    return (
+      <div
+        className="rounded-2xl border border-dashed py-12 text-center"
+        style={{ borderColor: 'var(--border)' }}
+      >
+        <div className="text-3xl mb-2 opacity-70">📦</div>
+        <p className="text-sm text-app-secondary">Sin items todavía.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className="rounded-2xl border overflow-hidden"
+      style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
+    >
+      <table className="w-full text-sm">
+        <thead>
+          <tr
+            className="text-left text-[10px] uppercase tracking-widest text-app-muted border-b"
+            style={{ borderColor: 'var(--border-soft)' }}
+          >
+            <th className="px-4 py-3 font-semibold">Sección</th>
+            <th className="px-4 py-3 font-semibold">Concepto</th>
+            <th className="px-4 py-3 font-semibold text-right">Cant.</th>
+            {showCosts && <th className="px-4 py-3 font-semibold text-right">Costo unit.</th>}
+            <th className="px-4 py-3 font-semibold text-right">P. venta unit.</th>
+            {showCosts && <th className="px-4 py-3 font-semibold text-right">Subtotal costo</th>}
+            <th className="px-4 py-3 font-semibold text-right">Subtotal venta</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={i} className="border-b last:border-0" style={{ borderColor: 'var(--border-soft)' }}>
+              <td className="px-4 py-2 text-app-secondary text-xs">{r.seccion}</td>
+              <td className="px-4 py-2 text-app font-medium">{r.nombre}</td>
+              <td className="px-4 py-2 text-right text-app">{r.cantidad}</td>
+              {showCosts && <td className="px-4 py-2 text-right text-app-secondary">{fmtMoney(r.costoUnit)}</td>}
+              <td className="px-4 py-2 text-right text-app">{fmtMoney(r.precioUnit)}</td>
+              {showCosts && <td className="px-4 py-2 text-right text-app-secondary">{fmtMoney(r.subCosto)}</td>}
+              <td className="px-4 py-2 text-right text-app font-semibold">{fmtMoney(r.subVenta)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+// ─── Vista Agregar sección ───────────────────────────────────────────────
+function AgregarSeccionView({
+  catalog, onAdd,
+}: { catalog: CotizacionCatalog | null; onAdd: (nombre: string) => void }) {
   const [customName, setCustomName] = useState('')
 
   return (
-    <div className="space-y-4">
-      {cot.secciones.length === 0 && (
-        <div
-          className="rounded-xl border border-dashed py-10 text-center"
-          style={{ borderColor: 'var(--border)' }}
-        >
-          <div className="text-3xl mb-2 opacity-70">📂</div>
-          <p className="text-sm text-app-secondary">Agrega tu primera sección abajo.</p>
+    <div
+      className="rounded-2xl border p-6 space-y-4"
+      style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
+    >
+      <div>
+        <h3 className="text-lg font-bold text-app">Nueva sección</h3>
+        <p className="text-sm text-app-secondary">
+          Elige un tipo sugerido o escribe un nombre custom.
+        </p>
+      </div>
+
+      <div>
+        <div className="text-[10px] uppercase tracking-widest text-app-muted font-semibold mb-2">
+          Sugerencias
         </div>
-      )}
-
-      {cot.secciones.map((s) => (
-        <SeccionCard
-          key={s.id}
-          seccion={s}
-          showCosts={showCosts}
-          isFrozen={isFrozen}
-          recetas={recetas}
-          onAddItem={(rid) => p.onAddItem(s.id, rid)}
-          onDeleteSeccion={() => p.onDeleteSeccion(s.id)}
-          onUpdateItem={p.onUpdateItem}
-          onDeleteItem={p.onDeleteItem}
-        />
-      ))}
-
-      {/* Agregar sección */}
-      {!isFrozen && (
-        <div
-          className="rounded-xl border p-3 space-y-2"
-          style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-soft)' }}
-        >
-          <div className="text-[10px] uppercase tracking-widest text-app-muted font-semibold">
-            Agregar sección
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            {catalog?.secciones_tipo.map((t) => (
-              <button
-                key={t.nombre}
-                onClick={() => p.onAddSeccion(t.nombre)}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold border transition"
-                style={{
-                  background: 'var(--bg-card)',
-                  borderColor: 'var(--border)',
-                  color: 'var(--text-primary)',
-                }}
-              >
-                <span className="mr-1">{t.emoji}</span>{t.nombre}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-2 pt-1">
-            <input
-              type="text"
-              value={customName}
-              onChange={(e) => setCustomName(e.target.value)}
-              placeholder="O escribe un nombre custom…"
-              className="flex-1 px-3 py-1.5 rounded-md border text-sm"
+        <div className="flex items-center gap-2 flex-wrap">
+          {catalog?.secciones_tipo.map((t) => (
+            <button
+              key={t.nombre}
+              onClick={() => onAdd(t.nombre)}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold border transition"
               style={{
-                background: 'var(--bg-input)',
+                background: 'var(--bg-elevated)',
                 borderColor: 'var(--border)',
                 color: 'var(--text-primary)',
               }}
-            />
-            <Button
-              variant="secondary"
-              onClick={() => {
-                if (customName.trim()) {
-                  p.onAddSeccion(customName.trim())
-                  setCustomName('')
-                }
-              }}
-              disabled={!customName.trim()}
             >
-              + Agregar
-            </Button>
-          </div>
+              <span className="mr-1">{t.emoji}</span>{t.nombre}
+            </button>
+          ))}
         </div>
-      )}
+      </div>
+
+      <div className="pt-2 border-t" style={{ borderColor: 'var(--border-soft)' }}>
+        <div className="text-[10px] uppercase tracking-widest text-app-muted font-semibold mb-2 mt-3">
+          Nombre custom
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            autoFocus
+            type="text"
+            value={customName}
+            onChange={(e) => setCustomName(e.target.value)}
+            placeholder="Ej. Vestíbulo, Pista, Photo booth…"
+            className="flex-1 px-3 py-2 rounded-lg border text-sm"
+            style={{
+              background: 'var(--bg-input)',
+              borderColor: 'var(--border)',
+              color: 'var(--text-primary)',
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && customName.trim()) {
+                onAdd(customName.trim())
+                setCustomName('')
+              }
+            }}
+          />
+          <Button
+            onClick={() => {
+              if (customName.trim()) {
+                onAdd(customName.trim())
+                setCustomName('')
+              }
+            }}
+            disabled={!customName.trim()}
+          >
+            + Crear sección
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }
 
-// ─── Sección colapsable ──────────────────────────────────────────────────
-interface SeccionProps {
-  seccion: Cotizacion['secciones'][number]
+// ─── Vista Sección ───────────────────────────────────────────────────────
+interface SeccionViewProps {
+  seccion: CotizacionSeccion
   showCosts: boolean
   isFrozen: boolean
   recetas: RecetaSummary[]
+  onRename: (nombre: string) => void
+  onDelete: () => void
   onAddItem: (recetaId: number) => void
-  onDeleteSeccion: () => void
   onUpdateItem: (iid: number, patch: { cantidad?: number; precio_venta_unit?: number | null }) => void
   onDeleteItem: (iid: number) => void
 }
 
-function SeccionCard({
+function SeccionView({
   seccion, showCosts, isFrozen, recetas,
-  onAddItem, onDeleteSeccion, onUpdateItem, onDeleteItem,
-}: SeccionProps) {
-  const [open, setOpen] = useState(true)
+  onRename, onDelete, onAddItem, onUpdateItem, onDeleteItem,
+}: SeccionViewProps) {
+  const [editingName, setEditingName] = useState(false)
+  const [name, setName] = useState(seccion.nombre)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [search, setSearch] = useState('')
+
+  useEffect(() => { setName(seccion.nombre) }, [seccion.id, seccion.nombre])
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim()
@@ -528,35 +870,56 @@ function SeccionCard({
 
   return (
     <div
-      className="rounded-xl border overflow-hidden"
+      className="rounded-2xl border"
       style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
     >
-      {/* Header */}
+      {/* Header de sección con nombre editable */}
       <div
-        className="flex items-center gap-2 px-4 py-3 border-b"
+        className="flex items-center gap-3 px-5 py-4 border-b"
         style={{ borderColor: 'var(--border-soft)', background: 'var(--bg-elevated)' }}
       >
-        <button
-          onClick={() => setOpen((v) => !v)}
-          className="text-app-muted hover:text-app transition text-sm w-5"
-        >
-          {open ? '▾' : '▸'}
-        </button>
-        <h4 className="font-semibold text-app">{seccion.nombre}</h4>
+        {editingName ? (
+          <input
+            autoFocus
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={() => {
+              const trimmed = name.trim()
+              if (trimmed && trimmed !== seccion.nombre) onRename(trimmed)
+              else setName(seccion.nombre)
+              setEditingName(false)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+              if (e.key === 'Escape') { setName(seccion.nombre); setEditingName(false) }
+            }}
+            className="flex-1 px-3 py-1.5 rounded-md border text-lg font-bold"
+            style={{
+              background: 'var(--bg-input)',
+              borderColor: 'var(--accent)',
+              color: 'var(--text-primary)',
+            }}
+          />
+        ) : (
+          <button
+            onClick={() => !isFrozen && setEditingName(true)}
+            className="text-lg font-bold text-app hover:underline disabled:no-underline"
+            disabled={isFrozen}
+            title={isFrozen ? '' : 'Click para renombrar'}
+          >
+            {seccion.nombre}
+          </button>
+        )}
         <span className="text-xs text-app-muted">
-          {seccion.items.length} {seccion.items.length === 1 ? 'item' : 'items'}
+          · {seccion.items.length} {seccion.items.length === 1 ? 'item' : 'items'}
         </span>
         <div className="flex-1" />
-        {showCosts && (
-          <span className="text-xs text-app-secondary">
-            Costo: <strong className="text-app">{fmtMoney(seccion.subtotal_costo)}</strong>
-          </span>
-        )}
         <span className="text-sm font-bold text-app">{fmtMoney(seccion.subtotal_venta)}</span>
         {!isFrozen && (
           <button
-            onClick={onDeleteSeccion}
-            className="text-app-muted hover:text-red-500 transition text-xs ml-2"
+            onClick={onDelete}
+            className="text-app-muted hover:text-red-500 transition text-xs"
             title="Borrar sección"
           >
             🗑️
@@ -564,95 +927,97 @@ function SeccionCard({
         )}
       </div>
 
-      {open && (
-        <div className="px-4 py-3 space-y-2">
-          {seccion.items.length === 0 && (
-            <div className="text-xs text-app-muted py-2 text-center">
-              Aún no hay items en esta sección.
-            </div>
-          )}
+      <div className="px-5 py-4 space-y-2">
+        {seccion.items.length === 0 && (
+          <div className="text-center text-sm text-app-muted py-6">
+            Aún no hay recetas en esta sección.
+          </div>
+        )}
 
-          {seccion.items.map((it) => (
-            <ItemRow
-              key={it.id}
-              item={it}
-              showCosts={showCosts}
-              isFrozen={isFrozen}
-              onUpdate={(patch) => onUpdateItem(it.id, patch)}
-              onDelete={() => onDeleteItem(it.id)}
-            />
-          ))}
+        {seccion.items.map((it) => (
+          <ItemRow
+            key={it.id}
+            item={it}
+            showCosts={showCosts}
+            isFrozen={isFrozen}
+            onUpdate={(patch) => onUpdateItem(it.id, patch)}
+            onDelete={() => onDeleteItem(it.id)}
+          />
+        ))}
 
-          {!isFrozen && (
-            <>
-              {!pickerOpen ? (
-                <button
-                  onClick={() => setPickerOpen(true)}
-                  className="w-full mt-2 py-2 rounded-lg border-dashed border text-xs font-semibold text-app-secondary hover:text-app transition"
-                  style={{ borderColor: 'var(--border)' }}
-                >
-                  + Agregar receta del catálogo
-                </button>
-              ) : (
-                <div
-                  className="rounded-lg border p-3 space-y-2"
-                  style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-soft)' }}
-                >
-                  <div className="flex items-center gap-2">
-                    <input
-                      autoFocus
-                      type="text"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Buscar receta…"
-                      className="flex-1 px-3 py-1.5 rounded-md border text-sm"
-                      style={{
-                        background: 'var(--bg-input)',
-                        borderColor: 'var(--border)',
-                        color: 'var(--text-primary)',
-                      }}
-                    />
-                    <button
-                      onClick={() => { setPickerOpen(false); setSearch('') }}
-                      className="text-app-muted hover:text-app text-xs"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  <div className="max-h-56 overflow-y-auto -mx-1">
-                    {filtered.length === 0 && (
-                      <div className="text-xs text-app-muted py-3 text-center">
-                        Sin resultados. <a href="/recetas" className="underline">Crear receta</a>
-                      </div>
-                    )}
-                    {filtered.map((r) => (
-                      <button
-                        key={r.id}
-                        onClick={() => {
-                          onAddItem(r.id)
-                          setPickerOpen(false)
-                          setSearch('')
-                        }}
-                        className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-md hover:bg-black/5 transition text-left text-sm"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <div className="font-semibold text-app truncate">{r.nombre}</div>
-                          <div className="text-[10px] text-app-muted uppercase tracking-wide">
-                            {r.categoria} · {r.item_count} insumos
-                          </div>
-                        </div>
-                        <div className="text-xs text-app-secondary shrink-0">
-                          {fmtMoney(r.costo_estimado)}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
+        {!isFrozen && (
+          <>
+            {!pickerOpen ? (
+              <button
+                onClick={() => setPickerOpen(true)}
+                className="w-full mt-2 py-2 rounded-lg border-dashed border text-xs font-semibold text-app-secondary hover:text-app transition"
+                style={{ borderColor: 'var(--border)' }}
+              >
+                + Agregar receta
+              </button>
+            ) : (
+              <div
+                className="rounded-lg border p-3 space-y-2"
+                style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-soft)' }}
+              >
+                <div className="flex items-center gap-2">
+                  <input
+                    autoFocus
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Buscar receta existente…"
+                    className="flex-1 px-3 py-1.5 rounded-md border text-sm"
+                    style={{
+                      background: 'var(--bg-input)',
+                      borderColor: 'var(--border)',
+                      color: 'var(--text-primary)',
+                    }}
+                  />
+                  <button
+                    onClick={() => { setPickerOpen(false); setSearch('') }}
+                    className="text-app-muted hover:text-app text-xs"
+                  >
+                    ✕
+                  </button>
                 </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
+                <div className="text-[10px] text-app-muted">
+                  Por ahora puedes reutilizar recetas existentes. El editor de receta nueva
+                  llega en el siguiente paso.
+                </div>
+                <div className="max-h-56 overflow-y-auto -mx-1">
+                  {filtered.length === 0 && (
+                    <div className="text-xs text-app-muted py-3 text-center">
+                      Sin resultados.
+                    </div>
+                  )}
+                  {filtered.map((r) => (
+                    <button
+                      key={r.id}
+                      onClick={() => {
+                        onAddItem(r.id)
+                        setPickerOpen(false)
+                        setSearch('')
+                      }}
+                      className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-md hover:bg-black/5 transition text-left text-sm"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="font-semibold text-app truncate">{r.nombre}</div>
+                        <div className="text-[10px] text-app-muted uppercase tracking-wide">
+                          {r.categoria} · {r.item_count} insumos
+                        </div>
+                      </div>
+                      <div className="text-xs text-app-secondary shrink-0">
+                        {fmtMoney(r.costo_estimado)}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   )
 }
@@ -811,4 +1176,3 @@ function Stat({ label, value, big, hint }: { label: string; value: string; big?:
     </div>
   )
 }
-
