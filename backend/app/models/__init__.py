@@ -16,6 +16,7 @@ from app.models.cotizacion import (
     CotizacionItem,
     EstadoCotizacion,
 )
+from app.models.pago import MetodoPago, Pago, StatusPago, TipoPago
 
 __all__ = [
     "User",
@@ -39,4 +40,8 @@ __all__ = [
     "CotizacionSeccion",
     "CotizacionItem",
     "EstadoCotizacion",
+    "MetodoPago",
+    "Pago",
+    "StatusPago",
+    "TipoPago",
 ]

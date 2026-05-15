@@ -43,6 +43,13 @@ export type {
   TipoProyecto, EstadoProyecto, TipoMeta, EstadoMeta, VendedorOption,
 } from './proyectos'
 
+export { pagosApi } from './pagos'
+export type {
+  PagoRow, PagosResumen, PagosTabResponse,
+  PagoCreatePayload, PagoUpdatePayload, MetodoPago,
+  TipoPago, StatusPago,
+} from './pagos'
+
 export { cotizacionesApi } from './cotizaciones'
 export type {
   Cotizacion, CotizacionItem, CotizacionSeccion, CotizacionSummary,

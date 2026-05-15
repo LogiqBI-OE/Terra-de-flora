@@ -7,6 +7,7 @@ from app.core.security import hash_password
 from app.db import Base, SessionLocal, engine
 from app.models import User
 from app.models.material_catalog import MaterialFamilia, MaterialUnidad
+from app.models.pago import MetodoPago
 from app.models.user import compose_full_name, role_for_level
 from app.services.levels_service import ensure_levels_seeded
 from app.services.system_config_service import ensure_defaults
@@ -31,6 +32,23 @@ DEFAULT_UNIDADES = [
     ("Litro", 60),
     ("Servicio", 70),
 ]
+
+DEFAULT_METODOS_PAGO = [
+    ("Transferencia", 10),
+    ("Efectivo", 20),
+    ("Cheque", 30),
+    ("Tarjeta", 40),
+    ("Otro", 99),
+]
+
+
+def ensure_metodos_pago(db: Session) -> None:
+    """Pobla métodos de pago si la tabla está vacía. No sobrescribe."""
+    if db.query(MetodoPago).count() == 0:
+        for nombre, orden in DEFAULT_METODOS_PAGO:
+            db.add(MetodoPago(nombre=nombre, orden=orden))
+        db.commit()
+        print(f"  + métodos de pago: {len(DEFAULT_METODOS_PAGO)} cargados")
 
 
 def ensure_material_catalogs(db: Session) -> None:
@@ -184,6 +202,9 @@ def run() -> None:
 
         print("-> Catálogos de materiales (tipos y unidades)...")
         ensure_material_catalogs(db)
+
+        print("-> Catálogo de métodos de pago...")
+        ensure_metodos_pago(db)
     finally:
         db.close()
     print("-> Seed listo.")
