@@ -204,7 +204,7 @@ export default function RecetaEditorDrawer({
       itemId: null,
       material_id: materialId,
       cantidad: 1,
-      grupo,
+      grupo: grupo ?? null,
       orden: maxOrden + 1,
       notas: null,
     }])
