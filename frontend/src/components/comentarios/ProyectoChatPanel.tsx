@@ -50,6 +50,21 @@ export default function ProyectoChatPanel({ proyectoId, onRead, onChange, classN
   const listRef = useRef<HTMLDivElement | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
   const lastCountRef = useRef(0)
+  // Mensajes que recién mandamos pero el polling aún no ve. Los conservamos
+  // en la UI para que no parezca que se "borraron".
+  const pendingRef = useRef<Map<number, Comentario>>(new Map())
+
+  /** Mezcla la lista del servidor con los pendientes locales. Si el server
+   *  ya tiene un id, lo retira de pendientes. */
+  function mergeServerList(serverList: Comentario[]): Comentario[] {
+    const ids = new Set(serverList.map((m) => m.id))
+    for (const id of pendingRef.current.keys()) {
+      if (ids.has(id)) pendingRef.current.delete(id)
+    }
+    if (pendingRef.current.size === 0) return serverList
+    return [...serverList, ...Array.from(pendingRef.current.values())]
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+  }
 
   // Cargar equipo (mencionables) una vez
   useEffect(() => {
@@ -65,7 +80,7 @@ export default function ProyectoChatPanel({ proyectoId, onRead, onChange, classN
       if (!alive) return
       try {
         const list = await comentariosApi.list(proyectoId)
-        if (alive) setMessages(list)
+        if (alive) setMessages(mergeServerList(list))
       } catch {/* polling silencioso */}
       if (alive) timer = setTimeout(tick, POLL_MS)
     }
@@ -76,7 +91,7 @@ export default function ProyectoChatPanel({ proyectoId, onRead, onChange, classN
     comentariosApi.list(proyectoId)
       .then((list) => {
         if (!alive) return
-        setMessages(list)
+        setMessages(mergeServerList(list))
         // Marca como leído al cargar
         comentariosApi.markRead(proyectoId).then(() => onRead?.()).catch(() => {})
       })
@@ -111,6 +126,8 @@ export default function ProyectoChatPanel({ proyectoId, onRead, onChange, classN
         texto,
         parent_id: replyTo?.id ?? null,
       })
+      // Marca como pendiente hasta que el polling confirme que el server lo tiene.
+      pendingRef.current.set(nuevo.id, nuevo)
       setMessages((prev) => [...prev, nuevo])
       setDraft('')
       setReplyTo(null)
