@@ -8,6 +8,7 @@ import ProyectosPage from './pages/proyectos/ProyectosPage'
 import NuevoProyectoPage from './pages/proyectos/NuevoProyectoPage'
 import ProyectoDetailPage from './pages/proyectos/ProyectoDetailPage'
 import MuroComentariosPage from './pages/muro/MuroComentariosPage'
+import CalendarioPage from './pages/calendario/CalendarioPage'
 import MaterialesPage from './pages/catalogos/MaterialesPage'
 import ClientesPage from './pages/catalogos/ClientesPage'
 import RecetasPage from './pages/catalogos/RecetasPage'
@@ -48,6 +49,9 @@ export default function App() {
 
       {/* MURO DE COMENTARIOS */}
       <Route path="/muro-comentarios" element={<MinLevelRoute min={5}><MuroComentariosPage /></MinLevelRoute>} />
+
+      {/* CALENDARIO */}
+      <Route path="/calendario" element={<MinLevelRoute min={5}><CalendarioPage /></MinLevelRoute>} />
 
       {/* CATÁLOGOS */}
       <Route path="/clientes" element={<AnyAuthRoute><ClientesPage /></AnyAuthRoute>} />

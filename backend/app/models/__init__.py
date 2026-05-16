@@ -23,6 +23,7 @@ from app.models.comentario import (
     ComentarioReaccion,
     ComentarioRead,
 )
+from app.models.evento import EventoCalendario, EventoParticipante, TipoEvento
 
 __all__ = [
     "User",
@@ -54,4 +55,7 @@ __all__ = [
     "ComentarioMention",
     "ComentarioReaccion",
     "ComentarioRead",
+    "EventoCalendario",
+    "EventoParticipante",
+    "TipoEvento",
 ]

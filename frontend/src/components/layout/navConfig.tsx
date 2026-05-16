@@ -52,7 +52,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { to: '/portal-mensajes', label: 'Portal de mensajes', icon: <IconNetwork />, disabled: true, hint: 'Próximamente' },
       { to: '/campanas', label: 'Campañas', icon: <IconMegaphone />, disabled: true, hint: 'Próximamente' },
       { to: '/integraciones', label: 'Integraciones', icon: <IconPlug />, disabled: true, hint: 'Próximamente' },
-      { to: '/calendario', label: 'Calendario', icon: <IconCalendar />, disabled: true, hint: 'Próximamente' },
+      { to: '/calendario', label: 'Calendario', icon: <IconCalendar />, minLevel: 5 },
     ],
   },
   {

@@ -66,4 +66,10 @@ export type {
   EstadoCotizacion,
 } from './cotizaciones'
 
+export { eventosApi } from './eventos'
+export type {
+  Evento, EventoCreatePayload, EventoUpdatePayload,
+  ParticipanteEvento, TipoEvento, EventoKind,
+} from './eventos'
+
 export { ApiError, API_URL } from './client'
