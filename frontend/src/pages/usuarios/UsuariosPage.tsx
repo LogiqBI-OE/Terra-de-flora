@@ -16,6 +16,7 @@ import {
 import { useAuth } from '../../lib/auth'
 import UsuariosTable from './sections/UsuariosTable'
 import UsuarioFormDrawer, { type UserFormValue } from './sections/UsuarioFormDrawer'
+import { SkeletonTable } from '../../components/ui/Skeleton'
 
 export default function UsuariosPage() {
   const { user: currentUser } = useAuth()
@@ -27,6 +28,7 @@ export default function UsuariosPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
   // Catalogo filtrado para el form: solo niveles <= currentLevel
   const scopedCatalog = useMemo<PermissionsCatalog | null>(() => {
@@ -38,11 +40,15 @@ export default function UsuariosPage() {
   }, [catalog, currentLevel])
 
   async function reload() {
-    const [u, c] = await Promise.all([usersApi.list(), usersApi.catalog()])
-    setRows(u)
-    setCatalog(c)
+    try {
+      const [u, c] = await Promise.all([usersApi.list(), usersApi.catalog()])
+      setRows(u)
+      setCatalog(c)
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'No se pudo cargar la lista')
+    } finally { setLoading(false) }
   }
-  useEffect(() => { reload().catch(() => {}) }, [])
+  useEffect(() => { reload() }, [])
 
   function flash(msg: string) {
     setToast(msg)
@@ -166,14 +172,18 @@ export default function UsuariosPage() {
         </div>
 
         <Card>
-          <UsuariosTable
-            rows={rows}
-            currentUserLevel={currentLevel}
-            currentUserEmail={currentUser?.email}
-            onEdit={startEdit}
-            onDelete={handleDelete}
-            onResetPassword={handleResetPassword}
-          />
+          {loading ? (
+            <SkeletonTable rows={5} cols={6} />
+          ) : (
+            <UsuariosTable
+              rows={rows}
+              currentUserLevel={currentLevel}
+              currentUserEmail={currentUser?.email}
+              onEdit={startEdit}
+              onDelete={handleDelete}
+              onResetPassword={handleResetPassword}
+            />
+          )}
         </Card>
 
         {editing && scopedCatalog && (

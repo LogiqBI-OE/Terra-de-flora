@@ -7,6 +7,32 @@
 import { NavLink } from 'react-router-dom'
 import type { NavItem } from './navConfig'
 
+/** Mapa ruta → import dinámico del chunk. Al hover, disparamos el import
+ *  para que Vite/browser empiece a descargar el JS. Si el usuario hace
+ *  click, el chunk ya está listo o casi (instantáneo). */
+const PREFETCH_MAP: Record<string, () => Promise<unknown>> = {
+  '/proyectos':        () => import('../../pages/proyectos/ProyectosPage'),
+  '/proyectos/nuevo':  () => import('../../pages/proyectos/NuevoProyectoPage'),
+  '/muro-comentarios': () => import('../../pages/muro/MuroComentariosPage'),
+  '/calendario':       () => import('../../pages/calendario/CalendarioPage'),
+  '/clientes':         () => import('../../pages/catalogos/ClientesPage'),
+  '/materiales':       () => import('../../pages/catalogos/MaterialesPage'),
+  '/recetas':          () => import('../../pages/catalogos/RecetasPage'),
+  '/usuarios':         () => import('../../pages/usuarios/UsuariosPage'),
+  '/usuarios/log':     () => import('../../pages/usuarios/LogUsuariosPage'),
+  '/configuracion':    () => import('../../pages/configuracion/ConfiguracionPage'),
+}
+
+const prefetched = new Set<string>()
+
+function prefetchRoute(to: string) {
+  if (prefetched.has(to)) return
+  const fn = PREFETCH_MAP[to]
+  if (!fn) return
+  prefetched.add(to)
+  fn().catch(() => prefetched.delete(to))  // si falla, permitir reintentar
+}
+
 interface Props {
   item: NavItem
 }
@@ -47,6 +73,8 @@ export default function SidebarItem({ item }: Props) {
     <NavLink
       to={item.to}
       className={baseRow}
+      onMouseEnter={() => prefetchRoute(item.to)}
+      onFocus={() => prefetchRoute(item.to)}
       style={({ isActive }) => ({
         background: isActive ? 'var(--sidebar-active-bg)' : 'transparent',
         color: isActive ? 'var(--sidebar-active-text)' : 'var(--sidebar-text-secondary)',

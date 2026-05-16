@@ -18,6 +18,7 @@ import {
 import KpiCards from './sections/KpiCards'
 import ProyectosFilters from './sections/ProyectosFilters'
 import ProyectosTable from './sections/ProyectosTable'
+import { SkeletonTable } from '../../components/ui/Skeleton'
 
 export default function ProyectosPage() {
   const navigate = useNavigate()
@@ -115,7 +116,7 @@ export default function ProyectosPage() {
               catalog={catalog}
             />
             {loading ? (
-              <div className="py-12 text-center text-sm text-app-muted">Cargando…</div>
+              <SkeletonTable rows={6} cols={8} />
             ) : rows.length === 0 ? (
               <div className="py-16 text-center">
                 <div className="text-4xl mb-2">📋</div>

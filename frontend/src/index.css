@@ -210,3 +210,12 @@
   .btn-oleo:hover { background: var(--accent-dark); }
   .btn-oleo:disabled { opacity: 0.6; cursor: not-allowed; }
 }
+
+/* Skeleton pulse animation — usado por components/ui/Skeleton.tsx */
+@keyframes skeleton-pulse-kf {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 0.85; }
+}
+.skeleton-pulse {
+  animation: skeleton-pulse-kf 1.4s ease-in-out infinite;
+}
