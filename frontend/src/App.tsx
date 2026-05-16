@@ -7,6 +7,7 @@ import ConfiguracionPage from './pages/configuracion/ConfiguracionPage'
 import ProyectosPage from './pages/proyectos/ProyectosPage'
 import NuevoProyectoPage from './pages/proyectos/NuevoProyectoPage'
 import ProyectoDetailPage from './pages/proyectos/ProyectoDetailPage'
+import MuroComentariosPage from './pages/muro/MuroComentariosPage'
 import MaterialesPage from './pages/catalogos/MaterialesPage'
 import ClientesPage from './pages/catalogos/ClientesPage'
 import RecetasPage from './pages/catalogos/RecetasPage'
@@ -58,6 +59,9 @@ export default function App() {
       <Route path="/proyectos" element={<AnyAuthRoute><ProyectosPage /></AnyAuthRoute>} />
       <Route path="/proyectos/nuevo" element={<AnyAuthRoute><NuevoProyectoPage /></AnyAuthRoute>} />
       <Route path="/proyectos/:id" element={<AnyAuthRoute><ProyectoDetailPage /></AnyAuthRoute>} />
+
+      {/* MURO DE COMENTARIOS */}
+      <Route path="/muro-comentarios" element={<MinLevelRoute min={5}><MuroComentariosPage /></MinLevelRoute>} />
 
       {/* CATÁLOGOS */}
       <Route path="/clientes" element={<AnyAuthRoute><ClientesPage /></AnyAuthRoute>} />

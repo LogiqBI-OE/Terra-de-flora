@@ -7,7 +7,9 @@ import Card from '../../components/ui/Card'
 import { IconChevronRight, IconPlus } from '../../components/icons/Icons'
 import { useAuth } from '../../lib/auth'
 import {
+  comentariosApi,
   proyectosApi,
+  type BadgeProyecto,
   type EstadoProyecto,
   type ProyectoCatalog,
   type ProyectoRow,
@@ -22,6 +24,7 @@ export default function ProyectosPage() {
 
   const [rows, setRows] = useState<ProyectoRow[]>([])
   const [catalog, setCatalog] = useState<ProyectoCatalog | null>(null)
+  const [badges, setBadges] = useState<Record<number, BadgeProyecto>>({})
   const [loading, setLoading] = useState(true)
 
   const [vendedor, setVendedor] = useState<string | 'todos'>('todos')
@@ -30,12 +33,23 @@ export default function ProyectosPage() {
 
   async function reload() {
     try {
-      const [r, c] = await Promise.all([proyectosApi.list(), proyectosApi.catalog()])
+      const [r, c, b] = await Promise.all([
+        proyectosApi.list(),
+        proyectosApi.catalog(),
+        comentariosApi.getBadgesMap().catch(() => ({ items: [] as BadgeProyecto[] })),
+      ])
       setRows(r); setCatalog(c)
+      const bm: Record<number, BadgeProyecto> = {}
+      for (const it of b.items) bm[it.proyecto_id] = it
+      setBadges(bm)
     } catch (e) { console.error(e) }
     finally { setLoading(false) }
   }
-  useEffect(() => { reload() }, [])
+  useEffect(() => {
+    reload()
+    const id = setInterval(reload, 30000)
+    return () => clearInterval(id)
+  }, [])
 
   const filtered = useMemo(() => {
     return rows.filter((p) => {
@@ -120,7 +134,7 @@ export default function ProyectosPage() {
                 </button>
               </div>
             ) : (
-              <ProyectosTable rows={filtered} onClick={(p) => navigate(`/proyectos/${p.id}`)} />
+              <ProyectosTable rows={filtered} badges={badges} onClick={(p) => navigate(`/proyectos/${p.id}`)} />
             )}
           </div>
         </Card>

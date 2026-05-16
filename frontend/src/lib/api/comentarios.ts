@@ -41,6 +41,39 @@ export interface ComentarioUpdatePayload {
   texto: string
 }
 
+export interface TeamUser {
+  id: number
+  nombre: string
+  username: string | null
+  iniciales: string
+  level: number
+}
+
+export interface ConversacionItem {
+  proyecto_id: number
+  proyecto_codigo: string
+  proyecto_nombre: string
+  cliente_nombre: string
+  ultimo_mensaje: string | null
+  ultimo_autor: string | null
+  ultimo_at: string | null
+  total_mensajes: number
+  unread_count: number
+  has_mention: boolean
+}
+
+export interface BadgeProyecto {
+  proyecto_id: number
+  unread_count: number
+  has_mention: boolean
+}
+
+export interface TopbarBadge {
+  unread_proyectos: number
+  total_mensajes: number
+  has_mention: boolean
+}
+
 export const comentariosApi = {
   list: (pid: number) => request<Comentario[]>(`/proyectos/${pid}/comentarios`),
   create: (pid: number, p: ComentarioCreatePayload) =>
@@ -60,4 +93,21 @@ export const comentariosApi = {
       method: 'POST',
       body: JSON.stringify({ emoji }),
     }),
+  markRead: (pid: number) =>
+    request<void>(`/proyectos/${pid}/comentarios/read`, { method: 'POST' }),
+
+  // Badges
+  getBadgeProyecto: (pid: number) =>
+    request<BadgeProyecto>(`/proyectos/${pid}/comentarios/badge`),
+  getBadgesMap: () =>
+    request<{ items: BadgeProyecto[] }>('/muro/badges'),
+  getTopbarBadge: () =>
+    request<TopbarBadge>('/muro/topbar'),
+
+  // Muro
+  listConversaciones: () =>
+    request<{ items: ConversacionItem[] }>('/muro/conversaciones'),
+
+  // @ autocomplete
+  listTeam: () => request<TeamUser[]>('/users/team'),
 }

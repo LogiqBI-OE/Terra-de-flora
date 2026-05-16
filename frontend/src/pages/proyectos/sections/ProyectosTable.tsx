@@ -1,10 +1,11 @@
 // Tabla del gestor de proyectos — alimentada por el backend real.
 
-import type { ProyectoRow } from '../../../lib/api'
+import type { BadgeProyecto, ProyectoRow } from '../../../lib/api'
 import { fmtMoney } from '../../../lib/format'
 
 interface Props {
   rows: ProyectoRow[]
+  badges?: Record<number, BadgeProyecto>
   onClick?: (p: ProyectoRow) => void
 }
 
@@ -45,7 +46,7 @@ function fmtFechaDM(iso: string | null): string {
   return d.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit' })
 }
 
-export default function ProyectosTable({ rows, onClick }: Props) {
+export default function ProyectosTable({ rows, badges, onClick }: Props) {
   if (rows.length === 0) {
     return (
       <div className="py-12 text-center text-sm text-app-muted">
@@ -69,6 +70,7 @@ export default function ProyectosTable({ rows, onClick }: Props) {
             <th className="px-4 py-3 font-semibold">Fecha evento</th>
             <th className="px-4 py-3 font-semibold text-right">Valor</th>
             <th className="px-4 py-3 font-semibold">Estado</th>
+            <th className="px-4 py-3 font-semibold text-center">💬</th>
           </tr>
         </thead>
         <tbody>
@@ -124,6 +126,31 @@ export default function ProyectosTable({ rows, onClick }: Props) {
                     <span>{ESTADO_EMOJI[p.estado] ?? '•'}</span>
                     <span>{ESTADO_LABEL[p.estado] ?? p.estado}</span>
                   </span>
+                </td>
+                <td className="px-4 py-3 text-center">
+                  {(() => {
+                    const b = badges?.[p.id]
+                    if (!b || (b.unread_count === 0 && !b.has_mention)) {
+                      return <span className="text-app-muted">—</span>
+                    }
+                    if (b.has_mention) {
+                      return (
+                        <span
+                          className="inline-flex items-center justify-center px-1.5 min-w-[20px] h-5 rounded-full text-[10px] font-bold text-white"
+                          style={{ background: '#E11D48' }}
+                          title="Te etiquetaron"
+                        >@</span>
+                      )
+                    }
+                    return (
+                      <span
+                        className="inline-flex items-center justify-center px-1.5 min-w-[20px] h-5 rounded-full text-[10px] font-bold"
+                        style={{ background: 'var(--accent)', color: 'var(--text-on-accent)' }}
+                      >
+                        {b.unread_count > 9 ? '9+' : b.unread_count}
+                      </span>
+                    )
+                  })()}
                 </td>
               </tr>
             )

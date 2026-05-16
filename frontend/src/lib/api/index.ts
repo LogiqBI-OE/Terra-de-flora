@@ -47,6 +47,7 @@ export { comentariosApi, ALLOWED_EMOJIS } from './comentarios'
 export type {
   Comentario, ComentarioCreatePayload, ComentarioUpdatePayload,
   ParentSnippet, ReaccionAgg, AllowedEmoji,
+  TeamUser, ConversacionItem, BadgeProyecto, TopbarBadge,
 } from './comentarios'
 
 export { pagosApi } from './pagos'

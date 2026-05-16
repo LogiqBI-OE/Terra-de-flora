@@ -49,3 +49,50 @@ class ComentarioOut(BaseModel):
 
 class EmojiToggle(BaseModel):
     emoji: str
+
+
+# ── Muro de comentarios ────────────────────────────────────────────────────
+class TeamUser(BaseModel):
+    """Usuario mencionable (para @-autocomplete)."""
+    id: int
+    nombre: str
+    username: str | None
+    iniciales: str
+    level: int
+
+
+class ConversacionItem(BaseModel):
+    """Una fila del listado del Muro: un proyecto + su último mensaje + badges."""
+    proyecto_id: int
+    proyecto_codigo: str
+    proyecto_nombre: str
+    cliente_nombre: str
+    ultimo_mensaje: str | None
+    ultimo_autor: str | None
+    ultimo_at: datetime | None
+    total_mensajes: int
+    unread_count: int
+    has_mention: bool
+
+
+class ConversacionesResponse(BaseModel):
+    items: list[ConversacionItem]
+
+
+class BadgeProyecto(BaseModel):
+    """Badge para una pill/columna específica."""
+    proyecto_id: int
+    unread_count: int
+    has_mention: bool
+
+
+class BadgeMap(BaseModel):
+    """Map de badges para todos los proyectos visibles (gestor)."""
+    items: list[BadgeProyecto]
+
+
+class TopbarBadge(BaseModel):
+    """Lo que muestra la campana del topbar."""
+    unread_proyectos: int  # cuántos proyectos tienen mensajes sin leer
+    total_mensajes: int    # cuántos mensajes sin leer en total
+    has_mention: bool      # ¿hay alguno donde @me esté pendiente?

@@ -8,24 +8,38 @@ Endpoints:
   POST   /proyectos/{pid}/comentarios/{cid}/reaccion
                                                   → toggle reacción (body: emoji)
 """
+import re
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func as sql_func
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user, require_level_5
 from app.db import get_db
-from app.models.comentario import Comentario, ComentarioReaccion
+from app.models.cliente import Cliente
+from app.models.comentario import (
+    Comentario,
+    ComentarioMention,
+    ComentarioReaccion,
+    ComentarioRead,
+)
 from app.models.proyecto import Proyecto
 from app.models.user import User
 from app.schemas.comentario import (
     ALLOWED_EMOJIS,
+    BadgeMap,
+    BadgeProyecto,
     ComentarioCreate,
     ComentarioOut,
     ComentarioUpdate,
+    ConversacionesResponse,
+    ConversacionItem,
     EmojiToggle,
     ParentSnippet,
     ReaccionAgg,
+    TeamUser,
+    TopbarBadge,
 )
 
 
@@ -91,6 +105,52 @@ def _now_utc() -> datetime:
 def _within_edit_window(c: Comentario) -> bool:
     # created_at viene con tz (server_default=func.now() en columna TIMESTAMPTZ).
     return _now_utc() - c.created_at <= EDIT_WINDOW
+
+
+# ── Menciones ────────────────────────────────────────────────────────────
+# Acepta @usuario o @"nombre con espacios"
+MENTION_RE = re.compile(r'@(?:"([^"]+)"|([A-Za-z0-9_.\-]+))')
+
+
+def _resolve_mentions(db: Session, texto: str) -> list[int]:
+    """Extrae @tokens del texto y los matchea contra username (case-insensitive)
+    o full_name (exacto case-insensitive si va entre comillas).
+
+    Por ahora solo L5+ son mencionables (equipo). Para L4 y abajo: requiere
+    membresía de proyecto que aún no existe.
+    """
+    if not texto:
+        return []
+    tokens: list[str] = []
+    for m in MENTION_RE.finditer(texto):
+        quoted, plain = m.group(1), m.group(2)
+        tokens.append((quoted or plain).strip())
+    if not tokens:
+        return []
+
+    seen: set[int] = set()
+    out: list[int] = []
+    for tok in tokens:
+        # Match por username primero, luego full_name
+        candidate = (
+            db.query(User)
+            .filter(
+                User.is_active == True,  # noqa: E712
+                User.level >= 5,
+                (sql_func.lower(User.username) == tok.lower())
+                | (sql_func.lower(User.full_name) == tok.lower()),
+            )
+            .first()
+        )
+        if candidate and candidate.id not in seen:
+            seen.add(candidate.id)
+            out.append(candidate.id)
+    return out
+
+
+def _save_mentions(db: Session, comentario_id: int, user_ids: list[int]) -> None:
+    for uid in user_ids:
+        db.add(ComentarioMention(comentario_id=comentario_id, user_id=uid))
 
 
 @router.get(
@@ -166,13 +226,18 @@ def create_comentario(
         # Aplana threads de >1 nivel: si el padre es respuesta, usamos su raíz.
         parent_id = parent.parent_id or parent.id
 
+    texto = payload.texto.strip()
     c = Comentario(
         proyecto_id=pid,
         user_id=user.id,
         parent_id=parent_id,
-        texto=payload.texto.strip(),
+        texto=texto,
     )
     db.add(c)
+    db.flush()  # necesita id para las menciones
+
+    mention_ids = _resolve_mentions(db, texto)
+    _save_mentions(db, c.id, mention_ids)
     db.commit()
     db.refresh(c)
 
@@ -210,6 +275,13 @@ def update_comentario(
 
     c.texto = payload.texto.strip()
     c.edited_at = _now_utc()
+
+    # Re-resolver menciones (borra las viejas, agrega las nuevas)
+    db.query(ComentarioMention).filter(ComentarioMention.comentario_id == c.id).delete()
+    db.flush()
+    mention_ids = _resolve_mentions(db, c.texto)
+    _save_mentions(db, c.id, mention_ids)
+
     db.commit()
     db.refresh(c)
 
@@ -319,3 +391,239 @@ def toggle_reaccion(
 
     assert autor is not None
     return _to_out(c, autor, parents, reacciones_index)
+
+
+# ── Read tracking ─────────────────────────────────────────────────────────
+def _get_or_create_read(db: Session, user_id: int, proyecto_id: int) -> ComentarioRead:
+    r = (
+        db.query(ComentarioRead)
+        .filter(ComentarioRead.user_id == user_id, ComentarioRead.proyecto_id == proyecto_id)
+        .first()
+    )
+    if r:
+        return r
+    r = ComentarioRead(user_id=user_id, proyecto_id=proyecto_id, last_read_at=_now_utc())
+    db.add(r)
+    db.flush()
+    return r
+
+
+@router.post(
+    "/proyectos/{pid}/comentarios/read",
+    status_code=204,
+)
+def mark_read(
+    pid: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> None:
+    if not db.get(Proyecto, pid):
+        raise HTTPException(status_code=404, detail="Proyecto no encontrado")
+    r = _get_or_create_read(db, user.id, pid)
+    r.last_read_at = _now_utc()
+    db.commit()
+
+
+# ── Badges (consultas auxiliares) ─────────────────────────────────────────
+def _badge_for(
+    db: Session, user_id: int, proyecto_id: int
+) -> tuple[int, bool]:
+    """Devuelve (unread_count, has_mention) para un proyecto y usuario."""
+    r = (
+        db.query(ComentarioRead)
+        .filter(ComentarioRead.user_id == user_id, ComentarioRead.proyecto_id == proyecto_id)
+        .first()
+    )
+    if r is None:
+        # Nunca abierto: todo cuenta como no leído (excepto los propios)
+        unread = (
+            db.query(sql_func.count(Comentario.id))
+            .filter(Comentario.proyecto_id == proyecto_id, Comentario.user_id != user_id)
+            .scalar()
+        ) or 0
+        # Menciones pendientes (excluye las propias por construcción)
+        mention = (
+            db.query(ComentarioMention)
+            .join(Comentario, Comentario.id == ComentarioMention.comentario_id)
+            .filter(
+                Comentario.proyecto_id == proyecto_id,
+                ComentarioMention.user_id == user_id,
+                Comentario.user_id != user_id,
+            )
+            .first()
+        )
+        return int(unread), mention is not None
+
+    unread = (
+        db.query(sql_func.count(Comentario.id))
+        .filter(
+            Comentario.proyecto_id == proyecto_id,
+            Comentario.user_id != user_id,
+            Comentario.created_at > r.last_read_at,
+        )
+        .scalar()
+    ) or 0
+    mention = (
+        db.query(ComentarioMention)
+        .join(Comentario, Comentario.id == ComentarioMention.comentario_id)
+        .filter(
+            Comentario.proyecto_id == proyecto_id,
+            ComentarioMention.user_id == user_id,
+            Comentario.user_id != user_id,
+            Comentario.created_at > r.last_read_at,
+        )
+        .first()
+    )
+    return int(unread), mention is not None
+
+
+@router.get(
+    "/proyectos/{pid}/comentarios/badge",
+    response_model=BadgeProyecto,
+)
+def get_badge_proyecto(
+    pid: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> BadgeProyecto:
+    if user.level < 5:
+        raise HTTPException(status_code=403, detail="Acceso denegado")
+    if not db.get(Proyecto, pid):
+        raise HTTPException(status_code=404, detail="Proyecto no encontrado")
+    unread, has_mention = _badge_for(db, user.id, pid)
+    return BadgeProyecto(proyecto_id=pid, unread_count=unread, has_mention=has_mention)
+
+
+@router.get(
+    "/muro/badges",
+    response_model=BadgeMap,
+    dependencies=[Depends(require_level_5)],
+)
+def get_badges_map(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> BadgeMap:
+    """Badges para todos los proyectos visibles. Usado por el gestor."""
+    proyectos = db.query(Proyecto.id).all()
+    items = []
+    for (pid,) in proyectos:
+        unread, has_mention = _badge_for(db, user.id, pid)
+        if unread > 0 or has_mention:
+            items.append(BadgeProyecto(proyecto_id=pid, unread_count=unread, has_mention=has_mention))
+    return BadgeMap(items=items)
+
+
+@router.get(
+    "/muro/topbar",
+    response_model=TopbarBadge,
+    dependencies=[Depends(require_level_5)],
+)
+def get_topbar_badge(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> TopbarBadge:
+    proyectos = db.query(Proyecto.id).all()
+    total_mensajes = 0
+    unread_proyectos = 0
+    has_mention = False
+    for (pid,) in proyectos:
+        unread, mention = _badge_for(db, user.id, pid)
+        if unread > 0:
+            unread_proyectos += 1
+            total_mensajes += unread
+        if mention:
+            has_mention = True
+    return TopbarBadge(
+        unread_proyectos=unread_proyectos,
+        total_mensajes=total_mensajes,
+        has_mention=has_mention,
+    )
+
+
+# ── Muro: lista de conversaciones ─────────────────────────────────────────
+@router.get(
+    "/muro/conversaciones",
+    response_model=ConversacionesResponse,
+    dependencies=[Depends(require_level_5)],
+)
+def list_conversaciones(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> ConversacionesResponse:
+    """Lista de proyectos visibles, ordenados por última actividad de chat."""
+    proyectos = db.query(Proyecto).all()
+    items: list[ConversacionItem] = []
+    for p in proyectos:
+        last_msg, last_user = (
+            db.query(Comentario, User)
+            .join(User, User.id == Comentario.user_id)
+            .filter(Comentario.proyecto_id == p.id)
+            .order_by(Comentario.created_at.desc(), Comentario.id.desc())
+            .first()
+            or (None, None)
+        )
+        total = (
+            db.query(sql_func.count(Comentario.id))
+            .filter(Comentario.proyecto_id == p.id)
+            .scalar()
+        ) or 0
+        unread, has_mention = _badge_for(db, user.id, p.id)
+
+        # Skip proyectos sin actividad si quieres ocultarlos. Por ahora los
+        # mostramos todos para que el usuario pueda iniciar conversación.
+        cli = db.get(Cliente, p.cliente_id)
+        snippet = None
+        if last_msg is not None:
+            snippet = last_msg.texto if len(last_msg.texto) <= 120 else last_msg.texto[:117] + "…"
+
+        items.append(ConversacionItem(
+            proyecto_id=p.id,
+            proyecto_codigo=f"PROY-{p.id:04d}",
+            proyecto_nombre=p.nombre,
+            cliente_nombre=cli.nombre if cli else "—",
+            ultimo_mensaje=snippet,
+            ultimo_autor=(_nombre_display(last_user) if last_user else None),
+            ultimo_at=last_msg.created_at if last_msg else None,
+            total_mensajes=int(total),
+            unread_count=unread,
+            has_mention=has_mention,
+        ))
+
+    # Orden: primero los que tienen mensión, luego con unread, luego por
+    # actividad reciente (proyectos sin chat al final).
+    def sort_key(it: ConversacionItem):
+        return (
+            0 if it.has_mention else 1,
+            0 if it.unread_count > 0 else 1,
+            # ultimo_at puede ser None; convertimos a min para ir al final
+            -(it.ultimo_at.timestamp() if it.ultimo_at else 0),
+        )
+    items.sort(key=sort_key)
+
+    return ConversacionesResponse(items=items)
+
+
+# ── Team users (para @ autocomplete) ──────────────────────────────────────
+@router.get(
+    "/users/team",
+    response_model=list[TeamUser],
+    dependencies=[Depends(require_level_5)],
+)
+def list_team(db: Session = Depends(get_db)) -> list[TeamUser]:
+    """Usuarios mencionables. Por ahora todos los L5+ activos."""
+    rows = (
+        db.query(User)
+        .filter(User.is_active == True, User.level >= 5)  # noqa: E712
+        .order_by(User.full_name.asc(), User.username.asc())
+        .all()
+    )
+    return [
+        TeamUser(
+            id=u.id,
+            nombre=_nombre_display(u),
+            username=u.username,
+            iniciales=_iniciales(u.full_name, u.email),
+            level=u.level,
+        )
+        for u in rows
+    ]

@@ -12,6 +12,7 @@ import {
   IconBriefcase,
   IconCalendar,
   IconChart,
+  IconChat,
   IconHome,
   IconManual,
   IconMegaphone,
@@ -42,6 +43,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { to: '/', label: 'Inicio', icon: <IconHome /> },
       { to: '/proyectos', label: 'Gestor de proyectos', icon: <IconBriefcase /> },
+      { to: '/muro-comentarios', label: 'Muro de comentarios', icon: <IconChat />, minLevel: 5 },
       { to: '/calendario', label: 'Calendario', icon: <IconCalendar />, disabled: true, hint: 'Próximamente' },
       { to: '/reportes', label: 'Reportes', icon: <IconChart />, disabled: true, hint: 'Próximamente' },
     ],

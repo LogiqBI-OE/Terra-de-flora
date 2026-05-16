@@ -5,7 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import AppShell from '../../components/layout/AppShell'
 import Button from '../../components/ui/Button'
 import { IconChevronRight } from '../../components/icons/Icons'
-import { ApiError, proyectosApi, type ProyectoRow } from '../../lib/api'
+import { ApiError, comentariosApi, proyectosApi, type BadgeProyecto, type ProyectoRow } from '../../lib/api'
 import FolioTab from './sections/FolioTab'
 import PagosTab from './sections/PagosTab'
 import ComentariosTab from './sections/ComentariosTab'
@@ -52,6 +52,23 @@ export default function ProyectoDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [tab, setTab] = useState<TabKey>('folio')
+  const [badge, setBadge] = useState<BadgeProyecto | null>(null)
+
+  async function reloadBadge() {
+    if (!id) return
+    try {
+      const b = await comentariosApi.getBadgeProyecto(Number(id))
+      setBadge(b)
+    } catch {/* silencioso */}
+  }
+
+  useEffect(() => {
+    if (!id) return
+    reloadBadge()
+    const t = setInterval(reloadBadge, 15000)
+    return () => clearInterval(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
 
   useEffect(() => {
     if (!id) return
@@ -146,11 +163,12 @@ export default function ProyectoDetailPage() {
           >
             {TABS.map((t) => {
               const active = tab === t.id
+              const showBadge = t.id === 'comentarios' && badge && (badge.unread_count > 0 || badge.has_mention)
               return (
                 <button
                   key={t.id}
                   onClick={() => setTab(t.id)}
-                  className="px-4 py-2.5 text-sm font-semibold rounded-t-lg transition whitespace-nowrap"
+                  className="relative px-4 py-2.5 text-sm font-semibold rounded-t-lg transition whitespace-nowrap"
                   style={{
                     background: active ? 'var(--bg-elevated)' : 'transparent',
                     color: active ? 'var(--accent-text)' : 'var(--text-secondary)',
@@ -160,6 +178,22 @@ export default function ProyectoDetailPage() {
                 >
                   <span className="mr-1.5">{t.emoji}</span>
                   {t.label}
+                  {showBadge && (
+                    badge!.has_mention ? (
+                      <span
+                        className="absolute -top-1 -right-1 px-1 min-w-[16px] h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
+                        style={{ background: '#E11D48' }}
+                        title="Te etiquetaron"
+                      >@</span>
+                    ) : (
+                      <span
+                        className="absolute -top-1 -right-1 px-1 min-w-[16px] h-4 rounded-full flex items-center justify-center text-[9px] font-bold"
+                        style={{ background: 'var(--accent)', color: 'var(--text-on-accent)' }}
+                      >
+                        {badge!.unread_count > 9 ? '9+' : badge!.unread_count}
+                      </span>
+                    )
+                  )}
                 </button>
               )
             })}
@@ -187,7 +221,7 @@ export default function ProyectoDetailPage() {
                 hint="Próximamente"
               />
             )}
-            {tab === 'comentarios' && <ComentariosTab proyecto={proyecto} />}
+            {tab === 'comentarios' && <ComentariosTab proyecto={proyecto} onChange={reloadBadge} />}
           </div>
         </div>
       </div>
