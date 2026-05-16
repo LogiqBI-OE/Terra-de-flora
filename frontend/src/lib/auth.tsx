@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useMemo, useState, type ReactNo
 import { authApi, type LoginPayload, type Role } from './api'
 
 interface AuthUser {
+  id: number
   email: string
   username: string | null
   full_name: string | null
@@ -33,7 +34,15 @@ interface PersistedSession {
 function loadSession(): PersistedSession | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? (JSON.parse(raw) as PersistedSession) : null
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as PersistedSession
+    // Migración: sesiones viejas no tienen user.id. Forzamos relogin para
+    // que features como "este mensaje es mío" funcionen.
+    if (parsed?.user && typeof parsed.user.id !== 'number') {
+      localStorage.removeItem(STORAGE_KEY)
+      return null
+    }
+    return parsed
   } catch {
     return null
   }
@@ -55,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const res = await authApi.login(payload)
       const u: AuthUser = {
+        id: res.user_id,
         email: res.email,
         username: res.username ?? null,
         full_name: res.full_name,

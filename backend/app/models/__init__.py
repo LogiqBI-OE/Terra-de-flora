@@ -17,6 +17,7 @@ from app.models.cotizacion import (
     EstadoCotizacion,
 )
 from app.models.pago import MetodoPago, Pago, StatusPago, TipoPago
+from app.models.comentario import Comentario
 
 __all__ = [
     "User",
@@ -44,4 +45,5 @@ __all__ = [
     "Pago",
     "StatusPago",
     "TipoPago",
+    "Comentario",
 ]

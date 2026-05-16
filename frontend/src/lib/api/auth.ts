@@ -14,6 +14,7 @@ export interface LoginResponse {
   access_token: string
   token_type: string
   role: Role
+  user_id: number
   email: string
   username: string | null
   full_name: string | null

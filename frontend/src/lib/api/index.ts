@@ -43,6 +43,9 @@ export type {
   TipoProyecto, EstadoProyecto, TipoMeta, EstadoMeta, VendedorOption,
 } from './proyectos'
 
+export { comentariosApi } from './comentarios'
+export type { Comentario, ComentarioCreatePayload } from './comentarios'
+
 export { pagosApi } from './pagos'
 export type {
   PagoRow, PagosResumen, PagosTabResponse,

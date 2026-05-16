@@ -104,6 +104,7 @@ def login(
     return TokenResponse(
         access_token=token,
         role=user.role,
+        user_id=user.id,
         email=user.email,
         username=user.username,
         full_name=user.full_name,
