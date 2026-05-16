@@ -70,7 +70,7 @@ export { navApi } from './nav'
 export type {
   NavConfig, NavSectionDTO, NavItemDTO,
   NavAdminConfig, NavSectionAdminDTO, NavItemAdminDTO,
-  SectionCreatePayload, SectionUpdatePayload, ItemUpdatePayload,
+  NavSectionCreatePayload, NavSectionUpdatePayload, NavItemUpdatePayload,
 } from './nav'
 
 export { eventosApi } from './eventos'

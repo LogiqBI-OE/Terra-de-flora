@@ -42,18 +42,18 @@ export interface NavAdminConfig {
   sections: NavSectionAdminDTO[]
 }
 
-export interface SectionCreatePayload {
+export interface NavSectionCreatePayload {
   key: string
   label: string
   orden?: number
 }
 
-export interface SectionUpdatePayload {
+export interface NavSectionUpdatePayload {
   label?: string
   orden?: number
 }
 
-export interface ItemUpdatePayload {
+export interface NavItemUpdatePayload {
   section_id?: number | null
   label?: string
   orden?: number
@@ -66,12 +66,12 @@ export interface ItemUpdatePayload {
 export const navApi = {
   get: () => request<NavConfig>('/nav'),
   getAdmin: () => request<NavAdminConfig>('/nav/admin'),
-  createSection: (p: SectionCreatePayload) =>
+  createSection: (p: NavSectionCreatePayload) =>
     request<NavSectionAdminDTO>('/nav/admin/sections', { method: 'POST', body: JSON.stringify(p) }),
-  updateSection: (id: number, p: SectionUpdatePayload) =>
+  updateSection: (id: number, p: NavSectionUpdatePayload) =>
     request<NavSectionAdminDTO>(`/nav/admin/sections/${id}`, { method: 'PATCH', body: JSON.stringify(p) }),
   deleteSection: (id: number) =>
     request<void>(`/nav/admin/sections/${id}`, { method: 'DELETE' }),
-  updateItem: (id: number, p: ItemUpdatePayload) =>
+  updateItem: (id: number, p: NavItemUpdatePayload) =>
     request<NavItemAdminDTO>(`/nav/admin/items/${id}`, { method: 'PATCH', body: JSON.stringify(p) }),
 }
