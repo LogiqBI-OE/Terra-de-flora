@@ -108,7 +108,7 @@ class CotizacionOut(BaseModel):
 
 
 class CotizacionSummary(BaseModel):
-    """Versión resumida para la lista de versiones."""
+    """Versión resumida para la lista de versiones (sidebar cards)."""
     id: int
     proyecto_id: int
     version: int
@@ -117,6 +117,9 @@ class CotizacionSummary(BaseModel):
     snapshot_at: datetime | None
     is_active: bool
     total_venta: Decimal
+    total_costo: Decimal
+    secciones_count: int
+    items_count: int
     created_at: datetime
     updated_at: datetime
 

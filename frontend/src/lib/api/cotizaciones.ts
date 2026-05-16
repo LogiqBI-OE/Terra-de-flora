@@ -58,6 +58,9 @@ export interface CotizacionSummary {
   snapshot_at: string | null
   is_active: boolean
   total_venta: number | string
+  total_costo: number | string
+  secciones_count: number
+  items_count: number
   created_at: string
   updated_at: string
 }

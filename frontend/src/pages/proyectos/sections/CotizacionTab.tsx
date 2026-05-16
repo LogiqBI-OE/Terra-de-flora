@@ -33,8 +33,8 @@ const ESTADO_META: Record<EstadoCotizacion, { label: string; bg: string; text: s
   rechazada: { label: 'Rechazada', bg: 'rgba(244, 63, 94, 0.20)',   text: '#E11D48' },
 }
 
-// La vista activa: 'resumen', 'consolidado', o el id (numérico) de una sección.
-type View = 'resumen' | 'consolidado' | { kind: 'seccion'; id: number } | 'agregar'
+// La vista activa: vistas fijas o el id (numérico) de una sección custom.
+type View = 'resumen' | 'instalacion' | 'consolidado' | { kind: 'seccion'; id: number } | 'agregar'
 
 function viewKey(v: View): string {
   if (typeof v === 'string') return v
@@ -243,57 +243,42 @@ export default function CotizacionTab({ proyecto }: Props) {
   return (
     <div className="grid grid-cols-12 gap-4 min-h-[600px]">
       {/* ── Sidebar versiones (col 1) ───────────────────────────────── */}
-      <aside className="col-span-12 md:col-span-2">
+      <aside className="col-span-12 md:col-span-3 lg:col-span-3">
         <div
           className="rounded-2xl border p-3 space-y-2 sticky top-4"
           style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border)' }}
         >
-          <div className="text-[10px] uppercase tracking-widest text-app-muted font-semibold px-1 pb-1">
-            Versiones
+          <div className="flex items-center justify-between px-1 pb-1">
+            <div className="text-[10px] uppercase tracking-widest text-app-muted font-semibold">
+              Versiones <span className="opacity-70">({versiones.length})</span>
+            </div>
           </div>
 
           <button
             onClick={handleDuplicate}
             disabled={busy}
-            className="w-full px-3 py-2 rounded-lg text-xs font-semibold transition disabled:opacity-50"
+            className="w-full px-3 py-2 rounded-lg text-xs font-semibold transition disabled:opacity-50 flex items-center justify-center gap-1.5"
             style={{ background: 'var(--accent)', color: 'var(--text-on-accent)' }}
           >
-            + Duplicar
+            + Nueva versión (duplicar)
           </button>
 
-          <div className="space-y-1 pt-1">
-            {versiones.map((v) => {
-              const meta = ESTADO_META[v.estado]
-              const active = v.id === activeId
-              return (
-                <button
-                  key={v.id}
-                  onClick={() => setActiveId(v.id)}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold border transition text-left"
-                  style={{
-                    background: active ? 'var(--accent-bg-soft)' : 'var(--bg-card)',
-                    color: active ? 'var(--accent-text)' : 'var(--text-primary)',
-                    borderColor: active ? 'var(--accent)' : 'var(--border)',
-                  }}
-                >
-                  <span className="font-bold">v{v.version}</span>
-                  <span
-                    className="px-1.5 py-0.5 rounded-full text-[9px] font-semibold"
-                    style={{ background: meta.bg, color: meta.text }}
-                  >
-                    {meta.label}
-                  </span>
-                  {v.snapshot_at && <span className="ml-auto" title="Congelada">🔒</span>}
-                </button>
-              )
-            })}
+          <div className="space-y-2 pt-1">
+            {versiones.map((v) => (
+              <VersionCard
+                key={v.id}
+                summary={v}
+                active={v.id === activeId}
+                onClick={() => setActiveId(v.id)}
+              />
+            ))}
           </div>
         </div>
       </aside>
 
       {/* ── Contenido (col 2) ───────────────────────────────────────── */}
-      <main className="col-span-12 md:col-span-10 space-y-4">
-        {/* Pills de vistas */}
+      <main className="col-span-12 md:col-span-9 lg:col-span-9 space-y-4">
+        {/* Pills de vistas: fijas (Resumen · Instalación · Consolidado) + custom */}
         <div className="flex items-center gap-2 flex-wrap">
           <Pill
             label="📄 Resumen"
@@ -301,10 +286,17 @@ export default function CotizacionTab({ proyecto }: Props) {
             onClick={() => setView('resumen')}
           />
           <Pill
+            label="🚚 Instalación"
+            active={view === 'instalacion'}
+            onClick={() => setView('instalacion')}
+          />
+          <Pill
             label="📦 Consolidado"
             active={view === 'consolidado'}
             onClick={() => setView('consolidado')}
           />
+          {/* Separador visual */}
+          <span className="text-app-muted text-xs select-none">·</span>
           {cot.secciones.map((s) => (
             <Pill
               key={s.id}
@@ -384,6 +376,28 @@ export default function CotizacionTab({ proyecto }: Props) {
           </label>
         </div>
 
+        {isFrozen && (
+          <div
+            className="rounded-xl border px-4 py-3 text-xs flex items-start gap-2"
+            style={{
+              background: 'rgba(245, 158, 11, 0.10)',
+              borderColor: 'rgba(245, 158, 11, 0.40)',
+              color: '#92400E',
+            }}
+          >
+            <span className="text-base">🔒</span>
+            <div className="flex-1">
+              <strong>Esta versión está congelada.</strong>{' '}
+              Los costos quedaron snapshot cuando se envió/aprobó. Para modificar
+              los costos reales, edita los materiales en el{' '}
+              <a href="/materiales" className="underline font-semibold">catálogo de materiales</a>
+              {' '}— el cambio NO afecta esta versión, solo las futuras. Si quieres
+              re-cotizar con precios nuevos, usa <strong>"+ Nueva versión (duplicar)"</strong>{' '}
+              en el sidebar.
+            </div>
+          </div>
+        )}
+
         {error && (
           <div
             className="rounded-lg border px-4 py-2 text-sm"
@@ -396,6 +410,8 @@ export default function CotizacionTab({ proyecto }: Props) {
         {/* ── Contenido de la vista activa ─────────────────────────── */}
         <div key={viewKey(view)}>
           {view === 'resumen' && <ResumenView cot={cot} proyecto={proyecto} showCosts={showCosts} />}
+
+          {view === 'instalacion' && <InstalacionView />}
 
           {view === 'consolidado' && <ConsolidadoView cot={cot} showCosts={showCosts} />}
 
@@ -425,6 +441,91 @@ export default function CotizacionTab({ proyecto }: Props) {
         {/* Footer sticky de totales */}
         <TotalsFooter cot={cot} showCosts={showCosts} />
       </main>
+    </div>
+  )
+}
+
+// ─── Version Card (sidebar avatar) ───────────────────────────────────────
+function VersionCard({
+  summary, active, onClick,
+}: { summary: CotizacionSummary; active: boolean; onClick: () => void }) {
+  const meta = ESTADO_META[summary.estado]
+  const frozen = !!summary.snapshot_at
+
+  return (
+    <button
+      onClick={onClick}
+      className="w-full text-left rounded-xl border p-3 transition"
+      style={{
+        background: active ? 'var(--accent-bg-soft)' : 'var(--bg-card)',
+        borderColor: active ? 'var(--accent)' : 'var(--border)',
+        boxShadow: active ? '0 0 0 1px var(--accent)' : 'none',
+      }}
+    >
+      {/* Header: avatar versión + estado + lock */}
+      <div className="flex items-center gap-2 mb-2">
+        <div
+          className="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm shrink-0"
+          style={{
+            background: active ? 'var(--accent)' : 'var(--bg-toggle)',
+            color: active ? 'var(--text-on-accent)' : 'var(--text-primary)',
+          }}
+        >
+          v{summary.version}
+        </div>
+        <div className="min-w-0 flex-1">
+          <span
+            className="inline-block px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide"
+            style={{ background: meta.bg, color: meta.text }}
+          >
+            {meta.label}
+          </span>
+        </div>
+        {frozen && (
+          <span title="Versión congelada" className="text-app-muted text-xs">🔒</span>
+        )}
+      </div>
+
+      {/* Precio */}
+      <div className="text-lg font-bold leading-tight" style={{ color: active ? 'var(--accent-text)' : 'var(--text-primary)' }}>
+        {fmtMoney(summary.total_venta)}
+      </div>
+
+      {/* Resumen secciones / items */}
+      <div className="text-[10px] uppercase tracking-wide text-app-muted mt-1">
+        {summary.secciones_count} secc. · {summary.items_count} {summary.items_count === 1 ? 'item' : 'items'}
+      </div>
+
+      {/* Fecha de envío si snapshot, o creación si borrador */}
+      <div className="text-[10px] text-app-muted mt-0.5">
+        {frozen && summary.snapshot_at
+          ? `Enviada ${new Date(summary.snapshot_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}`
+          : `${new Date(summary.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}`}
+      </div>
+    </button>
+  )
+}
+
+// ─── Vista Instalación (placeholder por ahora) ───────────────────────────
+function InstalacionView() {
+  return (
+    <div
+      className="rounded-2xl border p-10 text-center"
+      style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
+    >
+      <div className="text-5xl mb-3 opacity-70">🚚</div>
+      <h3 className="text-lg font-bold text-app mb-1">Instalación</h3>
+      <p className="text-sm text-app-secondary max-w-md mx-auto">
+        Aquí va lo del montaje y desmontaje del evento: jornadas, equipo asignado,
+        sueldos, comida y transporte. La estructura entra en el siguiente paso del
+        rollout — me confirmas qué campos quieres y lo armo.
+      </p>
+      <div
+        className="mt-5 inline-block px-3 py-1.5 rounded-full text-[11px] font-semibold uppercase tracking-widest"
+        style={{ background: 'var(--bg-toggle)', color: 'var(--text-secondary)' }}
+      >
+        Pendiente de definir
+      </div>
     </div>
   )
 }

@@ -252,10 +252,14 @@ def _summary(db: Session, c: Cotizacion, cache: RecetaCostCache | None = None) -
     if cache is None:
         cache = RecetaCostCache(db).load_for(_collect_receta_ids(c))
     total_venta = ZERO
+    total_costo = ZERO
+    items_count = 0
     for s in c.secciones:
         for it in s.items:
             out = _item_to_out(it, margen, is_snap, cache)
             total_venta += out.subtotal_venta
+            total_costo += out.subtotal_costo
+            items_count += 1
     return CotizacionSummary(
         id=c.id,
         proyecto_id=c.proyecto_id,
@@ -265,6 +269,9 @@ def _summary(db: Session, c: Cotizacion, cache: RecetaCostCache | None = None) -
         snapshot_at=c.snapshot_at,
         is_active=c.is_active,
         total_venta=_q2(total_venta),
+        total_costo=_q2(total_costo),
+        secciones_count=len(c.secciones),
+        items_count=items_count,
         created_at=c.created_at,
         updated_at=c.updated_at,
     )
