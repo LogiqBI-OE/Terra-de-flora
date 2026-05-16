@@ -116,6 +116,8 @@ export default function Login() {
                   type="text"
                   required
                   autoComplete="username"
+                  name="username"
+                  id="login-username"
                   placeholder="correo@terradeflora.com  o  usuario"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
@@ -144,6 +146,9 @@ export default function Login() {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
+                    autoComplete="current-password"
+                    name="password"
+                    id="login-password"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
