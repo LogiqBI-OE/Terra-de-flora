@@ -3,7 +3,7 @@
 // Encapsula: carga, polling, send, reply, edit, react, mark-as-read,
 // @ autocomplete y highlight de menciones.
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useAuth } from '../../lib/auth'
 import {
   ALLOWED_EMOJIS,
@@ -384,9 +384,15 @@ function fmtTime(iso: string): string {
 }
 
 /** Renderiza el texto destacando @menciones. Si la mención coincide con
- *  el usuario actual, usa color "danger" para resaltar.
+ *  el usuario actual, usa color rojo. En burbujas propias (fondo accent),
+ *  invierte a estilo "sobre azul" para que el highlight sea visible.
  */
-function renderTexto(texto: string, myUsername: string | null, myName: string | null) {
+function renderTexto(
+  texto: string,
+  isMe: boolean,
+  myUsername: string | null,
+  myName: string | null,
+) {
   const re = /@(?:"([^"]+)"|([A-Za-z0-9_.\-]+))/g
   const parts: Array<{ kind: 'text' | 'mention'; value: string; me?: boolean }> = []
   let last = 0
@@ -404,14 +410,34 @@ function renderTexto(texto: string, myUsername: string | null, myName: string | 
 
   return parts.map((p, i) => {
     if (p.kind === 'text') return <span key={i}>{p.value}</span>
+
+    // Color del highlight: depende de (1) si te etiqueta a ti y (2) si estamos
+    // dentro de una burbuja propia (fondo accent oscuro) u otra (fondo claro).
+    let style: CSSProperties
+    if (p.me) {
+      // Te etiquetaron: rojo, igual en cualquier burbuja
+      style = { background: 'rgba(244,63,94,0.28)', color: '#FECDD3', fontWeight: 700 }
+      if (!isMe) {
+        style = { background: 'rgba(244,63,94,0.18)', color: '#E11D48', fontWeight: 700 }
+      }
+    } else if (isMe) {
+      // Mención dentro de mi burbuja (fondo azul accent): blanco sobre alpha
+      style = {
+        background: 'rgba(255,255,255,0.22)',
+        color: '#FFFFFF',
+        fontWeight: 700,
+      }
+    } else {
+      // Mención a otro dentro de burbuja de otro autor
+      style = {
+        background: 'var(--accent-bg-soft)',
+        color: 'var(--accent-text)',
+        fontWeight: 700,
+      }
+    }
+
     return (
-      <span
-        key={i}
-        className="px-1 rounded font-semibold"
-        style={p.me
-          ? { background: 'rgba(244,63,94,0.18)', color: '#E11D48' }
-          : { background: 'var(--accent-bg-soft)', color: 'var(--accent-text)' }}
-      >
+      <span key={i} className="px-1 rounded" style={style}>
         @{p.value}
       </span>
     )
@@ -522,7 +548,7 @@ function MessageRow(p: MessageRowProps) {
           </div>
         </div>
       ) : (
-        <span>{renderTexto(m.texto, myUsername, myName)}</span>
+        <span>{renderTexto(m.texto, isMe, myUsername, myName)}</span>
       )}
     </div>
   )
