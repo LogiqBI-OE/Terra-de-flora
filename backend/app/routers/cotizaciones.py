@@ -22,7 +22,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.core.deps import require_level_5
 from app.db import get_db
@@ -75,8 +75,71 @@ def _q2(v: Decimal) -> Decimal:
 
 
 # ── Cálculo de costos ─────────────────────────────────────────────────────
-def _costo_unit_receta(db: Session, receta_id: int) -> Decimal:
-    """Suma costo_unitario(material) * cantidad por todos los RecetaItem."""
+class RecetaCostCache:
+    """Precarga en batch los costos y nombres de un set de recetas para
+    evitar N+1 queries al construir CotizacionOut.
+
+    Uso:
+        cache = RecetaCostCache(db).load_for([id1, id2, ...])
+        nombre, costo = cache.get(receta_id)
+    """
+
+    def __init__(self, db: Session) -> None:
+        self.db = db
+        self._cache: dict[int, tuple[str, Decimal]] = {}
+
+    def load_for(self, receta_ids: list[int]) -> "RecetaCostCache":
+        # Quita None / duplicados y filtra los que ya tenemos
+        unique_ids = {rid for rid in receta_ids if rid is not None and rid not in self._cache}
+        if not unique_ids:
+            return self
+        # 1 query: trae las recetas con items y materials eager-loaded
+        recetas = (
+            self.db.query(Receta)
+            .options(selectinload(Receta.items))
+            .filter(Receta.id.in_(unique_ids))
+            .all()
+        )
+        # 2 query: precios de materiales referenciados
+        material_ids: set[int] = set()
+        for r in recetas:
+            for it in r.items:
+                material_ids.add(it.material_id)
+        materiales: dict[int, Material] = {}
+        if material_ids:
+            for m in self.db.query(Material).filter(Material.id.in_(material_ids)).all():
+                materiales[m.id] = m
+
+        for r in recetas:
+            total = ZERO
+            for it in r.items:
+                mat = materiales.get(it.material_id)
+                if not mat or mat.contenido_por_paquete <= 0:
+                    continue
+                precio_unit = mat.precio_paquete / mat.contenido_por_paquete
+                total += precio_unit * it.cantidad
+            self._cache[r.id] = (r.nombre, total)
+
+        # Marca como "(eliminada)" las que pediste pero no existen
+        for rid in unique_ids:
+            if rid not in self._cache:
+                self._cache[rid] = ("(receta eliminada)", ZERO)
+
+        return self
+
+    def get(self, receta_id: int) -> tuple[str, Decimal]:
+        if receta_id not in self._cache:
+            # Lazy fallback: carga sola esta receta. Idealmente nunca pasa.
+            self.load_for([receta_id])
+        return self._cache.get(receta_id, ("(receta eliminada)", ZERO))
+
+
+def _collect_receta_ids(c: Cotizacion) -> list[int]:
+    return [it.receta_id for s in c.secciones for it in s.items if it.receta_id is not None]
+
+
+# Mantengo helpers legacy para freeze (que solo corre 1 vez por cotización al firmar)
+def _costo_unit_receta_uncached(db: Session, receta_id: int) -> Decimal:
     items = db.query(RecetaItem).filter(RecetaItem.receta_id == receta_id).all()
     total = ZERO
     for it in items:
@@ -88,21 +151,23 @@ def _costo_unit_receta(db: Session, receta_id: int) -> Decimal:
     return total
 
 
-def _nombre_receta(db: Session, receta_id: int) -> str:
+def _nombre_receta_uncached(db: Session, receta_id: int) -> str:
     r = db.get(Receta, receta_id)
     return r.nombre if r else "(receta eliminada)"
 
 
 def _item_to_out(
-    db: Session, it: CotizacionItem, margen_default: Decimal, is_snapshot: bool
+    it: CotizacionItem,
+    margen_default: Decimal,
+    is_snapshot: bool,
+    cache: RecetaCostCache,
 ) -> CotizacionItemOut:
     if is_snapshot and it.costo_unit_snapshot is not None:
         costo_unit = Decimal(it.costo_unit_snapshot)
         nombre = it.nombre_snapshot or it.descripcion or "(item)"
     else:
         if it.receta_id is not None:
-            costo_unit = _costo_unit_receta(db, it.receta_id)
-            nombre = _nombre_receta(db, it.receta_id)
+            nombre, costo_unit = cache.get(it.receta_id)
         else:
             costo_unit = ZERO
             nombre = it.descripcion or "(item libre)"
@@ -132,9 +197,12 @@ def _item_to_out(
 
 
 def _to_seccion_out(
-    db: Session, s: CotizacionSeccion, margen_default: Decimal, is_snapshot: bool
+    s: CotizacionSeccion,
+    margen_default: Decimal,
+    is_snapshot: bool,
+    cache: RecetaCostCache,
 ) -> CotizacionSeccionOut:
-    items_out = [_item_to_out(db, it, margen_default, is_snapshot) for it in s.items]
+    items_out = [_item_to_out(it, margen_default, is_snapshot, cache) for it in s.items]
     subtotal_costo = sum((it.subtotal_costo for it in items_out), ZERO)
     subtotal_venta = sum((it.subtotal_venta for it in items_out), ZERO)
     return CotizacionSeccionOut(
@@ -152,7 +220,8 @@ def _to_seccion_out(
 def _to_out(db: Session, c: Cotizacion) -> CotizacionOut:
     is_snap = c.snapshot_at is not None
     margen = Decimal(c.margen_default)
-    secciones_out = [_to_seccion_out(db, s, margen, is_snap) for s in c.secciones]
+    cache = RecetaCostCache(db).load_for(_collect_receta_ids(c))
+    secciones_out = [_to_seccion_out(s, margen, is_snap, cache) for s in c.secciones]
     total_costo = sum((s.subtotal_costo for s in secciones_out), ZERO)
     total_venta = sum((s.subtotal_venta for s in secciones_out), ZERO)
     margen_real = (
@@ -177,13 +246,15 @@ def _to_out(db: Session, c: Cotizacion) -> CotizacionOut:
     )
 
 
-def _summary(db: Session, c: Cotizacion) -> CotizacionSummary:
+def _summary(db: Session, c: Cotizacion, cache: RecetaCostCache | None = None) -> CotizacionSummary:
     is_snap = c.snapshot_at is not None
     margen = Decimal(c.margen_default)
+    if cache is None:
+        cache = RecetaCostCache(db).load_for(_collect_receta_ids(c))
     total_venta = ZERO
     for s in c.secciones:
         for it in s.items:
-            out = _item_to_out(db, it, margen, is_snap)
+            out = _item_to_out(it, margen, is_snap, cache)
             total_venta += out.subtotal_venta
     return CotizacionSummary(
         id=c.id,
@@ -205,8 +276,8 @@ def _freeze_snapshot(db: Session, c: Cotizacion) -> None:
     for s in c.secciones:
         for it in s.items:
             if it.receta_id is not None:
-                it.costo_unit_snapshot = _costo_unit_receta(db, it.receta_id)
-                it.nombre_snapshot = _nombre_receta(db, it.receta_id)
+                it.costo_unit_snapshot = _costo_unit_receta_uncached(db, it.receta_id)
+                it.nombre_snapshot = _nombre_receta_uncached(db, it.receta_id)
             else:
                 it.costo_unit_snapshot = ZERO
                 it.nombre_snapshot = it.descripcion or "(item libre)"
@@ -235,11 +306,17 @@ def list_versions(pid: int, db: Session = Depends(get_db)) -> list[CotizacionSum
         raise HTTPException(status_code=404, detail="Proyecto no encontrado")
     versiones = (
         db.query(Cotizacion)
+        .options(selectinload(Cotizacion.secciones).selectinload(CotizacionSeccion.items))
         .filter(Cotizacion.proyecto_id == pid)
         .order_by(Cotizacion.version.desc())
         .all()
     )
-    return [_summary(db, c) for c in versiones]
+    # Una sola cache compartida para todas las versiones del proyecto
+    all_receta_ids: list[int] = []
+    for c in versiones:
+        all_receta_ids.extend(_collect_receta_ids(c))
+    cache = RecetaCostCache(db).load_for(all_receta_ids)
+    return [_summary(db, c, cache) for c in versiones]
 
 
 @router.post(
@@ -328,7 +405,12 @@ def duplicar(pid: int, cid: int, db: Session = Depends(get_db)) -> CotizacionOut
     dependencies=[Depends(require_level_5)],
 )
 def get_cotizacion(cid: int, db: Session = Depends(get_db)) -> CotizacionOut:
-    c = db.get(Cotizacion, cid)
+    c = (
+        db.query(Cotizacion)
+        .options(selectinload(Cotizacion.secciones).selectinload(CotizacionSeccion.items))
+        .filter(Cotizacion.id == cid)
+        .first()
+    )
     if not c:
         raise HTTPException(status_code=404, detail="Cotización no encontrada")
     return _to_out(db, c)
@@ -441,7 +523,8 @@ def create_seccion(
         )
     db.commit()
     db.refresh(s)
-    return _to_seccion_out(db, s, Decimal(c.margen_default), False)
+    cache = RecetaCostCache(db).load_for([it.receta_id for it in s.items if it.receta_id])
+    return _to_seccion_out(s, Decimal(c.margen_default), False, cache)
 
 
 @router.patch(
@@ -465,7 +548,8 @@ def update_seccion(
         s.notas = payload.notas
     db.commit()
     db.refresh(s)
-    return _to_seccion_out(db, s, Decimal(c.margen_default), False)
+    cache = RecetaCostCache(db).load_for([it.receta_id for it in s.items if it.receta_id])
+    return _to_seccion_out(s, Decimal(c.margen_default), False, cache)
 
 
 @router.delete(
@@ -509,7 +593,8 @@ def create_item(
     db.add(it)
     db.commit()
     db.refresh(it)
-    return _item_to_out(db, it, Decimal(c.margen_default), False)
+    cache = RecetaCostCache(db).load_for([it.receta_id] if it.receta_id else [])
+    return _item_to_out(it, Decimal(c.margen_default), False, cache)
 
 
 @router.patch(
@@ -540,7 +625,8 @@ def update_item(
         it.notas = payload.notas
     db.commit()
     db.refresh(it)
-    return _item_to_out(db, it, Decimal(c.margen_default), False)
+    cache = RecetaCostCache(db).load_for([it.receta_id] if it.receta_id else [])
+    return _item_to_out(it, Decimal(c.margen_default), False, cache)
 
 
 @router.delete(
