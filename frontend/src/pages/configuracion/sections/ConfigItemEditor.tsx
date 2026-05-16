@@ -14,6 +14,7 @@ interface Props {
 export default function ConfigItemEditor({ item, draft, onChange }: Props) {
   const [show, setShow] = useState(!item.secret)
 
+  const isBool = item.input_type === 'boolean'
   const inputType =
     item.secret && !show
       ? 'password'
@@ -38,19 +39,32 @@ export default function ConfigItemEditor({ item, draft, onChange }: Props) {
         </code>
       </div>
       <div className="flex items-center gap-2">
-        <input
-          type={inputType}
-          value={draft}
-          onChange={(e) => onChange(e.target.value)}
-          min={item.input_type === 'number' ? 1 : undefined}
-          className="w-full max-w-sm px-3 py-2 rounded-lg border text-sm"
-          style={{
-            background: 'var(--bg-input)',
-            borderColor: 'var(--border)',
-            color: 'var(--text-primary)',
-          }}
-        />
-        {item.secret && (
+        {isBool ? (
+          <label className="inline-flex items-center gap-2 text-sm text-app cursor-pointer">
+            <input
+              type="checkbox"
+              checked={draft === 'true'}
+              onChange={(e) => onChange(e.target.checked ? 'true' : 'false')}
+              className="w-4 h-4"
+              style={{ accentColor: 'var(--accent)' }}
+            />
+            <span>{draft === 'true' ? 'Activado' : 'Apagado'}</span>
+          </label>
+        ) : (
+          <input
+            type={inputType}
+            value={draft}
+            onChange={(e) => onChange(e.target.value)}
+            min={item.input_type === 'number' ? 1 : undefined}
+            className="w-full max-w-sm px-3 py-2 rounded-lg border text-sm"
+            style={{
+              background: 'var(--bg-input)',
+              borderColor: 'var(--border)',
+              color: 'var(--text-primary)',
+            }}
+          />
+        )}
+        {item.secret && !isBool && (
           <button
             onClick={() => setShow((v) => !v)}
             className="text-xs text-app-secondary hover:text-app px-2 py-1"

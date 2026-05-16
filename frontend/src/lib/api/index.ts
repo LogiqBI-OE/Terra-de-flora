@@ -2,7 +2,7 @@ export { authApi } from './auth'
 export type { Role, LoginPayload, LoginResponse } from './auth'
 
 export { systemConfigApi } from './systemConfig'
-export type { SystemConfigItem } from './systemConfig'
+export type { SystemConfigItem, RuntimeConfig } from './systemConfig'
 
 export { levelsApi } from './levels'
 export type { LevelDetail, LevelsPayload } from './levels'

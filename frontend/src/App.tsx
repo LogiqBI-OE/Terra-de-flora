@@ -6,6 +6,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { lazy, Suspense, type JSX } from 'react'
 import Login from './pages/Login'
 import { useAuth } from './lib/auth'
+import { useKeepWarm } from './lib/useKeepWarm'
 
 // Lazy imports: cada chunk se baja solo cuando navegas a esa ruta.
 // Beneficio: el bundle inicial baja de ~600KB a ~250KB, primera carga +rápida.
@@ -50,6 +51,9 @@ function PageFallback() {
 }
 
 export default function App() {
+  // Keep-warm controlado por SystemConfig (apagado por default)
+  useKeepWarm()
+
   return (
     <Suspense fallback={<PageFallback />}>
       <Routes>

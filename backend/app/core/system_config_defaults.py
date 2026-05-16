@@ -48,6 +48,37 @@ SYSTEM_CONFIG_KEYS: list[ConfigKey] = [
         input_type="number",
         secret=False,
     ),
+
+    # ── Rendimiento ──────────────────────────────────────────────────────────
+    ConfigKey(
+        key="keep_warm_ping_enabled",
+        default="false",
+        label="Mantener backend caliente (keep-warm)",
+        description=(
+            "Cuando está activo, mientras tengas la app abierta en cualquier "
+            "pestaña, el frontend pinguea /health cada N minutos para evitar "
+            "que el backend se duerma (cold start de Railway ≈ 300-500ms en "
+            "el primer request del día). Si todos cierran la app, el ping se "
+            "detiene — para keep-warm 24/7 usa un servicio externo como "
+            "UptimeRobot."
+        ),
+        section="Rendimiento",
+        input_type="boolean",
+        secret=False,
+    ),
+    ConfigKey(
+        key="keep_warm_ping_interval_minutes",
+        default="5",
+        label="Intervalo del keep-warm (minutos)",
+        description=(
+            "Cada cuántos minutos hacer el ping a /health cuando el keep-warm "
+            "está activo. Default 5 (Railway suele dormir el contenedor "
+            "después de ~10 min sin tráfico)."
+        ),
+        section="Rendimiento",
+        input_type="number",
+        secret=False,
+    ),
 ]
 
 

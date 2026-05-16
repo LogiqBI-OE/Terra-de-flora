@@ -1,8 +1,16 @@
-"""Router: configuración global del sistema. Solo nivel 9."""
+"""Router: configuración global del sistema.
+
+- GET /system-config         → L9: lista completa con metadata
+- PATCH /system-config       → L9: actualiza valores
+- GET /system-config/runtime → cualquier autenticado: solo claves que el
+                                frontend necesita conocer en runtime (toggles
+                                de comportamiento del cliente)
+"""
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.core.deps import require_level_9
+from app.core.deps import get_current_user, require_level_9
 from app.core.system_config_defaults import keys_by_id
 from app.db import get_db
 from app.models.user import User
@@ -10,6 +18,30 @@ from app.schemas.system_config import SystemConfigItem, SystemConfigUpdate
 from app.services import system_config_service as svc
 
 router = APIRouter(prefix="/system-config", tags=["system-config"])
+
+
+class RuntimeConfig(BaseModel):
+    keep_warm_ping_enabled: bool
+    keep_warm_ping_interval_minutes: int
+
+
+@router.get("/runtime", response_model=RuntimeConfig)
+def runtime(
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> RuntimeConfig:
+    """Settings que el frontend lee al iniciar para configurar comportamiento."""
+    enabled = svc.get(db, "keep_warm_ping_enabled").strip().lower() == "true"
+    try:
+        interval = int(svc.get(db, "keep_warm_ping_interval_minutes"))
+    except ValueError:
+        interval = 5
+    if interval < 1:
+        interval = 1
+    return RuntimeConfig(
+        keep_warm_ping_enabled=enabled,
+        keep_warm_ping_interval_minutes=interval,
+    )
 
 
 @router.get("", response_model=list[SystemConfigItem])

@@ -5,10 +5,15 @@ export interface SystemConfigItem {
   key: string
   label: string
   description: string
-  section: string       // ej. "Accesos", "Licencia"
-  input_type: string    // "text" | "password" | "number"
+  section: string       // ej. "Accesos", "Licencia", "Rendimiento"
+  input_type: string    // "text" | "password" | "number" | "boolean"
   secret: boolean
   value: string
+}
+
+export interface RuntimeConfig {
+  keep_warm_ping_enabled: boolean
+  keep_warm_ping_interval_minutes: number
 }
 
 export const systemConfigApi = {
@@ -18,4 +23,5 @@ export const systemConfigApi = {
       method: 'PATCH',
       body: JSON.stringify({ items }),
     }),
+  runtime: () => request<RuntimeConfig>('/system-config/runtime'),
 }
