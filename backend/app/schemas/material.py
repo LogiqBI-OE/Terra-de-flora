@@ -13,6 +13,7 @@ class MaterialCreate(BaseModel):
     contenido_por_paquete: Decimal = Field(default=Decimal("1"), gt=Decimal("0"))
     precio_paquete: Decimal = Field(default=Decimal("0"), ge=Decimal("0"))
     proveedor_id: int | None = None
+    color_hex: str | None = None
     notas: str | None = None
 
 
@@ -24,6 +25,7 @@ class MaterialUpdate(BaseModel):
     contenido_por_paquete: Decimal | None = None
     precio_paquete: Decimal | None = None
     proveedor_id: int | None = None
+    color_hex: str | None = None
     notas: str | None = None
     is_active: bool | None = None
 
@@ -39,10 +41,24 @@ class MaterialOut(BaseModel):
     precio_unitario: Decimal  # calculado
     proveedor_id: int | None
     proveedor_nombre: str | None
+    color_hex: str | None
     notas: str | None
     is_active: bool
     created_at: datetime
     updated_at: datetime
+
+
+# ── Histórico de precios ─────────────────────────────────────────────────
+class MaterialPrecioHistoricoOut(BaseModel):
+    id: int
+    material_id: int
+    precio_paquete: Decimal
+    contenido_por_paquete: Decimal
+    precio_unitario: Decimal  # calculado
+    changed_by_user_id: int | None
+    changed_by_nombre: str | None
+    source: str
+    created_at: datetime
 
 
 # ── Catalogos editables ───────────────────────────────────────────────────

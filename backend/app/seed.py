@@ -89,6 +89,30 @@ def _run_lightweight_migrations() -> None:
             with engine.begin() as conn:
                 conn.execute(text("ALTER TABLE clientes ADD COLUMN como_nos_contacto VARCHAR(120)"))
 
+    if "recetas" in insp.get_table_names():
+        cols = {c["name"] for c in insp.get_columns("recetas")}
+        if "n_arreglos_default" not in cols:
+            print("  + migracion: agregando columna recetas.n_arreglos_default")
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE recetas ADD COLUMN n_arreglos_default INTEGER NOT NULL DEFAULT 1"))
+
+    if "receta_items" in insp.get_table_names():
+        cols = {c["name"] for c in insp.get_columns("receta_items")}
+        with engine.begin() as conn:
+            if "grupo" not in cols:
+                print("  + migracion: agregando columna receta_items.grupo")
+                conn.execute(text("ALTER TABLE receta_items ADD COLUMN grupo VARCHAR(60)"))
+            if "orden" not in cols:
+                print("  + migracion: agregando columna receta_items.orden")
+                conn.execute(text("ALTER TABLE receta_items ADD COLUMN orden INTEGER NOT NULL DEFAULT 0"))
+
+    if "materiales" in insp.get_table_names():
+        cols = {c["name"] for c in insp.get_columns("materiales")}
+        if "color_hex" not in cols:
+            print("  + migracion: agregando columna materiales.color_hex")
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE materiales ADD COLUMN color_hex VARCHAR(9)"))
+
     if "comentarios" in insp.get_table_names():
         cols = {c["name"] for c in insp.get_columns("comentarios")}
         with engine.begin() as conn:

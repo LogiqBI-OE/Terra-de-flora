@@ -8,6 +8,7 @@ from app.models.proveedor import Proveedor
 from app.models.cliente import Cliente, TipoCliente
 from app.models.material import Material
 from app.models.material_catalog import MaterialFamilia, MaterialUnidad
+from app.models.material_historico import MaterialPrecioHistorico
 from app.models.receta import Receta, RecetaItem
 from app.models.proyecto import Proyecto, EstadoProyecto, TipoProyecto
 from app.models.cotizacion import (
@@ -39,6 +40,7 @@ __all__ = [
     "Material",
     "MaterialFamilia",
     "MaterialUnidad",
+    "MaterialPrecioHistorico",
     "Receta",
     "RecetaItem",
     "Proyecto",

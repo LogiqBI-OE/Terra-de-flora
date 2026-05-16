@@ -47,6 +47,8 @@ from app.schemas.cotizacion import (
     CotizacionSeccionUpdate,
     CotizacionSummary,
     CotizacionUpdate,
+    DesviacionItem,
+    DesviacionResumen,
     SeccionTipoOption,
 )
 
@@ -650,3 +652,86 @@ def delete_item(iid: int, db: Session = Depends(get_db)) -> None:
     _assert_editable(c)
     db.delete(it)
     db.commit()
+
+
+
+# ── Desviación (Fase 3: snapshot vs precio actual) ────────────────────────
+@router.get(
+    "/cotizaciones/{cid}/desviacion",
+    response_model=DesviacionResumen,
+    dependencies=[Depends(require_level_5)],
+)
+def get_desviacion(cid: int, db: Session = Depends(get_db)) -> DesviacionResumen:
+    """Para una cotización CONGELADA: compara cada costo snapshot vs el
+    costo actual del catálogo. Muestra delta unitario y total.
+
+    Permite responder: '¿Cuánto se movió el costo desde que firmé hasta hoy?'
+    Útil para saber si el evento sigue rentable cerca del día de compra.
+    """
+    c = (
+        db.query(Cotizacion)
+        .options(selectinload(Cotizacion.secciones).selectinload(CotizacionSeccion.items))
+        .filter(Cotizacion.id == cid)
+        .first()
+    )
+    if not c:
+        raise HTTPException(status_code=404, detail="Cotización no encontrada")
+
+    cache = RecetaCostCache(db).load_for(_collect_receta_ids(c))
+    items: list[DesviacionItem] = []
+    snap_total = ZERO
+    actual_total = ZERO
+
+    for s in c.secciones:
+        for it in s.items:
+            cant = Decimal(it.cantidad)
+            # Snapshot
+            if it.costo_unit_snapshot is not None:
+                snap_unit = Decimal(it.costo_unit_snapshot)
+            else:
+                # No congelada todavía: usa el actual como snapshot
+                if it.receta_id is not None:
+                    _, snap_unit = cache.get(it.receta_id)
+                else:
+                    snap_unit = ZERO
+            # Actual (del catálogo en vivo)
+            if it.receta_id is not None:
+                nombre, actual_unit = cache.get(it.receta_id)
+            else:
+                actual_unit = ZERO
+                nombre = it.descripcion or "(item libre)"
+
+            delta_unit = actual_unit - snap_unit
+            direccion = "igual"
+            if delta_unit > 0:
+                direccion = "sube"
+            elif delta_unit < 0:
+                direccion = "baja"
+
+            items.append(DesviacionItem(
+                item_id=it.id,
+                receta_id=it.receta_id,
+                nombre=nombre,
+                seccion_nombre=s.nombre,
+                cantidad=cant,
+                costo_snapshot=_q2(snap_unit),
+                costo_actual=_q2(actual_unit),
+                delta_unit=_q2(delta_unit),
+                delta_total=_q2(delta_unit * cant),
+                direccion=direccion,
+            ))
+            snap_total += snap_unit * cant
+            actual_total += actual_unit * cant
+
+    delta_total = actual_total - snap_total
+    delta_pct = (delta_total / snap_total * Decimal("100")) if snap_total > 0 else ZERO
+
+    return DesviacionResumen(
+        cotizacion_id=c.id,
+        snapshot_at=c.snapshot_at,
+        snapshot_total_costo=_q2(snap_total),
+        actual_total_costo=_q2(actual_total),
+        delta_total=_q2(delta_total),
+        delta_pct=delta_pct.quantize(Decimal("0.01")),
+        items=items,
+    )

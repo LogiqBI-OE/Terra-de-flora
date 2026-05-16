@@ -132,3 +132,29 @@ class SeccionTipoOption(BaseModel):
 
 class CotizacionCatalog(BaseModel):
     secciones_tipo: list[SeccionTipoOption]
+
+
+# ── Desviación (snapshot vs precio actual del catálogo) ──────────────────
+class DesviacionItem(BaseModel):
+    """Comparación del costo congelado de un item vs el costo actual del
+    catálogo (Fase 3)."""
+    item_id: int
+    receta_id: int | None
+    nombre: str
+    seccion_nombre: str
+    cantidad: Decimal
+    costo_snapshot: Decimal     # costo unitario al momento de congelar
+    costo_actual: Decimal       # costo unitario hoy (recalculado del catálogo)
+    delta_unit: Decimal         # costo_actual - costo_snapshot
+    delta_total: Decimal        # delta_unit * cantidad
+    direccion: str              # 'sube' | 'baja' | 'igual'
+
+
+class DesviacionResumen(BaseModel):
+    cotizacion_id: int
+    snapshot_at: datetime | None
+    snapshot_total_costo: Decimal
+    actual_total_costo: Decimal
+    delta_total: Decimal
+    delta_pct: Decimal          # porcentaje del catálogo respecto al snapshot
+    items: list[DesviacionItem]

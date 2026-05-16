@@ -24,6 +24,10 @@ class Receta(Base):
     # Categoria libre tipo etiqueta: "Mesa", "Ambientación", "Iglesia",
     # "Ramo", "Boutonniere", etc. Sugerimos algunas en el frontend.
     categoria: Mapped[str] = mapped_column(String(60), index=True, nullable=False, default="Mesa")
+    # N° default de arreglos al editar la receta. Multiplica los costos en
+    # el editor para preview de costo total y cálculo de paquetes a comprar.
+    # No afecta el costo unitario (que sigue siendo 'por 1 unidad').
+    n_arreglos_default: Mapped[int] = mapped_column(default=1, nullable=False)
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -35,7 +39,7 @@ class Receta(Base):
         "RecetaItem",
         back_populates="receta",
         cascade="all, delete-orphan",
-        order_by="RecetaItem.id",
+        order_by="RecetaItem.orden, RecetaItem.id",
     )
 
 
@@ -51,6 +55,11 @@ class RecetaItem(Base):
     )
     # Cantidad necesaria del material por 1 unidad de la receta.
     cantidad: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False, default=1)
+    # Grupo visual dentro de la receta (FLORES, MATERIALES BASE,
+    # CONTENEDORES, etc.). Si null, se infiere de Material.familia.
+    grupo: Mapped[str | None] = mapped_column(String(60))
+    # Orden dentro del grupo (drag-to-reorder)
+    orden: Mapped[int] = mapped_column(default=0, nullable=False)
     notas: Mapped[str | None] = mapped_column(String(255))
 
     receta: Mapped["Receta"] = relationship("Receta", back_populates="items")

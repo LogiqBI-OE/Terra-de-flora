@@ -42,6 +42,10 @@ class Material(Base):
         ForeignKey("proveedores.id", ondelete="SET NULL"), index=True
     )
 
+    # Color visual del material en editores (dot en tabla de receta).
+    # Formato '#RRGGBB' o null (frontend genera color del hash del nombre).
+    color_hex: Mapped[str | None] = mapped_column(String(9))
+
     notas: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

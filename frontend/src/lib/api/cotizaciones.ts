@@ -106,6 +106,30 @@ export interface ItemCreatePayload {
 
 export interface ItemUpdatePayload extends ItemCreatePayload {}
 
+// ── Desviación (Fase 3) ────────────────────────────────────────────────
+export interface DesviacionItem {
+  item_id: number
+  receta_id: number | null
+  nombre: string
+  seccion_nombre: string
+  cantidad: number | string
+  costo_snapshot: number | string
+  costo_actual: number | string
+  delta_unit: number | string
+  delta_total: number | string
+  direccion: 'sube' | 'baja' | 'igual'
+}
+
+export interface DesviacionResumen {
+  cotizacion_id: number
+  snapshot_at: string | null
+  snapshot_total_costo: number | string
+  actual_total_costo: number | string
+  delta_total: number | string
+  delta_pct: number | string
+  items: DesviacionItem[]
+}
+
 export const cotizacionesApi = {
   list: (pid: number) =>
     request<CotizacionSummary[]>(`/proyectos/${pid}/cotizaciones`),
@@ -154,4 +178,7 @@ export const cotizacionesApi = {
     }),
   deleteItem: (iid: number) =>
     request<void>(`/cotizaciones/items/${iid}`, { method: 'DELETE' }),
+
+  getDesviacion: (cid: number) =>
+    request<DesviacionResumen>(`/cotizaciones/${cid}/desviacion`),
 }

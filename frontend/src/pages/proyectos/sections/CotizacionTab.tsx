@@ -9,6 +9,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Button from '../../../components/ui/Button'
 import { fmtMoney } from '../../../lib/format'
+import RecetaEditorDrawer from './RecetaEditorDrawer'
 import {
   ApiError,
   cotizacionesApi,
@@ -17,6 +18,7 @@ import {
   type CotizacionCatalog,
   type CotizacionSeccion,
   type CotizacionSummary,
+  type DesviacionResumen,
   type EstadoCotizacion,
   type ProyectoRow,
   type RecetaSummary,
@@ -51,6 +53,7 @@ export default function CotizacionTab({ proyecto }: Props) {
   const [view, setView] = useState<View>('resumen')
   const [showCosts, setShowCosts] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [editorRecetaId, setEditorRecetaId] = useState<number | null | undefined>(undefined)  // undefined=cerrado, null=nueva, number=existente
   const [busy, setBusy] = useState(false)
 
   async function reloadVersions(): Promise<CotizacionSummary[]> {
@@ -434,6 +437,7 @@ export default function CotizacionTab({ proyecto }: Props) {
               onAddItem={(rid) => handleAddItem(activeSeccion.id, rid)}
               onUpdateItem={handleUpdateItem}
               onDeleteItem={handleDeleteItem}
+              onOpenRecetaEditor={(rid) => setEditorRecetaId(rid)}
             />
           )}
         </div>
@@ -441,6 +445,29 @@ export default function CotizacionTab({ proyecto }: Props) {
         {/* Footer sticky de totales */}
         <TotalsFooter cot={cot} showCosts={showCosts} />
       </main>
+
+      {editorRecetaId !== undefined && (
+        <RecetaEditorDrawer
+          recetaId={editorRecetaId}
+          margenDefault={Number(cot.margen_default) || 0.35}
+          isFrozenContext={isFrozen}
+          onClose={() => setEditorRecetaId(undefined)}
+          onSaved={async (saved) => {
+            // Si era nueva, agrégala como item a la sección activa
+            if (editorRecetaId === null && activeSeccion) {
+              try { await handleAddItem(activeSeccion.id, saved.id) } catch {}
+            }
+            // Refresca la cotización (los costos pueden haber cambiado)
+            if (activeId !== null) await reloadActive(activeId)
+            // Refresca el catálogo de recetas para el picker
+            try {
+              const recs = await recetasApi.list()
+              setRecetas(recs)
+            } catch {}
+            setEditorRecetaId(undefined)
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -525,6 +552,99 @@ function InstalacionView() {
         style={{ background: 'var(--bg-toggle)', color: 'var(--text-secondary)' }}
       >
         Pendiente de definir
+      </div>
+    </div>
+  )
+}
+
+// ─── Desviación de costos (Fase 3) ──────────────────────────────────────
+function DesviacionPanel({ cotizacionId }: { cotizacionId: number }) {
+  const [data, setData] = useState<DesviacionResumen | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [err, setErr] = useState<string | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    setLoading(true)
+    cotizacionesApi.getDesviacion(cotizacionId)
+      .then((d) => { if (alive) setData(d) })
+      .catch((e) => { if (alive) setErr(e instanceof ApiError ? e.message : 'Error') })
+      .finally(() => { if (alive) setLoading(false) })
+    return () => { alive = false }
+  }, [cotizacionId])
+
+  if (loading) {
+    return <div className="py-4 text-center text-xs text-app-muted">Cargando desviación…</div>
+  }
+  if (err || !data) {
+    return <div className="py-4 text-center text-xs" style={{ color: 'var(--danger)' }}>{err}</div>
+  }
+
+  const delta = Number(data.delta_total)
+  const pct = Number(data.delta_pct)
+  const positivo = delta > 0  // costo subió = perdiste margen
+  const negativo = delta < 0  // costo bajó = ganaste margen
+
+  return (
+    <div
+      className="rounded-xl border p-4 mt-4"
+      style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-soft)' }}
+    >
+      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <div>
+          <h4 className="text-sm font-bold text-app">📊 Desviación de costos vs catálogo actual</h4>
+          <p className="text-[11px] text-app-secondary">
+            Compara el snapshot congelado vs el precio de hoy en el catálogo.
+            {data.snapshot_at && (
+              <> Congelada el {new Date(data.snapshot_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}.</>
+            )}
+          </p>
+        </div>
+        <div className="text-right">
+          <div className="text-[10px] uppercase tracking-widest text-app-muted font-semibold">Delta total</div>
+          <div
+            className="text-lg font-bold"
+            style={{ color: positivo ? '#E11D48' : negativo ? '#059669' : 'var(--text-primary)' }}
+          >
+            {delta >= 0 ? '+' : ''}{fmtMoney(delta)} ({pct >= 0 ? '+' : ''}{pct.toFixed(1)}%)
+          </div>
+          <div className="text-[10px] text-app-muted mt-0.5">
+            {positivo ? 'Costo SUBIÓ → perdiste margen' : negativo ? 'Costo BAJÓ → ganaste margen' : 'Sin cambios'}
+          </div>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="text-left text-[9px] uppercase tracking-widest text-app-muted border-b" style={{ borderColor: 'var(--border-soft)' }}>
+              <th className="px-2 py-2">Sección</th>
+              <th className="px-2 py-2">Concepto</th>
+              <th className="px-2 py-2 text-right">Cant.</th>
+              <th className="px-2 py-2 text-right">Costo snapshot</th>
+              <th className="px-2 py-2 text-right">Costo actual</th>
+              <th className="px-2 py-2 text-right">Δ unit</th>
+              <th className="px-2 py-2 text-right">Δ total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.items.map((it) => {
+              const dt = Number(it.delta_total)
+              const color = dt > 0 ? '#E11D48' : dt < 0 ? '#059669' : 'var(--text-secondary)'
+              return (
+                <tr key={it.item_id} className="border-b last:border-0" style={{ borderColor: 'var(--border-soft)' }}>
+                  <td className="px-2 py-1.5 text-app-secondary text-[10px]">{it.seccion_nombre}</td>
+                  <td className="px-2 py-1.5 text-app">{it.nombre}</td>
+                  <td className="px-2 py-1.5 text-right">{Number(it.cantidad)}</td>
+                  <td className="px-2 py-1.5 text-right text-app-secondary">{fmtMoney(it.costo_snapshot)}</td>
+                  <td className="px-2 py-1.5 text-right">{fmtMoney(it.costo_actual)}</td>
+                  <td className="px-2 py-1.5 text-right" style={{ color }}>{Number(it.delta_unit) >= 0 ? '+' : ''}{fmtMoney(it.delta_unit)}</td>
+                  <td className="px-2 py-1.5 text-right font-bold" style={{ color }}>{Number(it.delta_total) >= 0 ? '+' : ''}{fmtMoney(it.delta_total)}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   )
@@ -657,6 +777,11 @@ function ResumenWeb({ cot, proyecto, showCosts }: { cot: Cotizacion; proyecto: P
           />
           <Stat label="Precio cliente" value={fmtMoney(cot.total_venta)} big />
         </div>
+      )}
+
+      {/* Desviación: solo si congelada y mostrando costo interno */}
+      {cot.snapshot_at && showCosts && (
+        <DesviacionPanel cotizacionId={cot.id} />
       )}
     </div>
   )
@@ -948,11 +1073,12 @@ interface SeccionViewProps {
   onAddItem: (recetaId: number) => void
   onUpdateItem: (iid: number, patch: { cantidad?: number; precio_venta_unit?: number | null }) => void
   onDeleteItem: (iid: number) => void
+  onOpenRecetaEditor: (recetaId: number | null) => void
 }
 
 function SeccionView({
   seccion, showCosts, isFrozen, recetas,
-  onRename, onDelete, onAddItem, onUpdateItem, onDeleteItem,
+  onRename, onDelete, onAddItem, onUpdateItem, onDeleteItem, onOpenRecetaEditor,
 }: SeccionViewProps) {
   const [editingName, setEditingName] = useState(false)
   const [name, setName] = useState(seccion.nombre)
@@ -1043,6 +1169,7 @@ function SeccionView({
             isFrozen={isFrozen}
             onUpdate={(patch) => onUpdateItem(it.id, patch)}
             onDelete={() => onDeleteItem(it.id)}
+            onOpenEditor={() => it.receta_id && onOpenRecetaEditor(it.receta_id)}
           />
         ))}
 
@@ -1082,10 +1209,14 @@ function SeccionView({
                     ✕
                   </button>
                 </div>
-                <div className="text-[10px] text-app-muted">
-                  Por ahora puedes reutilizar recetas existentes. El editor de receta nueva
-                  llega en el siguiente paso.
-                </div>
+                <button
+                  onClick={() => { onOpenRecetaEditor(null); setPickerOpen(false); setSearch('') }}
+                  className="w-full px-3 py-1.5 rounded-md text-xs font-semibold transition"
+                  style={{ background: 'var(--accent)', color: 'var(--text-on-accent)' }}
+                >
+                  ＋ Crear receta nueva (abre editor)
+                </button>
+                <div className="text-[10px] text-app-muted text-center">o reutiliza una existente:</div>
                 <div className="max-h-56 overflow-y-auto -mx-1">
                   {filtered.length === 0 && (
                     <div className="text-xs text-app-muted py-3 text-center">
@@ -1130,9 +1261,10 @@ interface ItemRowProps {
   isFrozen: boolean
   onUpdate: (patch: { cantidad?: number; precio_venta_unit?: number | null }) => void
   onDelete: () => void
+  onOpenEditor?: () => void
 }
 
-function ItemRow({ item, showCosts, isFrozen, onUpdate, onDelete }: ItemRowProps) {
+function ItemRow({ item, showCosts, isFrozen, onUpdate, onDelete, onOpenEditor }: ItemRowProps) {
   const [cant, setCant] = useState(String(item.cantidad))
   const [precio, setPrecio] = useState(
     item.precio_venta_unit !== null ? String(item.precio_venta_unit) : ''
@@ -1151,7 +1283,17 @@ function ItemRow({ item, showCosts, isFrozen, onUpdate, onDelete }: ItemRowProps
       style={{ borderColor: 'var(--border-soft)', background: 'var(--bg-elevated)' }}
     >
       <div className="col-span-12 md:col-span-5 min-w-0">
-        <div className="font-medium text-app truncate">{item.nombre}</div>
+        {onOpenEditor && item.receta_id && !isFrozen ? (
+          <button
+            onClick={onOpenEditor}
+            className="font-medium text-app truncate hover:underline text-left"
+            title="Abrir editor de receta"
+          >
+            📋 {item.nombre}
+          </button>
+        ) : (
+          <div className="font-medium text-app truncate">{item.nombre}</div>
+        )}
         {showCosts && (
           <div className="text-[10px] text-app-muted uppercase tracking-wide">
             Costo unit. {fmtMoney(item.costo_unit)}

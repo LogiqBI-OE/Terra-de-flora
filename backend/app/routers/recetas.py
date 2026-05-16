@@ -11,11 +11,12 @@ Endpoints:
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.core.deps import require_level_5
 from app.db import get_db
 from app.models.material import Material
+from app.models.proveedor import Proveedor
 from app.models.receta import Receta, RecetaItem
 from app.models.user import User
 from app.schemas.receta import (
@@ -38,28 +39,68 @@ def _precio_unitario(m: Material) -> Decimal:
     return (m.precio_paquete / contenido).quantize(Decimal("0.0001"))
 
 
-def _item_to_out(it: RecetaItem, db: Session) -> RecetaItemOut:
-    m = db.get(Material, it.material_id)
+def _grupo_efectivo(it: RecetaItem, mat: Material | None) -> str:
+    """Si el item tiene grupo explícito, usa ese. Si no, infiere de familia."""
+    if it.grupo:
+        return it.grupo
+    return (mat.familia if mat else "Otros")
+
+
+def _load_materiales(db: Session, material_ids: set[int]) -> dict[int, Material]:
+    if not material_ids:
+        return {}
+    rows = db.query(Material).filter(Material.id.in_(material_ids)).all()
+    return {m.id: m for m in rows}
+
+
+def _load_proveedores(db: Session, proveedor_ids: set[int]) -> dict[int, Proveedor]:
+    proveedor_ids = {pid for pid in proveedor_ids if pid is not None}
+    if not proveedor_ids:
+        return {}
+    rows = db.query(Proveedor).filter(Proveedor.id.in_(proveedor_ids)).all()
+    return {p.id: p for p in rows}
+
+
+def _item_to_out(
+    it: RecetaItem,
+    materiales: dict[int, Material],
+    proveedores: dict[int, Proveedor],
+) -> RecetaItemOut:
+    m = materiales.get(it.material_id)
+    prov = (proveedores.get(m.proveedor_id) if (m and m.proveedor_id) else None)
     return RecetaItemOut(
         id=it.id,
         material_id=it.material_id,
         material_nombre=m.nombre if m else "(material eliminado)",
         material_familia=m.familia if m else "—",
         material_unidad=m.unidad if m else "—",
+        material_precio_paquete=(m.precio_paquete if m else Decimal("0")),
+        material_contenido_por_paquete=(m.contenido_por_paquete if m else Decimal("1")),
         material_precio_unitario=_precio_unitario(m) if m else Decimal("0"),
+        material_color_hex=(m.color_hex if m else None),
+        material_proveedor_nombre=(prov.nombre if prov else None),
         cantidad=it.cantidad,
+        grupo=it.grupo,
+        grupo_efectivo=_grupo_efectivo(it, m),
+        orden=it.orden or 0,
         notas=it.notas,
     )
 
 
 def _receta_to_out(r: Receta, db: Session) -> RecetaOut:
-    items_out = [_item_to_out(it, db) for it in r.items]
+    material_ids = {it.material_id for it in r.items}
+    materiales = _load_materiales(db, material_ids)
+    proveedor_ids = {m.proveedor_id for m in materiales.values() if m.proveedor_id}
+    proveedores = _load_proveedores(db, proveedor_ids)
+
+    items_out = [_item_to_out(it, materiales, proveedores) for it in r.items]
     costo = sum((io.cantidad * io.material_precio_unitario for io in items_out), Decimal("0"))
     return RecetaOut(
         id=r.id,
         nombre=r.nombre,
         descripcion=r.descripcion,
         categoria=r.categoria,
+        n_arreglos_default=r.n_arreglos_default or 1,
         is_active=r.is_active,
         items=items_out,
         costo_estimado=costo.quantize(Decimal("0.01")),
@@ -88,13 +129,21 @@ def listar(
     db: Session = Depends(get_db),
     _: User = Depends(require_level_5),
 ) -> list[RecetaSummary]:
-    rows = db.query(Receta).order_by(Receta.categoria, Receta.nombre).all()
+    rows = (
+        db.query(Receta)
+        .options(selectinload(Receta.items))
+        .order_by(Receta.categoria, Receta.nombre)
+        .all()
+    )
+    # Precarga TODOS los materiales referenciados en una sola query
+    material_ids = {it.material_id for r in rows for it in r.items}
+    materiales = _load_materiales(db, material_ids)
+
     out: list[RecetaSummary] = []
     for r in rows:
-        # Costo estimado liviano (sin construir RecetaOut completo)
         items_costo = Decimal("0")
         for it in r.items:
-            m = db.get(Material, it.material_id)
+            m = materiales.get(it.material_id)
             if m:
                 items_costo += (it.cantidad * _precio_unitario(m))
         out.append(RecetaSummary(
@@ -133,11 +182,14 @@ def crear(
         nombre=payload.nombre,
         descripcion=payload.descripcion,
         categoria=payload.categoria,
+        n_arreglos_default=payload.n_arreglos_default,
     )
     for it in payload.items:
         r.items.append(RecetaItem(
             material_id=it.material_id,
             cantidad=it.cantidad,
+            grupo=it.grupo,
+            orden=it.orden,
             notas=it.notas,
         ))
     db.add(r)
@@ -167,6 +219,8 @@ def actualizar(
             r.items.append(RecetaItem(
                 material_id=it.material_id,
                 cantidad=it.cantidad,
+                grupo=it.grupo,
+                orden=it.orden,
                 notas=it.notas,
             ))
         data.pop("items")

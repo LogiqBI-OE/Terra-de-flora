@@ -13,6 +13,7 @@ export interface Material {
   precio_unitario: number | string
   proveedor_id: number | null
   proveedor_nombre: string | null
+  color_hex: string | null
   notas: string | null
   is_active: boolean
   created_at: string
@@ -27,11 +28,24 @@ export interface MaterialCreatePayload {
   contenido_por_paquete: number
   precio_paquete: number
   proveedor_id?: number | null
+  color_hex?: string | null
   notas?: string | null
 }
 
 export interface MaterialUpdatePayload extends Partial<MaterialCreatePayload> {
   is_active?: boolean
+}
+
+export interface MaterialPrecioHistoricoRow {
+  id: number
+  material_id: number
+  precio_paquete: number | string
+  contenido_por_paquete: number | string
+  precio_unitario: number | string
+  changed_by_user_id: number | null
+  changed_by_nombre: string | null
+  source: string
+  created_at: string
 }
 
 export interface MaterialCatalog {
@@ -67,6 +81,8 @@ export const materialesApi = {
   update: (id: number, p: MaterialUpdatePayload) =>
     request<Material>(`/materiales/${id}`, { method: 'PATCH', body: JSON.stringify(p) }),
   delete: (id: number) => request<void>(`/materiales/${id}`, { method: 'DELETE' }),
+  historico: (id: number) =>
+    request<MaterialPrecioHistoricoRow[]>(`/materiales/${id}/historico`),
 
   // Familias (Tipos)
   listFamilias: () => request<CatalogItem[]>('/materiales/familias'),

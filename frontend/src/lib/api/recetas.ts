@@ -4,6 +4,8 @@ import { request } from './client'
 export interface RecetaItemIn {
   material_id: number
   cantidad: number
+  grupo?: string | null
+  orden?: number
   notas?: string | null
 }
 
@@ -13,8 +15,15 @@ export interface RecetaItem {
   material_nombre: string
   material_familia: string
   material_unidad: string
+  material_precio_paquete: number | string
+  material_contenido_por_paquete: number | string
   material_precio_unitario: number | string
+  material_color_hex: string | null
+  material_proveedor_nombre: string | null
   cantidad: number | string
+  grupo: string | null
+  grupo_efectivo: string
+  orden: number
   notas: string | null
 }
 
@@ -34,6 +43,7 @@ export interface Receta {
   nombre: string
   descripcion: string | null
   categoria: string
+  n_arreglos_default: number
   is_active: boolean
   items: RecetaItem[]
   costo_estimado: number | string
@@ -46,6 +56,7 @@ export interface RecetaCreatePayload {
   nombre: string
   descripcion?: string | null
   categoria: string
+  n_arreglos_default?: number
   items: RecetaItemIn[]
 }
 
@@ -53,6 +64,7 @@ export interface RecetaUpdatePayload {
   nombre?: string
   descripcion?: string | null
   categoria?: string
+  n_arreglos_default?: number
   is_active?: boolean
   items?: RecetaItemIn[]
 }

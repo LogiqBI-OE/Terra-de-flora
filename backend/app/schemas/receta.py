@@ -19,6 +19,8 @@ CATEGORIAS_RECETA = [
 class RecetaItemIn(BaseModel):
     material_id: int
     cantidad: Decimal = Field(default=Decimal("1"), gt=Decimal("0"))
+    grupo: str | None = None
+    orden: int = 0
     notas: str | None = None
 
 
@@ -28,8 +30,15 @@ class RecetaItemOut(BaseModel):
     material_nombre: str       # join lite
     material_familia: str
     material_unidad: str
+    material_precio_paquete: Decimal
+    material_contenido_por_paquete: Decimal
     material_precio_unitario: Decimal
+    material_color_hex: str | None
+    material_proveedor_nombre: str | None
     cantidad: Decimal
+    grupo: str | None     # explícito o inferido de familia
+    grupo_efectivo: str   # siempre con valor (fallback a familia)
+    orden: int
     notas: str | None
 
 
@@ -37,6 +46,7 @@ class RecetaCreate(BaseModel):
     nombre: str = Field(..., min_length=1, max_length=200)
     descripcion: str | None = None
     categoria: str = "Mesa"
+    n_arreglos_default: int = Field(default=1, ge=1)
     items: list[RecetaItemIn] = []
 
 
@@ -44,6 +54,7 @@ class RecetaUpdate(BaseModel):
     nombre: str | None = None
     descripcion: str | None = None
     categoria: str | None = None
+    n_arreglos_default: int | None = Field(default=None, ge=1)
     is_active: bool | None = None
     # Si se pasan items, REEMPLAZA la lista completa.
     items: list[RecetaItemIn] | None = None
@@ -54,6 +65,7 @@ class RecetaOut(BaseModel):
     nombre: str
     descripcion: str | None
     categoria: str
+    n_arreglos_default: int
     is_active: bool
     items: list[RecetaItemOut]
     costo_estimado: Decimal  # suma de cantidad × precio_unitario de cada item

@@ -28,6 +28,7 @@ export { materialesApi } from './materiales'
 export type {
   Material, MaterialCreatePayload, MaterialUpdatePayload, MaterialCatalog,
   CatalogItem, CatalogItemCreatePayload, CatalogItemUpdatePayload,
+  MaterialPrecioHistoricoRow,
 } from './materiales'
 
 export { recetasApi } from './recetas'
@@ -64,6 +65,7 @@ export type {
   SeccionCreatePayload, SeccionUpdatePayload,
   ItemCreatePayload, ItemUpdatePayload,
   EstadoCotizacion,
+  DesviacionItem, DesviacionResumen,
 } from './cotizaciones'
 
 export { navApi } from './nav'
