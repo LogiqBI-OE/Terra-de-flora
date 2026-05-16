@@ -6,6 +6,7 @@ import AppShell from '../../components/layout/AppShell'
 import Card from '../../components/ui/Card'
 import { IconChevronRight, IconPlus } from '../../components/icons/Icons'
 import { useAuth } from '../../lib/auth'
+import { usePolling } from '../../lib/usePolling'
 import {
   comentariosApi,
   proyectosApi,
@@ -45,11 +46,8 @@ export default function ProyectosPage() {
     } catch (e) { console.error(e) }
     finally { setLoading(false) }
   }
-  useEffect(() => {
-    reload()
-    const id = setInterval(reload, 30000)
-    return () => clearInterval(id)
-  }, [])
+  useEffect(() => { reload() }, [])
+  usePolling(reload, 60000)
 
   const filtered = useMemo(() => {
     return rows.filter((p) => {

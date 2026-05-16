@@ -8,30 +8,32 @@ import IconButton from '../ui/IconButton'
 import ThemeToggle from '../ui/ThemeToggle'
 import UserMenu from '../ui/UserMenu'
 import { useAuth } from '../../lib/auth'
+import { usePolling } from '../../lib/usePolling'
 import { comentariosApi, type TopbarBadge as TopbarBadgeData } from '../../lib/api'
 
-const POLL_MS = 30000
+const POLL_MS = 60000  // 60s — bajado de 30s, polling se pausa cuando pestaña oculta
 
 export default function Topbar({ title }: { title: string }) {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [badge, setBadge] = useState<TopbarBadgeData | null>(null)
 
+  const eligible = !!user && user.level >= 5
+
+  async function fetchBadge() {
+    if (!eligible) return
+    try {
+      const b = await comentariosApi.getTopbarBadge()
+      setBadge(b)
+    } catch {/* silencioso */}
+  }
+
   useEffect(() => {
-    if (!user || user.level < 5) return
-    let alive = true
-
-    async function tick() {
-      try {
-        const b = await comentariosApi.getTopbarBadge()
-        if (alive) setBadge(b)
-      } catch {/* silencioso */}
-    }
-
-    tick()
-    const id = setInterval(tick, POLL_MS)
-    return () => { alive = false; clearInterval(id) }
+    if (eligible) fetchBadge()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, user?.level])
+
+  usePolling(fetchBadge, POLL_MS, eligible)
 
   const totalUnread = badge?.total_mensajes ?? 0
   const hasMention = badge?.has_mention ?? false

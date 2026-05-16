@@ -7,6 +7,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import AppShell from '../../components/layout/AppShell'
 import ProyectoChatPanel from '../../components/comentarios/ProyectoChatPanel'
 import { ApiError, comentariosApi, type ConversacionItem } from '../../lib/api'
+import { usePolling } from '../../lib/usePolling'
 
 export default function MuroComentariosPage() {
   const navigate = useNavigate()
@@ -38,10 +39,10 @@ export default function MuroComentariosPage() {
   useEffect(() => {
     setLoading(true)
     reload()
-    const id = setInterval(reload, 12000)  // polling lista cada 12s
-    return () => clearInterval(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  usePolling(reload, 25000)
 
   // Sincroniza selectedId con la URL cuando cambia
   function selectProyecto(pid: number) {

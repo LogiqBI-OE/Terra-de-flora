@@ -23,7 +23,7 @@ interface Props {
   className?: string
 }
 
-const POLL_MS = 8000
+const POLL_MS = 12000
 const EDIT_WINDOW_MS = 3 * 60 * 1000
 
 export default function ProyectoChatPanel({ proyectoId, onRead, onChange, className }: Props) {
@@ -78,10 +78,13 @@ export default function ProyectoChatPanel({ proyectoId, onRead, onChange, classN
 
     async function tick() {
       if (!alive) return
-      try {
-        const list = await comentariosApi.list(proyectoId)
-        if (alive) setMessages(mergeServerList(list))
-      } catch {/* polling silencioso */}
+      // Pausa polling cuando la pestaña no está visible — ahorra red/CPU
+      if (document.visibilityState === 'visible') {
+        try {
+          const list = await comentariosApi.list(proyectoId)
+          if (alive) setMessages(mergeServerList(list))
+        } catch {/* polling silencioso */}
+      }
       if (alive) timer = setTimeout(tick, POLL_MS)
     }
 

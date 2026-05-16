@@ -6,6 +6,7 @@ import AppShell from '../../components/layout/AppShell'
 import Button from '../../components/ui/Button'
 import { IconChevronRight } from '../../components/icons/Icons'
 import { ApiError, comentariosApi, proyectosApi, type BadgeProyecto, type ProyectoRow } from '../../lib/api'
+import { usePolling } from '../../lib/usePolling'
 import FolioTab from './sections/FolioTab'
 import PagosTab from './sections/PagosTab'
 import ComentariosTab from './sections/ComentariosTab'
@@ -65,10 +66,10 @@ export default function ProyectoDetailPage() {
   useEffect(() => {
     if (!id) return
     reloadBadge()
-    const t = setInterval(reloadBadge, 15000)
-    return () => clearInterval(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
+
+  usePolling(reloadBadge, 45000, !!id)
 
   useEffect(() => {
     if (!id) return
