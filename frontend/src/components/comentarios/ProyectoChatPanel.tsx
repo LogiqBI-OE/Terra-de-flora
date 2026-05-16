@@ -577,7 +577,7 @@ function MessageRow(p: MessageRowProps) {
 
   const Toolbar = (
     !isEditing ? (
-      <div className={`opacity-0 group-hover:opacity-100 transition flex items-center gap-1 ${isMe ? 'order-first' : ''}`}>
+      <div className={`hidden group-hover:flex items-center gap-1 ${isMe ? 'order-first' : ''}`}>
         <div className="relative">
           <button
             onClick={() => setPickerOpen((v) => !v)}
