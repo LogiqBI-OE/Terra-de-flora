@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app import models  # registra todos los modelos en SQLAlchemy
 from app.core.config import settings
 from app.db import Base, engine
-from app.routers import auth, clientes, comentarios, cotizaciones, eventos, levels, materiales, pagos, proveedores, proyectos, recetas, system_config, users
+from app.routers import auth, clientes, comentarios, cotizaciones, eventos, levels, materiales, nav, pagos, proveedores, proyectos, recetas, system_config, users
 
 # Crea tablas si no existen (sin Alembic por ahora)
 Base.metadata.create_all(bind=engine)
@@ -36,6 +36,7 @@ app.include_router(cotizaciones.router)
 app.include_router(pagos.router)
 app.include_router(comentarios.router)
 app.include_router(eventos.router)
+app.include_router(nav.router)
 
 _ = models  # silenciar "imported but unused"
 

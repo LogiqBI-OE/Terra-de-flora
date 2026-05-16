@@ -24,6 +24,7 @@ from app.models.comentario import (
     ComentarioRead,
 )
 from app.models.evento import EventoCalendario, EventoParticipante, TipoEvento
+from app.models.nav import NavItem, NavSection
 
 __all__ = [
     "User",
@@ -58,4 +59,6 @@ __all__ = [
     "EventoCalendario",
     "EventoParticipante",
     "TipoEvento",
+    "NavItem",
+    "NavSection",
 ]

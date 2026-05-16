@@ -220,6 +220,10 @@ def run() -> None:
 
         print("-> Catálogo de métodos de pago...")
         ensure_metodos_pago(db)
+
+        print("-> Navegación (sidebar)...")
+        from app.routers.nav import ensure_nav_seed
+        ensure_nav_seed(db)
     finally:
         db.close()
     print("-> Seed listo.")

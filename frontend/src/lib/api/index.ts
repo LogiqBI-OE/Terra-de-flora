@@ -66,6 +66,13 @@ export type {
   EstadoCotizacion,
 } from './cotizaciones'
 
+export { navApi } from './nav'
+export type {
+  NavConfig, NavSectionDTO, NavItemDTO,
+  NavAdminConfig, NavSectionAdminDTO, NavItemAdminDTO,
+  SectionCreatePayload, SectionUpdatePayload, ItemUpdatePayload,
+} from './nav'
+
 export { eventosApi } from './eventos'
 export type {
   Evento, EventoCreatePayload, EventoUpdatePayload,
