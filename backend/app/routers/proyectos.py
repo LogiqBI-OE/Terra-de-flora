@@ -106,13 +106,62 @@ def catalog(
     )
 
 
+def _to_out_with_lookups(
+    p: Proyecto,
+    clientes: dict[int, Cliente],
+    vendedores: dict[int, User],
+) -> ProyectoOut:
+    """Versión de _to_out que recibe los lookups precargados (sin N+1)."""
+    cli = clientes.get(p.cliente_id)
+    vend = vendedores.get(p.vendedor_id) if p.vendedor_id else None
+    locations = [ProyectoLocation(**loc) for loc in (p.locations or [])]
+    return ProyectoOut(
+        id=p.id,
+        codigo=_codigo(p.id),
+        nombre=p.nombre,
+        descripcion=p.descripcion,
+        cliente_id=p.cliente_id,
+        cliente_nombre=cli.nombre if cli else "(cliente eliminado)",
+        cliente_tipo=cli.tipo.value if cli else "—",
+        cliente_telefono=cli.telefono if cli else None,
+        vendedor_id=p.vendedor_id,
+        vendedor_nombre=vend.full_name if vend else None,
+        vendedor_username=vend.username if vend else None,
+        tipo=p.tipo,
+        estado=p.estado,
+        fecha_evento=p.fecha_evento,
+        direccion_evento=p.direccion_evento,
+        valor_estimado=p.valor_estimado,
+        cant_invitados=p.cant_invitados,
+        planner_nombre=p.planner_nombre,
+        planner_telefono=p.planner_telefono,
+        planner_email=p.planner_email,
+        locations=locations,
+        notas=p.notas,
+        is_active=p.is_active,
+        created_at=p.created_at,
+        updated_at=p.updated_at,
+    )
+
+
 @router.get("", response_model=list[ProyectoOut])
 def listar(
     db: Session = Depends(get_db),
     _: User = Depends(require_level_5),
 ) -> list[ProyectoOut]:
+    """Lista proyectos. Precarga clientes + vendedores en 2 queries (sin N+1)."""
     rows = db.query(Proyecto).order_by(Proyecto.id.desc()).all()
-    return [_to_out(p, db) for p in rows]
+    if not rows:
+        return []
+    cliente_ids = {p.cliente_id for p in rows if p.cliente_id}
+    vendedor_ids = {p.vendedor_id for p in rows if p.vendedor_id}
+    clientes = {
+        c.id: c for c in db.query(Cliente).filter(Cliente.id.in_(cliente_ids)).all()
+    } if cliente_ids else {}
+    vendedores = {
+        u.id: u for u in db.query(User).filter(User.id.in_(vendedor_ids)).all()
+    } if vendedor_ids else {}
+    return [_to_out_with_lookups(p, clientes, vendedores) for p in rows]
 
 
 @router.get("/{proyecto_id}", response_model=ProyectoOut)

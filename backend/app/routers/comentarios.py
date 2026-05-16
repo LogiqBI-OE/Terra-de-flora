@@ -425,6 +425,53 @@ def mark_read(
 
 
 # ── Badges (consultas auxiliares) ─────────────────────────────────────────
+def _badges_for_all(db: Session, user_id: int) -> dict[int, tuple[int, bool]]:
+    """Devuelve {proyecto_id: (unread_count, has_mention)} en SOLO 3 queries.
+
+    Reemplaza N×3 queries (una por proyecto) por:
+      1. todos los reads del usuario
+      2. todos los comentarios ajenos
+      3. todas las menciones al usuario en comments ajenos
+    """
+    # 1. Reads del usuario, por proyecto
+    reads: dict[int, datetime] = {
+        r.proyecto_id: r.last_read_at
+        for r in db.query(ComentarioRead)
+        .filter(ComentarioRead.user_id == user_id)
+        .all()
+    }
+
+    # 2. Conteo de unread por proyecto. Una query trae todo lo ajeno
+    #    y agrupamos en Python (no es óptimo SQL pero es 1 query)
+    unread_counts: dict[int, int] = {}
+    for pid, created in (
+        db.query(Comentario.proyecto_id, Comentario.created_at)
+        .filter(Comentario.user_id != user_id)
+        .all()
+    ):
+        last_read = reads.get(pid)
+        if last_read is None or created > last_read:
+            unread_counts[pid] = unread_counts.get(pid, 0) + 1
+
+    # 3. Menciones pendientes
+    has_mention: set[int] = set()
+    for pid, created in (
+        db.query(Comentario.proyecto_id, Comentario.created_at)
+        .join(ComentarioMention, ComentarioMention.comentario_id == Comentario.id)
+        .filter(
+            ComentarioMention.user_id == user_id,
+            Comentario.user_id != user_id,
+        )
+        .all()
+    ):
+        last_read = reads.get(pid)
+        if last_read is None or created > last_read:
+            has_mention.add(pid)
+
+    pids = set(unread_counts) | has_mention
+    return {pid: (unread_counts.get(pid, 0), pid in has_mention) for pid in pids}
+
+
 def _badge_for(
     db: Session, user_id: int, proyecto_id: int
 ) -> tuple[int, bool]:
@@ -503,13 +550,14 @@ def get_badges_map(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ) -> BadgeMap:
-    """Badges para todos los proyectos visibles. Usado por el gestor."""
-    proyectos = db.query(Proyecto.id).all()
-    items = []
-    for (pid,) in proyectos:
-        unread, has_mention = _badge_for(db, user.id, pid)
-        if unread > 0 or has_mention:
-            items.append(BadgeProyecto(proyecto_id=pid, unread_count=unread, has_mention=has_mention))
+    """Badges para todos los proyectos visibles. Usado por el gestor.
+    Batched: 3 queries en vez de 3×N."""
+    badges = _badges_for_all(db, user.id)
+    items = [
+        BadgeProyecto(proyecto_id=pid, unread_count=unread, has_mention=mention)
+        for pid, (unread, mention) in badges.items()
+        if unread > 0 or mention
+    ]
     return BadgeMap(items=items)
 
 
@@ -522,12 +570,11 @@ def get_topbar_badge(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ) -> TopbarBadge:
-    proyectos = db.query(Proyecto.id).all()
+    badges = _badges_for_all(db, user.id)
     total_mensajes = 0
     unread_proyectos = 0
     has_mention = False
-    for (pid,) in proyectos:
-        unread, mention = _badge_for(db, user.id, pid)
+    for unread, mention in badges.values():
         if unread > 0:
             unread_proyectos += 1
             total_mensajes += unread
@@ -550,31 +597,59 @@ def list_conversaciones(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ) -> ConversacionesResponse:
-    """Lista de proyectos visibles, ordenados por última actividad de chat."""
+    """Lista de proyectos visibles, ordenados por última actividad de chat.
+    Batched: ~5 queries totales en vez de 4×N."""
     proyectos = db.query(Proyecto).all()
+    if not proyectos:
+        return ConversacionesResponse(items=[])
+
+    pids = [p.id for p in proyectos]
+
+    # 1. Clientes referenciados (1 query)
+    cliente_ids = {p.cliente_id for p in proyectos if p.cliente_id}
+    clientes = {
+        c.id: c for c in db.query(Cliente).filter(Cliente.id.in_(cliente_ids)).all()
+    } if cliente_ids else {}
+
+    # 2. Total de mensajes por proyecto (1 query con GROUP BY)
+    totales: dict[int, int] = dict(
+        db.query(Comentario.proyecto_id, sql_func.count(Comentario.id))
+        .filter(Comentario.proyecto_id.in_(pids))
+        .group_by(Comentario.proyecto_id)
+        .all()
+    )
+
+    # 3. Último mensaje por proyecto (1 query: traemos todos los del proyecto,
+    #    ordenados, y nos quedamos con el más reciente — en memoria)
+    ultimos: dict[int, tuple[Comentario, int]] = {}
+    for c in (
+        db.query(Comentario)
+        .filter(Comentario.proyecto_id.in_(pids))
+        .order_by(Comentario.proyecto_id, Comentario.created_at.desc(), Comentario.id.desc())
+        .all()
+    ):
+        if c.proyecto_id not in ultimos:
+            ultimos[c.proyecto_id] = (c, c.user_id)
+
+    # 4. Autores de los últimos mensajes (1 query)
+    autor_ids = {uid for _, uid in ultimos.values()}
+    autores = {
+        u.id: u for u in db.query(User).filter(User.id.in_(autor_ids)).all()
+    } if autor_ids else {}
+
+    # 5. Badges en batch (función propia, hace 3 queries)
+    badges = _badges_for_all(db, user.id)
+
     items: list[ConversacionItem] = []
     for p in proyectos:
-        last_msg, last_user = (
-            db.query(Comentario, User)
-            .join(User, User.id == Comentario.user_id)
-            .filter(Comentario.proyecto_id == p.id)
-            .order_by(Comentario.created_at.desc(), Comentario.id.desc())
-            .first()
-            or (None, None)
-        )
-        total = (
-            db.query(sql_func.count(Comentario.id))
-            .filter(Comentario.proyecto_id == p.id)
-            .scalar()
-        ) or 0
-        unread, has_mention = _badge_for(db, user.id, p.id)
-
-        # Skip proyectos sin actividad si quieres ocultarlos. Por ahora los
-        # mostramos todos para que el usuario pueda iniciar conversación.
-        cli = db.get(Cliente, p.cliente_id)
+        cli = clientes.get(p.cliente_id) if p.cliente_id else None
+        ultimo = ultimos.get(p.id)
+        last_msg = ultimo[0] if ultimo else None
+        last_user = autores.get(ultimo[1]) if ultimo else None
         snippet = None
         if last_msg is not None:
             snippet = last_msg.texto if len(last_msg.texto) <= 120 else last_msg.texto[:117] + "…"
+        unread, has_mention = badges.get(p.id, (0, False))
 
         items.append(ConversacionItem(
             proyecto_id=p.id,
@@ -584,7 +659,7 @@ def list_conversaciones(
             ultimo_mensaje=snippet,
             ultimo_autor=(_nombre_display(last_user) if last_user else None),
             ultimo_at=last_msg.created_at if last_msg else None,
-            total_mensajes=int(total),
+            total_mensajes=int(totales.get(p.id, 0)),
             unread_count=unread,
             has_mention=has_mention,
         ))
