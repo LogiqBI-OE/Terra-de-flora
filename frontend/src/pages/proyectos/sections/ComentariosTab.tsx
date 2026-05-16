@@ -29,15 +29,6 @@ export default function ComentariosTab({ proyecto }: Props) {
   const listRef = useRef<HTMLDivElement | null>(null)
   const lastCountRef = useRef(0)
 
-  async function reload() {
-    try {
-      const list = await comentariosApi.list(proyecto.id)
-      setMessages(list)
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Error cargando comentarios')
-    }
-  }
-
   // Carga inicial + polling
   useEffect(() => {
     let alive = true
