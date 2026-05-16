@@ -55,13 +55,23 @@ export default function PermisosTab() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h3 className="text-sm font-semibold text-app">Matriz de permisos por nivel</h3>
-        <p className="text-xs text-app-muted mt-1">
-          Define qué permisos trae cada nivel por default. <span className="text-warning">manage_users</span> solo se asigna a L9 (restringido).
-          Los niveles ocultos no aparecen aquí — actívalos primero en la tab <strong>Niveles</strong>.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h3 className="text-sm font-semibold text-app">Matriz de permisos por nivel</h3>
+          <p className="text-xs text-app-muted mt-1">
+            Define qué permisos trae cada nivel por default. <span className="text-warning">manage_users</span> solo se asigna a L9 (restringido).
+            Los niveles ocultos no aparecen aquí — actívalos primero en la tab <strong>Niveles</strong>.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button variant="secondary" onClick={handleDiscard} disabled={!dirty || busy}>Descartar</Button>
+          <Button onClick={handleSave} disabled={!dirty || busy}>
+            {busy ? 'Guardando...' : 'Guardar cambios'}
+          </Button>
+        </div>
       </div>
+
+      {error && <div className="text-xs text-danger">{error}</div>}
 
       <LevelsPermissionsMatrix
         payload={payloadFiltered}
@@ -74,15 +84,6 @@ export default function PermisosTab() {
           setDraftMatrix({ ...draftMatrix, [level]: next })
         }}
       />
-
-      {error && <div className="text-xs text-danger">{error}</div>}
-
-      <div className="flex items-center justify-end gap-2 pt-2 border-t" style={{ borderColor: 'var(--border-soft)' }}>
-        <Button variant="secondary" onClick={handleDiscard} disabled={!dirty || busy}>Descartar</Button>
-        <Button onClick={handleSave} disabled={!dirty || busy}>
-          {busy ? 'Guardando...' : 'Guardar cambios'}
-        </Button>
-      </div>
 
       {toast && (
         <div

@@ -58,6 +58,16 @@ export default function GeneralesTab() {
 
   return (
     <div className="space-y-8">
+      {/* Acciones top-right (sticky para que estén siempre visibles) */}
+      <div className="flex items-center justify-end gap-2 -mt-2">
+        <Button variant="secondary" onClick={handleDiscard} disabled={!dirty || busy}>Descartar</Button>
+        <Button onClick={handleSave} disabled={!dirty || busy}>
+          {busy ? 'Guardando...' : 'Guardar cambios'}
+        </Button>
+      </div>
+
+      {error && <div className="text-xs text-danger">{error}</div>}
+
       {grouped.map(([section, sectionItems]) => (
         <SectionBlock key={section} title={section}>
           <div className="space-y-5">
@@ -75,15 +85,6 @@ export default function GeneralesTab() {
 
       {/* Placeholder: Licencia (no conectado a backend todavia) */}
       <LicenciaPlaceholderSection />
-
-      {error && <div className="text-xs text-danger">{error}</div>}
-
-      <div className="flex items-center justify-end gap-2 pt-2 border-t" style={{ borderColor: 'var(--border-soft)' }}>
-        <Button variant="secondary" onClick={handleDiscard} disabled={!dirty || busy}>Descartar</Button>
-        <Button onClick={handleSave} disabled={!dirty || busy}>
-          {busy ? 'Guardando...' : 'Guardar cambios'}
-        </Button>
-      </div>
 
       {toast && (
         <div
