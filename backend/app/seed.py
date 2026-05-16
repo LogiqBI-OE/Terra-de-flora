@@ -89,6 +89,21 @@ def _run_lightweight_migrations() -> None:
             with engine.begin() as conn:
                 conn.execute(text("ALTER TABLE clientes ADD COLUMN como_nos_contacto VARCHAR(120)"))
 
+    if "comentarios" in insp.get_table_names():
+        cols = {c["name"] for c in insp.get_columns("comentarios")}
+        with engine.begin() as conn:
+            if "parent_id" not in cols:
+                print("  + migracion: agregando columna comentarios.parent_id")
+                conn.execute(text("ALTER TABLE comentarios ADD COLUMN parent_id INTEGER"))
+                conn.execute(text(
+                    "ALTER TABLE comentarios ADD CONSTRAINT comentarios_parent_fk "
+                    "FOREIGN KEY (parent_id) REFERENCES comentarios(id) ON DELETE SET NULL"
+                ))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_comentarios_parent_id ON comentarios (parent_id)"))
+            if "edited_at" not in cols:
+                print("  + migracion: agregando columna comentarios.edited_at")
+                conn.execute(text("ALTER TABLE comentarios ADD COLUMN edited_at TIMESTAMP WITH TIME ZONE"))
+
     if "proyectos" in insp.get_table_names():
         cols = {c["name"] for c in insp.get_columns("proyectos")}
         with engine.begin() as conn:

@@ -43,8 +43,11 @@ export type {
   TipoProyecto, EstadoProyecto, TipoMeta, EstadoMeta, VendedorOption,
 } from './proyectos'
 
-export { comentariosApi } from './comentarios'
-export type { Comentario, ComentarioCreatePayload } from './comentarios'
+export { comentariosApi, ALLOWED_EMOJIS } from './comentarios'
+export type {
+  Comentario, ComentarioCreatePayload, ComentarioUpdatePayload,
+  ParentSnippet, ReaccionAgg, AllowedEmoji,
+} from './comentarios'
 
 export { pagosApi } from './pagos'
 export type {
