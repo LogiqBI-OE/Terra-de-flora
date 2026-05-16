@@ -229,6 +229,16 @@ export function IconRecipe({ size, className, style }: IconProps) {
   )
 }
 
+export function IconPlug({ size, className, style }: IconProps) {
+  return (
+    <svg {...svgBase(size)} className={className} style={style}>
+      <path d="M9 2v6M15 2v6" />
+      <path d="M6 8h12v3a6 6 0 0 1-12 0V8z" />
+      <path d="M12 17v5" />
+    </svg>
+  )
+}
+
 export function IconChat({ size, className, style }: IconProps) {
   return (
     <svg {...svgBase(size)} className={className} style={style}>

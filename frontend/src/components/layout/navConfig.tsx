@@ -13,10 +13,10 @@ import {
   IconCalendar,
   IconChart,
   IconChat,
-  IconHome,
   IconManual,
   IconMegaphone,
   IconNetwork,
+  IconPlug,
   IconSettings,
   IconUserCircle,
   IconUsers,
@@ -41,18 +41,18 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     title: 'Gestión',
     items: [
-      { to: '/', label: 'Inicio', icon: <IconHome /> },
       { to: '/proyectos', label: 'Gestor de proyectos', icon: <IconBriefcase /> },
       { to: '/muro-comentarios', label: 'Muro de comentarios', icon: <IconChat />, minLevel: 5 },
-      { to: '/calendario', label: 'Calendario', icon: <IconCalendar />, disabled: true, hint: 'Próximamente' },
       { to: '/reportes', label: 'Reportes', icon: <IconChart />, disabled: true, hint: 'Próximamente' },
     ],
   },
   {
     title: 'Community Management',
     items: [
-      { to: '/redes', label: 'Redes', icon: <IconNetwork />, disabled: true, hint: 'Próximamente' },
+      { to: '/portal-mensajes', label: 'Portal de mensajes', icon: <IconNetwork />, disabled: true, hint: 'Próximamente' },
       { to: '/campanas', label: 'Campañas', icon: <IconMegaphone />, disabled: true, hint: 'Próximamente' },
+      { to: '/integraciones', label: 'Integraciones', icon: <IconPlug />, disabled: true, hint: 'Próximamente' },
+      { to: '/calendario', label: 'Calendario', icon: <IconCalendar />, disabled: true, hint: 'Próximamente' },
     ],
   },
   {

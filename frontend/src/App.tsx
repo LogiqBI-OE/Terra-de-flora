@@ -11,8 +11,6 @@ import MuroComentariosPage from './pages/muro/MuroComentariosPage'
 import MaterialesPage from './pages/catalogos/MaterialesPage'
 import ClientesPage from './pages/catalogos/ClientesPage'
 import RecetasPage from './pages/catalogos/RecetasPage'
-import AppShell from './components/layout/AppShell'
-import EmptyState from './components/ui/EmptyState'
 import { useAuth } from './lib/auth'
 
 function AnyAuthRoute({ children }: { children: JSX.Element }) {
@@ -35,25 +33,13 @@ function MinLevelRoute({ min, children }: { min: number; children: JSX.Element }
   return children
 }
 
-function HomePage() {
-  return (
-    <AppShell title="Inicio">
-      <div className="max-w-2xl mx-auto mt-12">
-        <EmptyState
-          title="Bienvenido a Terra de Flora"
-          description="Configura tus primeras páginas para empezar."
-        />
-      </div>
-    </AppShell>
-  )
-}
-
 export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
 
-      <Route path="/" element={<AnyAuthRoute><HomePage /></AnyAuthRoute>} />
+      {/* Landing: siempre Gestor de proyectos */}
+      <Route path="/" element={<AnyAuthRoute><Navigate to="/proyectos" replace /></AnyAuthRoute>} />
 
       {/* PROYECTOS */}
       <Route path="/proyectos" element={<AnyAuthRoute><ProyectosPage /></AnyAuthRoute>} />
