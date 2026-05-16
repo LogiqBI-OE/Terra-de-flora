@@ -16,6 +16,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNod
 import Button from '../../../components/ui/Button'
 import Drawer from '../../../components/ui/Drawer'
 import { fmtMoney } from '../../../lib/format'
+import MaterialQuickCreateModal from './MaterialQuickCreateModal'
 import {
   ApiError,
   materialesApi,
@@ -378,6 +379,7 @@ export default function RecetaEditorDrawer({
               <AgregarMaterialButton
                 materiales={allMateriales}
                 onSelect={(id) => addItem(id)}
+                onCreated={(m) => setAllMateriales((prev) => [m, ...prev])}
               />
             )}
             <div className="flex-1" />
@@ -493,6 +495,7 @@ export default function RecetaEditorDrawer({
                         onUpdateItem={(patch) => updateItem(it.tempId, patch)}
                         onUpdateMaterial={(patch) => updateMaterial(it.material_id, patch)}
                         onSwitchMaterial={(newId) => updateItem(it.tempId, { material_id: newId })}
+                        onMaterialCreated={(m) => setAllMateriales((prev) => [m, ...prev])}
                         onDelete={() => deleteItem(it.tempId)}
                         onMove={(dir) => moveItem(it.tempId, dir)}
                       />
@@ -545,10 +548,15 @@ function KpiCard({
 
 // ─── Botón Agregar con picker ────────────────────────────────────────────
 function AgregarMaterialButton({
-  materiales, onSelect,
-}: { materiales: Material[]; onSelect: (id: number) => void }) {
+  materiales, onSelect, onCreated,
+}: {
+  materiales: Material[]
+  onSelect: (id: number) => void
+  onCreated: (m: Material) => void
+}) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
+  const [createOpen, setCreateOpen] = useState(false)
   const ref = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -569,51 +577,73 @@ function AgregarMaterialButton({
   }, [materiales, search])
 
   return (
-    <div className="relative" ref={ref}>
-      <Button onClick={() => setOpen((v) => !v)}>
-        + Agregar
-      </Button>
-      {open && (
-        <div
-          className="absolute top-full left-0 mt-1 z-20 w-80 rounded-lg border shadow-xl"
-          style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
-        >
-          <div className="p-2 border-b" style={{ borderColor: 'var(--border-soft)' }}>
-            <input
-              autoFocus
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar material…"
-              className="w-full px-2 py-1.5 rounded-md border text-sm"
-              style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
-            />
+    <>
+      <div className="relative" ref={ref}>
+        <Button onClick={() => setOpen((v) => !v)}>
+          + Agregar
+        </Button>
+        {open && (
+          <div
+            className="absolute top-full left-0 mt-1 z-20 w-80 rounded-lg border shadow-xl"
+            style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
+          >
+            <div className="p-2 border-b" style={{ borderColor: 'var(--border-soft)' }}>
+              <input
+                autoFocus
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar material…"
+                className="w-full px-2 py-1.5 rounded-md border text-sm"
+                style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+              />
+            </div>
+            <div className="max-h-64 overflow-y-auto">
+              {filtered.length === 0 && (
+                <div className="px-3 py-3 text-xs text-app-muted text-center">Sin resultados.</div>
+              )}
+              {filtered.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => { onSelect(m.id); setOpen(false); setSearch('') }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-black/5 transition text-sm"
+                >
+                  <span
+                    className="w-4 h-4 rounded shrink-0"
+                    style={{ background: materialColor(m) }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-app truncate">{m.nombre}</div>
+                    <div className="text-[10px] text-app-muted">{m.familia} · {m.unidad}</div>
+                  </div>
+                  <span className="text-xs text-app-secondary">{fmtMoney(m.precio_paquete)}</span>
+                </button>
+              ))}
+            </div>
+            {/* Footer fijo: crear nuevo material */}
+            <button
+              onClick={() => { setCreateOpen(true); setOpen(false) }}
+              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 border-t text-xs font-semibold transition"
+              style={{
+                borderColor: 'var(--border-soft)',
+                background: 'var(--accent-bg-soft)',
+                color: 'var(--accent-text)',
+              }}
+            >
+              ＋ Crear material nuevo{search ? ` "${search}"` : ''}
+            </button>
           </div>
-          <div className="max-h-64 overflow-y-auto">
-            {filtered.length === 0 && (
-              <div className="px-3 py-3 text-xs text-app-muted text-center">Sin resultados.</div>
-            )}
-            {filtered.map((m) => (
-              <button
-                key={m.id}
-                onClick={() => { onSelect(m.id); setOpen(false); setSearch('') }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-black/5 transition text-sm"
-              >
-                <span
-                  className="w-4 h-4 rounded shrink-0"
-                  style={{ background: materialColor(m) }}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-app truncate">{m.nombre}</div>
-                  <div className="text-[10px] text-app-muted">{m.familia} · {m.unidad}</div>
-                </div>
-                <span className="text-xs text-app-secondary">{fmtMoney(m.precio_paquete)}</span>
-              </button>
-            ))}
-          </div>
-        </div>
+        )}
+      </div>
+
+      {createOpen && (
+        <MaterialQuickCreateModal
+          initialNombre={search}
+          onClose={() => { setCreateOpen(false); setSearch('') }}
+          onCreated={(m) => { onCreated(m); onSelect(m.id) }}
+        />
       )}
-    </div>
+    </>
   )
 }
 
@@ -629,6 +659,7 @@ interface ItemRowProps {
   onUpdateItem: (patch: Partial<LocalItem>) => void
   onUpdateMaterial: (patch: MaterialUpdatePayload) => void
   onSwitchMaterial: (newId: number) => void
+  onMaterialCreated: (m: Material) => void
   onDelete: () => void
   onMove: (dir: -1 | 1) => void
 }
@@ -700,6 +731,7 @@ function ItemRow(p: ItemRowProps) {
               materiales={allMateriales}
               onSelect={(id) => { p.onSwitchMaterial(id); p.onOpenPicker(false) }}
               onClose={() => p.onOpenPicker(false)}
+              onCreated={p.onMaterialCreated}
             />
           )}
         </div>
@@ -792,18 +824,25 @@ function ItemRow(p: ItemRowProps) {
 
 // ─── Picker de material para cambiar el material de una fila ─────────────
 function MaterialPicker({
-  materiales, onSelect, onClose,
-}: { materiales: Material[]; onSelect: (id: number) => void; onClose: () => void }) {
+  materiales, onSelect, onClose, onCreated,
+}: {
+  materiales: Material[]
+  onSelect: (id: number) => void
+  onClose: () => void
+  onCreated: (m: Material) => void
+}) {
   const [search, setSearch] = useState('')
+  const [createOpen, setCreateOpen] = useState(false)
   const ref = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
+    if (createOpen) return  // no cerrar mientras el modal de crear está abierto
     function handler(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose()
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
-  }, [onClose])
+  }, [onClose, createOpen])
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim()
@@ -814,37 +853,61 @@ function MaterialPicker({
   }, [materiales, search])
 
   return (
-    <div
-      ref={ref}
-      className="absolute top-full left-0 mt-1 z-30 w-72 rounded-lg border shadow-xl"
-      style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
-    >
-      <div className="p-2 border-b" style={{ borderColor: 'var(--border-soft)' }}>
-        <input
-          autoFocus
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar…"
-          className="w-full px-2 py-1.5 rounded-md border text-xs"
-          style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+    <>
+      <div
+        ref={ref}
+        className="absolute top-full left-0 mt-1 z-30 w-72 rounded-lg border shadow-xl"
+        style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
+      >
+        <div className="p-2 border-b" style={{ borderColor: 'var(--border-soft)' }}>
+          <input
+            autoFocus
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar…"
+            className="w-full px-2 py-1.5 rounded-md border text-xs"
+            style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+          />
+        </div>
+        <div className="max-h-56 overflow-y-auto">
+          {filtered.length === 0 && (
+            <div className="px-3 py-3 text-xs text-app-muted text-center">Sin resultados.</div>
+          )}
+          {filtered.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => onSelect(m.id)}
+              className="w-full flex items-center gap-2 px-2 py-1.5 text-left hover:bg-black/5 text-xs"
+            >
+              <span className="w-3 h-3 rounded shrink-0" style={{ background: materialColor(m) }} />
+              <div className="flex-1 min-w-0">
+                <div className="text-app font-semibold truncate">{m.nombre}</div>
+                <div className="text-[10px] text-app-muted">{m.familia} · {m.unidad}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => setCreateOpen(true)}
+          className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 border-t text-[11px] font-semibold transition"
+          style={{
+            borderColor: 'var(--border-soft)',
+            background: 'var(--accent-bg-soft)',
+            color: 'var(--accent-text)',
+          }}
+        >
+          ＋ Crear material{search ? ` "${search}"` : ''}
+        </button>
+      </div>
+
+      {createOpen && (
+        <MaterialQuickCreateModal
+          initialNombre={search}
+          onClose={() => setCreateOpen(false)}
+          onCreated={(m) => { onCreated(m); onSelect(m.id); setCreateOpen(false) }}
         />
-      </div>
-      <div className="max-h-56 overflow-y-auto">
-        {filtered.map((m) => (
-          <button
-            key={m.id}
-            onClick={() => onSelect(m.id)}
-            className="w-full flex items-center gap-2 px-2 py-1.5 text-left hover:bg-black/5 text-xs"
-          >
-            <span className="w-3 h-3 rounded shrink-0" style={{ background: materialColor(m) }} />
-            <div className="flex-1 min-w-0">
-              <div className="text-app font-semibold truncate">{m.nombre}</div>
-              <div className="text-[10px] text-app-muted">{m.familia} · {m.unidad}</div>
-            </div>
-          </button>
-        ))}
-      </div>
-    </div>
+      )}
+    </>
   )
 }
