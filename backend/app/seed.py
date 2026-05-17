@@ -89,6 +89,28 @@ def _run_lightweight_migrations() -> None:
             with engine.begin() as conn:
                 conn.execute(text("ALTER TABLE clientes ADD COLUMN como_nos_contacto VARCHAR(120)"))
 
+    if "cotizacion_secciones" in insp.get_table_names():
+        cols = {c["name"] for c in insp.get_columns("cotizacion_secciones")}
+        if "n_arreglos" not in cols:
+            print("  + migracion: agregando columna cotizacion_secciones.n_arreglos")
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE cotizacion_secciones ADD COLUMN n_arreglos INTEGER NOT NULL DEFAULT 1"))
+
+    if "cotizacion_items" in insp.get_table_names():
+        cols = {c["name"] for c in insp.get_columns("cotizacion_items")}
+        with engine.begin() as conn:
+            if "material_id" not in cols:
+                print("  + migracion: agregando columna cotizacion_items.material_id")
+                conn.execute(text("ALTER TABLE cotizacion_items ADD COLUMN material_id INTEGER"))
+                conn.execute(text(
+                    "ALTER TABLE cotizacion_items ADD CONSTRAINT cotizacion_items_material_fk "
+                    "FOREIGN KEY (material_id) REFERENCES materiales(id) ON DELETE SET NULL"
+                ))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_cotizacion_items_material_id ON cotizacion_items (material_id)"))
+            if "grupo" not in cols:
+                print("  + migracion: agregando columna cotizacion_items.grupo")
+                conn.execute(text("ALTER TABLE cotizacion_items ADD COLUMN grupo VARCHAR(60)"))
+
     if "recetas" in insp.get_table_names():
         cols = {c["name"] for c in insp.get_columns("recetas")}
         if "n_arreglos_default" not in cols:

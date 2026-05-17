@@ -9,19 +9,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import Button from '../../../components/ui/Button'
 import { fmtMoney } from '../../../lib/format'
-import RecetaEditorDrawer from './RecetaEditorDrawer'
+import SeccionInlineEditor from './SeccionInlineEditor'
 import {
   ApiError,
   cotizacionesApi,
-  recetasApi,
   type Cotizacion,
   type CotizacionCatalog,
-  type CotizacionSeccion,
   type CotizacionSummary,
   type DesviacionResumen,
   type EstadoCotizacion,
   type ProyectoRow,
-  type RecetaSummary,
 } from '../../../lib/api'
 
 interface Props {
@@ -48,12 +45,10 @@ export default function CotizacionTab({ proyecto }: Props) {
   const [activeId, setActiveId] = useState<number | null>(null)
   const [cot, setCot] = useState<Cotizacion | null>(null)
   const [catalog, setCatalog] = useState<CotizacionCatalog | null>(null)
-  const [recetas, setRecetas] = useState<RecetaSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState<View>('resumen')
   const [showCosts, setShowCosts] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [editorRecetaId, setEditorRecetaId] = useState<number | null | undefined>(undefined)  // undefined=cerrado, null=nueva, number=existente
   const [busy, setBusy] = useState(false)
 
   async function reloadVersions(): Promise<CotizacionSummary[]> {
@@ -73,13 +68,11 @@ export default function CotizacionTab({ proyecto }: Props) {
     Promise.all([
       cotizacionesApi.list(proyecto.id),
       cotizacionesApi.catalog(proyecto.id),
-      recetasApi.list(),
     ])
-      .then(async ([list, cat, recs]) => {
+      .then(async ([list, cat]) => {
         if (!alive) return
         setVersiones(list)
         setCatalog(cat)
-        setRecetas(recs)
         if (list.length > 0) {
           setActiveId(list[0].id)
           const c = await cotizacionesApi.get(list[0].id)
@@ -177,41 +170,6 @@ export default function CotizacionTab({ proyecto }: Props) {
       await cotizacionesApi.deleteSeccion(sid)
       await reloadActive(cot.id)
       setView('resumen')
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Error')
-    }
-  }
-
-  async function handleAddItem(sid: number, recetaId: number) {
-    if (!cot) return
-    try {
-      const sec = cot.secciones.find((s) => s.id === sid)
-      await cotizacionesApi.createItem(sid, {
-        receta_id: recetaId,
-        cantidad: 1,
-        orden: sec?.items.length ?? 0,
-      })
-      await reloadActive(cot.id)
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Error')
-    }
-  }
-
-  async function handleUpdateItem(iid: number, patch: { cantidad?: number; precio_venta_unit?: number | null }) {
-    if (!cot) return
-    try {
-      await cotizacionesApi.updateItem(iid, patch)
-      await reloadActive(cot.id)
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Error')
-    }
-  }
-
-  async function handleDeleteItem(iid: number) {
-    if (!cot) return
-    try {
-      await cotizacionesApi.deleteItem(iid)
-      await reloadActive(cot.id)
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Error')
     }
@@ -426,18 +384,13 @@ export default function CotizacionTab({ proyecto }: Props) {
           )}
 
           {activeSeccion && (
-            <SeccionView
+            <SeccionInlineEditor
               key={activeSeccion.id}
               seccion={activeSeccion}
-              showCosts={showCosts}
               isFrozen={isFrozen}
-              recetas={recetas}
               onRename={(nombre) => handleRenameSeccion(activeSeccion.id, nombre)}
               onDelete={() => handleDeleteSeccion(activeSeccion.id)}
-              onAddItem={(rid) => handleAddItem(activeSeccion.id, rid)}
-              onUpdateItem={handleUpdateItem}
-              onDeleteItem={handleDeleteItem}
-              onOpenRecetaEditor={(rid) => setEditorRecetaId(rid)}
+              onChange={() => { if (activeId !== null) reloadActive(activeId) }}
             />
           )}
         </div>
@@ -445,29 +398,6 @@ export default function CotizacionTab({ proyecto }: Props) {
         {/* Footer sticky de totales */}
         <TotalsFooter cot={cot} showCosts={showCosts} />
       </main>
-
-      {editorRecetaId !== undefined && (
-        <RecetaEditorDrawer
-          recetaId={editorRecetaId}
-          margenDefault={Number(cot.margen_default) || 0.35}
-          isFrozenContext={isFrozen}
-          onClose={() => setEditorRecetaId(undefined)}
-          onSaved={async (saved) => {
-            // Si era nueva, agrégala como item a la sección activa
-            if (editorRecetaId === null && activeSeccion) {
-              try { await handleAddItem(activeSeccion.id, saved.id) } catch {}
-            }
-            // Refresca la cotización (los costos pueden haber cambiado)
-            if (activeId !== null) await reloadActive(activeId)
-            // Refresca el catálogo de recetas para el picker
-            try {
-              const recs = await recetasApi.list()
-              setRecetas(recs)
-            } catch {}
-            setEditorRecetaId(undefined)
-          }}
-        />
-      )}
     </div>
   )
 }
@@ -1057,318 +987,6 @@ function AgregarSeccionView({
             + Crear sección
           </Button>
         </div>
-      </div>
-    </div>
-  )
-}
-
-// ─── Vista Sección ───────────────────────────────────────────────────────
-interface SeccionViewProps {
-  seccion: CotizacionSeccion
-  showCosts: boolean
-  isFrozen: boolean
-  recetas: RecetaSummary[]
-  onRename: (nombre: string) => void
-  onDelete: () => void
-  onAddItem: (recetaId: number) => void
-  onUpdateItem: (iid: number, patch: { cantidad?: number; precio_venta_unit?: number | null }) => void
-  onDeleteItem: (iid: number) => void
-  onOpenRecetaEditor: (recetaId: number | null) => void
-}
-
-function SeccionView({
-  seccion, showCosts, isFrozen, recetas,
-  onRename, onDelete, onAddItem, onUpdateItem, onDeleteItem, onOpenRecetaEditor,
-}: SeccionViewProps) {
-  const [editingName, setEditingName] = useState(false)
-  const [name, setName] = useState(seccion.nombre)
-  const [pickerOpen, setPickerOpen] = useState(false)
-  const [search, setSearch] = useState('')
-
-  useEffect(() => { setName(seccion.nombre) }, [seccion.id, seccion.nombre])
-
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase().trim()
-    if (!q) return recetas
-    return recetas.filter((r) =>
-      r.nombre.toLowerCase().includes(q) || r.categoria.toLowerCase().includes(q),
-    )
-  }, [recetas, search])
-
-  return (
-    <div
-      className="rounded-2xl border"
-      style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
-    >
-      {/* Header de sección con nombre editable */}
-      <div
-        className="flex items-center gap-3 px-5 py-4 border-b"
-        style={{ borderColor: 'var(--border-soft)', background: 'var(--bg-elevated)' }}
-      >
-        {editingName ? (
-          <input
-            autoFocus
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onBlur={() => {
-              const trimmed = name.trim()
-              if (trimmed && trimmed !== seccion.nombre) onRename(trimmed)
-              else setName(seccion.nombre)
-              setEditingName(false)
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
-              if (e.key === 'Escape') { setName(seccion.nombre); setEditingName(false) }
-            }}
-            className="flex-1 px-3 py-1.5 rounded-md border text-lg font-bold"
-            style={{
-              background: 'var(--bg-input)',
-              borderColor: 'var(--accent)',
-              color: 'var(--text-primary)',
-            }}
-          />
-        ) : (
-          <button
-            onClick={() => !isFrozen && setEditingName(true)}
-            className="text-lg font-bold text-app hover:underline disabled:no-underline"
-            disabled={isFrozen}
-            title={isFrozen ? '' : 'Click para renombrar'}
-          >
-            {seccion.nombre}
-          </button>
-        )}
-        <span className="text-xs text-app-muted">
-          · {seccion.items.length} {seccion.items.length === 1 ? 'item' : 'items'}
-        </span>
-        <div className="flex-1" />
-        <span className="text-sm font-bold text-app">{fmtMoney(seccion.subtotal_venta)}</span>
-        {!isFrozen && (
-          <button
-            onClick={onDelete}
-            className="text-app-muted hover:text-red-500 transition text-xs"
-            title="Borrar sección"
-          >
-            🗑️
-          </button>
-        )}
-      </div>
-
-      <div className="px-5 py-4 space-y-2">
-        {seccion.items.length === 0 && (
-          <div className="text-center text-sm text-app-muted py-6">
-            Aún no hay recetas en esta sección.
-          </div>
-        )}
-
-        {seccion.items.map((it) => (
-          <ItemRow
-            key={it.id}
-            item={it}
-            showCosts={showCosts}
-            isFrozen={isFrozen}
-            onUpdate={(patch) => onUpdateItem(it.id, patch)}
-            onDelete={() => onDeleteItem(it.id)}
-            onOpenEditor={() => it.receta_id && onOpenRecetaEditor(it.receta_id)}
-          />
-        ))}
-
-        {!isFrozen && (
-          <>
-            {!pickerOpen ? (
-              <button
-                onClick={() => setPickerOpen(true)}
-                className="w-full mt-2 py-2 rounded-lg border-dashed border text-xs font-semibold text-app-secondary hover:text-app transition"
-                style={{ borderColor: 'var(--border)' }}
-              >
-                + Agregar receta
-              </button>
-            ) : (
-              <div
-                className="rounded-lg border p-3 space-y-2"
-                style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-soft)' }}
-              >
-                <div className="flex items-center gap-2">
-                  <input
-                    autoFocus
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Buscar receta existente…"
-                    className="flex-1 px-3 py-1.5 rounded-md border text-sm"
-                    style={{
-                      background: 'var(--bg-input)',
-                      borderColor: 'var(--border)',
-                      color: 'var(--text-primary)',
-                    }}
-                  />
-                  <button
-                    onClick={() => { setPickerOpen(false); setSearch('') }}
-                    className="text-app-muted hover:text-app text-xs"
-                  >
-                    ✕
-                  </button>
-                </div>
-                <button
-                  onClick={() => { onOpenRecetaEditor(null); setPickerOpen(false); setSearch('') }}
-                  className="w-full px-3 py-1.5 rounded-md text-xs font-semibold transition"
-                  style={{ background: 'var(--accent)', color: 'var(--text-on-accent)' }}
-                >
-                  ＋ Crear receta nueva (abre editor)
-                </button>
-                <div className="text-[10px] text-app-muted text-center">o reutiliza una existente:</div>
-                <div className="max-h-56 overflow-y-auto -mx-1">
-                  {filtered.length === 0 && (
-                    <div className="text-xs text-app-muted py-3 text-center">
-                      Sin resultados.
-                    </div>
-                  )}
-                  {filtered.map((r) => (
-                    <button
-                      key={r.id}
-                      onClick={() => {
-                        onAddItem(r.id)
-                        setPickerOpen(false)
-                        setSearch('')
-                      }}
-                      className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-md hover:bg-black/5 transition text-left text-sm"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <div className="font-semibold text-app truncate">{r.nombre}</div>
-                        <div className="text-[10px] text-app-muted uppercase tracking-wide">
-                          {r.categoria} · {r.item_count} insumos
-                        </div>
-                      </div>
-                      <div className="text-xs text-app-secondary shrink-0">
-                        {fmtMoney(r.costo_estimado)}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ─── Fila de item ─────────────────────────────────────────────────────────
-interface ItemRowProps {
-  item: Cotizacion['secciones'][number]['items'][number]
-  showCosts: boolean
-  isFrozen: boolean
-  onUpdate: (patch: { cantidad?: number; precio_venta_unit?: number | null }) => void
-  onDelete: () => void
-  onOpenEditor?: () => void
-}
-
-function ItemRow({ item, showCosts, isFrozen, onUpdate, onDelete, onOpenEditor }: ItemRowProps) {
-  const [cant, setCant] = useState(String(item.cantidad))
-  const [precio, setPrecio] = useState(
-    item.precio_venta_unit !== null ? String(item.precio_venta_unit) : ''
-  )
-
-  useEffect(() => {
-    setCant(String(item.cantidad))
-    setPrecio(item.precio_venta_unit !== null ? String(item.precio_venta_unit) : '')
-  }, [item.id, item.cantidad, item.precio_venta_unit])
-
-  const overridden = item.precio_venta_unit !== null
-
-  return (
-    <div
-      className="grid grid-cols-12 items-center gap-3 px-3 py-2 rounded-lg border"
-      style={{ borderColor: 'var(--border-soft)', background: 'var(--bg-elevated)' }}
-    >
-      <div className="col-span-12 md:col-span-5 min-w-0">
-        {onOpenEditor && item.receta_id && !isFrozen ? (
-          <button
-            onClick={onOpenEditor}
-            className="font-medium text-app truncate hover:underline text-left"
-            title="Abrir editor de receta"
-          >
-            📋 {item.nombre}
-          </button>
-        ) : (
-          <div className="font-medium text-app truncate">{item.nombre}</div>
-        )}
-        {showCosts && (
-          <div className="text-[10px] text-app-muted uppercase tracking-wide">
-            Costo unit. {fmtMoney(item.costo_unit)}
-          </div>
-        )}
-      </div>
-
-      <div className="col-span-3 md:col-span-2">
-        <label className="text-[9px] uppercase tracking-widest text-app-muted block mb-0.5">Cant.</label>
-        <input
-          type="number"
-          min={0}
-          step={1}
-          value={cant}
-          disabled={isFrozen}
-          onChange={(e) => setCant(e.target.value)}
-          onBlur={() => {
-            const n = Number(cant)
-            if (Number.isFinite(n) && n !== Number(item.cantidad)) onUpdate({ cantidad: n })
-          }}
-          className="w-full px-2 py-1 rounded-md border text-sm text-right"
-          style={{
-            background: 'var(--bg-input)',
-            borderColor: 'var(--border)',
-            color: 'var(--text-primary)',
-          }}
-        />
-      </div>
-
-      <div className="col-span-5 md:col-span-3">
-        <label className="text-[9px] uppercase tracking-widest text-app-muted block mb-0.5">
-          P. venta unit. {overridden && <span style={{ color: 'var(--accent-text)' }}>(override)</span>}
-        </label>
-        <input
-          type="number"
-          min={0}
-          step={1}
-          value={precio || (overridden ? '' : Number(item.precio_venta_calc).toFixed(0))}
-          placeholder={Number(item.precio_venta_calc).toFixed(0)}
-          disabled={isFrozen}
-          onChange={(e) => setPrecio(e.target.value)}
-          onBlur={() => {
-            if (precio === '') {
-              if (overridden) onUpdate({ precio_venta_unit: null })
-              return
-            }
-            const n = Number(precio)
-            if (Number.isFinite(n) && n !== Number(item.precio_venta_unit ?? -1)) {
-              onUpdate({ precio_venta_unit: n })
-            }
-          }}
-          className="w-full px-2 py-1 rounded-md border text-sm text-right"
-          style={{
-            background: 'var(--bg-input)',
-            borderColor: 'var(--border)',
-            color: 'var(--text-primary)',
-          }}
-        />
-      </div>
-
-      <div className="col-span-3 md:col-span-1 text-right">
-        <label className="text-[9px] uppercase tracking-widest text-app-muted block mb-0.5">Subtotal</label>
-        <div className="text-sm font-bold text-app">{fmtMoney(item.subtotal_venta)}</div>
-      </div>
-
-      <div className="col-span-1 text-right">
-        {!isFrozen && (
-          <button
-            onClick={onDelete}
-            className="text-app-muted hover:text-red-500 transition text-sm"
-            title="Borrar item"
-          >
-            ✕
-          </button>
-        )}
       </div>
     </div>
   )

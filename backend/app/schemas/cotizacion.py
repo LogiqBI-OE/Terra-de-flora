@@ -9,9 +9,11 @@ from app.models.cotizacion import EstadoCotizacion
 
 # ── Item ──────────────────────────────────────────────────────────────────
 class CotizacionItemBase(BaseModel):
-    receta_id: int | None = None
+    material_id: int | None = None
+    receta_id: int | None = None   # legacy: items creados con la flor vieja
     descripcion: str | None = None
     cantidad: Decimal = Field(default=Decimal("1"), ge=Decimal("0"))
+    grupo: str | None = None
     precio_venta_unit: Decimal | None = None  # override; si NULL usa margen default
     orden: int = 0
     notas: str | None = None
@@ -22,9 +24,11 @@ class CotizacionItemCreate(CotizacionItemBase):
 
 
 class CotizacionItemUpdate(BaseModel):
+    material_id: int | None = None
     receta_id: int | None = None
     descripcion: str | None = None
     cantidad: Decimal | None = None
+    grupo: str | None = None
     precio_venta_unit: Decimal | None = None
     orden: int | None = None
     notas: str | None = None
@@ -34,11 +38,20 @@ class CotizacionItemOut(CotizacionItemBase):
     id: int
     seccion_id: int
     # Calculados en vivo (o desde snapshot si la cotización está congelada):
-    nombre: str  # nombre de la receta o `descripcion`
-    costo_unit: Decimal  # costo de materia prima por unidad
-    precio_venta_calc: Decimal  # precio_venta_unit override o costo_unit*(1+margen)
-    subtotal_costo: Decimal  # costo_unit * cantidad
-    subtotal_venta: Decimal  # precio_venta_calc * cantidad
+    nombre: str
+    # Para items basados en material: replico el detalle del material para
+    # que el frontend renderice la tabla tipo Excel sin queries extras.
+    material_familia: str | None
+    material_unidad: str | None
+    material_color_hex: str | None
+    material_proveedor_nombre: str | None
+    material_precio_paquete: Decimal | None
+    material_contenido_por_paquete: Decimal | None
+    grupo_efectivo: str  # explícito o inferido de familia
+    costo_unit: Decimal  # costo por unidad de cantidad
+    precio_venta_calc: Decimal
+    subtotal_costo: Decimal  # costo_unit * cantidad * n_arreglos
+    subtotal_venta: Decimal
     is_snapshot: bool
 
     model_config = {"from_attributes": True}
@@ -48,6 +61,7 @@ class CotizacionItemOut(CotizacionItemBase):
 class CotizacionSeccionBase(BaseModel):
     nombre: str = Field(..., min_length=1, max_length=160)
     orden: int = 0
+    n_arreglos: int = Field(default=1, ge=1)
     notas: str | None = None
 
 
@@ -58,6 +72,7 @@ class CotizacionSeccionCreate(CotizacionSeccionBase):
 class CotizacionSeccionUpdate(BaseModel):
     nombre: str | None = None
     orden: int | None = None
+    n_arreglos: int | None = Field(default=None, ge=1)
     notas: str | None = None
 
 

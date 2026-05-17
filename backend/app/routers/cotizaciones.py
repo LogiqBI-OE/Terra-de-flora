@@ -158,23 +158,98 @@ def _nombre_receta_uncached(db: Session, receta_id: int) -> str:
     return r.nombre if r else "(receta eliminada)"
 
 
+# ── Cache de materiales (para items material-based) ─────────────────────
+class MaterialInfoCache:
+    """Precarga materiales + proveedores referenciados en una cotización
+    para construir CotizacionItemOut sin N+1."""
+
+    def __init__(self, db: Session) -> None:
+        self.db = db
+        self._mats: dict[int, Material] = {}
+        self._provs: dict[int, str] = {}
+
+    def load_for(self, material_ids: list[int]) -> "MaterialInfoCache":
+        from app.models.proveedor import Proveedor
+        unique = {mid for mid in material_ids if mid is not None and mid not in self._mats}
+        if unique:
+            for m in self.db.query(Material).filter(Material.id.in_(unique)).all():
+                self._mats[m.id] = m
+            prov_ids = {m.proveedor_id for m in self._mats.values() if m.proveedor_id}
+            prov_ids -= set(self._provs.keys())
+            if prov_ids:
+                for p in self.db.query(Proveedor).filter(Proveedor.id.in_(prov_ids)).all():
+                    self._provs[p.id] = p.nombre
+        return self
+
+    def get(self, material_id: int) -> Material | None:
+        return self._mats.get(material_id)
+
+    def proveedor(self, proveedor_id: int | None) -> str | None:
+        if proveedor_id is None:
+            return None
+        return self._provs.get(proveedor_id)
+
+
+def _collect_material_ids(c: Cotizacion) -> list[int]:
+    return [it.material_id for s in c.secciones for it in s.items if it.material_id is not None]
+
+
+def _costo_unit_material(m: Material) -> Decimal:
+    contenido = m.contenido_por_paquete or Decimal("1")
+    if contenido <= 0:
+        return ZERO
+    return Decimal(m.precio_paquete) / Decimal(contenido)
+
+
 def _item_to_out(
     it: CotizacionItem,
+    n_arreglos: int,
     margen_default: Decimal,
     is_snapshot: bool,
-    cache: RecetaCostCache,
+    receta_cache: RecetaCostCache,
+    mat_cache: MaterialInfoCache,
 ) -> CotizacionItemOut:
+    mat: Material | None = None
+    grupo_efectivo = it.grupo or "Otros"
+    material_familia = None
+    material_unidad = None
+    material_color_hex = None
+    material_proveedor_nombre = None
+    material_precio_paquete: Decimal | None = None
+    material_contenido: Decimal | None = None
+
     if is_snapshot and it.costo_unit_snapshot is not None:
         costo_unit = Decimal(it.costo_unit_snapshot)
         nombre = it.nombre_snapshot or it.descripcion or "(item)"
-    else:
-        if it.receta_id is not None:
-            nombre, costo_unit = cache.get(it.receta_id)
+        # Si era material-based, igual exponemos los datos actuales del material
+        if it.material_id is not None:
+            mat = mat_cache.get(it.material_id)
+    elif it.material_id is not None:
+        mat = mat_cache.get(it.material_id)
+        if mat:
+            costo_unit = _costo_unit_material(mat)
+            nombre = mat.nombre
         else:
             costo_unit = ZERO
-            nombre = it.descripcion or "(item libre)"
+            nombre = "(material eliminado)"
+    elif it.receta_id is not None:
+        nombre, costo_unit = receta_cache.get(it.receta_id)
+    else:
+        costo_unit = ZERO
+        nombre = it.descripcion or "(item libre)"
+
+    if mat:
+        material_familia = mat.familia
+        material_unidad = mat.unidad
+        material_color_hex = mat.color_hex
+        material_proveedor_nombre = mat_cache.proveedor(mat.proveedor_id)
+        material_precio_paquete = Decimal(mat.precio_paquete)
+        material_contenido = Decimal(mat.contenido_por_paquete or Decimal("1"))
+        if not it.grupo:
+            grupo_efectivo = mat.familia or "Otros"
 
     cant = Decimal(it.cantidad)
+    total_unidades = cant * Decimal(n_arreglos)  # cantidad TOTAL en la sección
     if it.precio_venta_unit is not None:
         precio_venta = Decimal(it.precio_venta_unit)
     else:
@@ -183,17 +258,26 @@ def _item_to_out(
     return CotizacionItemOut(
         id=it.id,
         seccion_id=it.seccion_id,
+        material_id=it.material_id,
         receta_id=it.receta_id,
         descripcion=it.descripcion,
         cantidad=cant,
+        grupo=it.grupo,
         precio_venta_unit=it.precio_venta_unit,
         orden=it.orden,
         notas=it.notas,
         nombre=nombre,
+        material_familia=material_familia,
+        material_unidad=material_unidad,
+        material_color_hex=material_color_hex,
+        material_proveedor_nombre=material_proveedor_nombre,
+        material_precio_paquete=material_precio_paquete,
+        material_contenido_por_paquete=material_contenido,
+        grupo_efectivo=grupo_efectivo,
         costo_unit=_q2(costo_unit),
         precio_venta_calc=_q2(precio_venta),
-        subtotal_costo=_q2(costo_unit * cant),
-        subtotal_venta=_q2(precio_venta * cant),
+        subtotal_costo=_q2(costo_unit * total_unidades),
+        subtotal_venta=_q2(precio_venta * total_unidades),
         is_snapshot=is_snapshot,
     )
 
@@ -202,9 +286,14 @@ def _to_seccion_out(
     s: CotizacionSeccion,
     margen_default: Decimal,
     is_snapshot: bool,
-    cache: RecetaCostCache,
+    receta_cache: RecetaCostCache,
+    mat_cache: MaterialInfoCache,
 ) -> CotizacionSeccionOut:
-    items_out = [_item_to_out(it, margen_default, is_snapshot, cache) for it in s.items]
+    n_arreglos = s.n_arreglos or 1
+    items_out = [
+        _item_to_out(it, n_arreglos, margen_default, is_snapshot, receta_cache, mat_cache)
+        for it in s.items
+    ]
     subtotal_costo = sum((it.subtotal_costo for it in items_out), ZERO)
     subtotal_venta = sum((it.subtotal_venta for it in items_out), ZERO)
     return CotizacionSeccionOut(
@@ -212,6 +301,7 @@ def _to_seccion_out(
         cotizacion_id=s.cotizacion_id,
         nombre=s.nombre,
         orden=s.orden,
+        n_arreglos=n_arreglos,
         notas=s.notas,
         items=items_out,
         subtotal_costo=_q2(subtotal_costo),
@@ -222,8 +312,9 @@ def _to_seccion_out(
 def _to_out(db: Session, c: Cotizacion) -> CotizacionOut:
     is_snap = c.snapshot_at is not None
     margen = Decimal(c.margen_default)
-    cache = RecetaCostCache(db).load_for(_collect_receta_ids(c))
-    secciones_out = [_to_seccion_out(s, margen, is_snap, cache) for s in c.secciones]
+    receta_cache = RecetaCostCache(db).load_for(_collect_receta_ids(c))
+    mat_cache = MaterialInfoCache(db).load_for(_collect_material_ids(c))
+    secciones_out = [_to_seccion_out(s, margen, is_snap, receta_cache, mat_cache) for s in c.secciones]
     total_costo = sum((s.subtotal_costo for s in secciones_out), ZERO)
     total_venta = sum((s.subtotal_venta for s in secciones_out), ZERO)
     margen_real = (
@@ -248,17 +339,25 @@ def _to_out(db: Session, c: Cotizacion) -> CotizacionOut:
     )
 
 
-def _summary(db: Session, c: Cotizacion, cache: RecetaCostCache | None = None) -> CotizacionSummary:
+def _summary(
+    db: Session,
+    c: Cotizacion,
+    receta_cache: RecetaCostCache | None = None,
+    mat_cache: MaterialInfoCache | None = None,
+) -> CotizacionSummary:
     is_snap = c.snapshot_at is not None
     margen = Decimal(c.margen_default)
-    if cache is None:
-        cache = RecetaCostCache(db).load_for(_collect_receta_ids(c))
+    if receta_cache is None:
+        receta_cache = RecetaCostCache(db).load_for(_collect_receta_ids(c))
+    if mat_cache is None:
+        mat_cache = MaterialInfoCache(db).load_for(_collect_material_ids(c))
     total_venta = ZERO
     total_costo = ZERO
     items_count = 0
     for s in c.secciones:
+        n_arreglos = s.n_arreglos or 1
         for it in s.items:
-            out = _item_to_out(it, margen, is_snap, cache)
+            out = _item_to_out(it, n_arreglos, margen, is_snap, receta_cache, mat_cache)
             total_venta += out.subtotal_venta
             total_costo += out.subtotal_costo
             items_count += 1
@@ -282,9 +381,18 @@ def _summary(db: Session, c: Cotizacion, cache: RecetaCostCache | None = None) -
 # ── Snapshot al congelar ──────────────────────────────────────────────────
 def _freeze_snapshot(db: Session, c: Cotizacion) -> None:
     """Llena nombre_snapshot y costo_unit_snapshot en todos los items."""
+    mat_cache = MaterialInfoCache(db).load_for(_collect_material_ids(c))
     for s in c.secciones:
         for it in s.items:
-            if it.receta_id is not None:
+            if it.material_id is not None:
+                mat = mat_cache.get(it.material_id)
+                if mat:
+                    it.costo_unit_snapshot = _costo_unit_material(mat)
+                    it.nombre_snapshot = mat.nombre
+                else:
+                    it.costo_unit_snapshot = ZERO
+                    it.nombre_snapshot = it.descripcion or "(material eliminado)"
+            elif it.receta_id is not None:
                 it.costo_unit_snapshot = _costo_unit_receta_uncached(db, it.receta_id)
                 it.nombre_snapshot = _nombre_receta_uncached(db, it.receta_id)
             else:
@@ -320,12 +428,15 @@ def list_versions(pid: int, db: Session = Depends(get_db)) -> list[CotizacionSum
         .order_by(Cotizacion.version.desc())
         .all()
     )
-    # Una sola cache compartida para todas las versiones del proyecto
+    # Caches compartidos para todas las versiones del proyecto
     all_receta_ids: list[int] = []
+    all_material_ids: list[int] = []
     for c in versiones:
         all_receta_ids.extend(_collect_receta_ids(c))
-    cache = RecetaCostCache(db).load_for(all_receta_ids)
-    return [_summary(db, c, cache) for c in versiones]
+        all_material_ids.extend(_collect_material_ids(c))
+    receta_cache = RecetaCostCache(db).load_for(all_receta_ids)
+    mat_cache = MaterialInfoCache(db).load_for(all_material_ids)
+    return [_summary(db, c, receta_cache, mat_cache) for c in versiones]
 
 
 @router.post(
@@ -514,6 +625,7 @@ def create_seccion(
         cotizacion_id=cid,
         nombre=payload.nombre,
         orden=payload.orden,
+        n_arreglos=payload.n_arreglos,
         notas=payload.notas,
     )
     db.add(s)
@@ -522,9 +634,11 @@ def create_seccion(
         db.add(
             CotizacionItem(
                 seccion_id=s.id,
+                material_id=it.material_id,
                 receta_id=it.receta_id,
                 descripcion=it.descripcion,
                 cantidad=it.cantidad,
+                grupo=it.grupo,
                 precio_venta_unit=it.precio_venta_unit,
                 orden=it.orden,
                 notas=it.notas,
@@ -532,8 +646,9 @@ def create_seccion(
         )
     db.commit()
     db.refresh(s)
-    cache = RecetaCostCache(db).load_for([it.receta_id for it in s.items if it.receta_id])
-    return _to_seccion_out(s, Decimal(c.margen_default), False, cache)
+    receta_cache = RecetaCostCache(db).load_for([it.receta_id for it in s.items if it.receta_id])
+    mat_cache = MaterialInfoCache(db).load_for([it.material_id for it in s.items if it.material_id])
+    return _to_seccion_out(s, Decimal(c.margen_default), False, receta_cache, mat_cache)
 
 
 @router.patch(
@@ -553,12 +668,15 @@ def update_seccion(
         s.nombre = payload.nombre
     if payload.orden is not None:
         s.orden = payload.orden
+    if payload.n_arreglos is not None:
+        s.n_arreglos = payload.n_arreglos
     if payload.notas is not None:
         s.notas = payload.notas
     db.commit()
     db.refresh(s)
-    cache = RecetaCostCache(db).load_for([it.receta_id for it in s.items if it.receta_id])
-    return _to_seccion_out(s, Decimal(c.margen_default), False, cache)
+    receta_cache = RecetaCostCache(db).load_for([it.receta_id for it in s.items if it.receta_id])
+    mat_cache = MaterialInfoCache(db).load_for([it.material_id for it in s.items if it.material_id])
+    return _to_seccion_out(s, Decimal(c.margen_default), False, receta_cache, mat_cache)
 
 
 @router.delete(
@@ -592,9 +710,11 @@ def create_item(
     _assert_editable(c)
     it = CotizacionItem(
         seccion_id=sid,
+        material_id=payload.material_id,
         receta_id=payload.receta_id,
         descripcion=payload.descripcion,
         cantidad=payload.cantidad,
+        grupo=payload.grupo,
         precio_venta_unit=payload.precio_venta_unit,
         orden=payload.orden,
         notas=payload.notas,
@@ -602,8 +722,9 @@ def create_item(
     db.add(it)
     db.commit()
     db.refresh(it)
-    cache = RecetaCostCache(db).load_for([it.receta_id] if it.receta_id else [])
-    return _item_to_out(it, Decimal(c.margen_default), False, cache)
+    receta_cache = RecetaCostCache(db).load_for([it.receta_id] if it.receta_id else [])
+    mat_cache = MaterialInfoCache(db).load_for([it.material_id] if it.material_id else [])
+    return _item_to_out(it, s.n_arreglos or 1, Decimal(c.margen_default), False, receta_cache, mat_cache)
 
 
 @router.patch(
@@ -620,12 +741,16 @@ def update_item(
     s = db.get(CotizacionSeccion, it.seccion_id)
     c = db.get(Cotizacion, s.cotizacion_id)
     _assert_editable(c)
+    if payload.material_id is not None:
+        it.material_id = payload.material_id
     if payload.receta_id is not None:
         it.receta_id = payload.receta_id
     if payload.descripcion is not None:
         it.descripcion = payload.descripcion
     if payload.cantidad is not None:
         it.cantidad = payload.cantidad
+    if payload.grupo is not None:
+        it.grupo = payload.grupo
     if payload.precio_venta_unit is not None:
         it.precio_venta_unit = payload.precio_venta_unit
     if payload.orden is not None:
@@ -634,8 +759,9 @@ def update_item(
         it.notas = payload.notas
     db.commit()
     db.refresh(it)
-    cache = RecetaCostCache(db).load_for([it.receta_id] if it.receta_id else [])
-    return _item_to_out(it, Decimal(c.margen_default), False, cache)
+    receta_cache = RecetaCostCache(db).load_for([it.receta_id] if it.receta_id else [])
+    mat_cache = MaterialInfoCache(db).load_for([it.material_id] if it.material_id else [])
+    return _item_to_out(it, s.n_arreglos or 1, Decimal(c.margen_default), False, receta_cache, mat_cache)
 
 
 @router.delete(
@@ -677,26 +803,35 @@ def get_desviacion(cid: int, db: Session = Depends(get_db)) -> DesviacionResumen
     if not c:
         raise HTTPException(status_code=404, detail="Cotización no encontrada")
 
-    cache = RecetaCostCache(db).load_for(_collect_receta_ids(c))
+    receta_cache = RecetaCostCache(db).load_for(_collect_receta_ids(c))
+    mat_cache = MaterialInfoCache(db).load_for(_collect_material_ids(c))
     items: list[DesviacionItem] = []
     snap_total = ZERO
     actual_total = ZERO
 
     for s in c.secciones:
+        n_arreglos = s.n_arreglos or 1
         for it in s.items:
-            cant = Decimal(it.cantidad)
+            cant_total = Decimal(it.cantidad) * Decimal(n_arreglos)
             # Snapshot
             if it.costo_unit_snapshot is not None:
                 snap_unit = Decimal(it.costo_unit_snapshot)
             else:
                 # No congelada todavía: usa el actual como snapshot
-                if it.receta_id is not None:
-                    _, snap_unit = cache.get(it.receta_id)
+                if it.material_id is not None:
+                    mat_snap = mat_cache.get(it.material_id)
+                    snap_unit = _costo_unit_material(mat_snap) if mat_snap else ZERO
+                elif it.receta_id is not None:
+                    _, snap_unit = receta_cache.get(it.receta_id)
                 else:
                     snap_unit = ZERO
             # Actual (del catálogo en vivo)
-            if it.receta_id is not None:
-                nombre, actual_unit = cache.get(it.receta_id)
+            if it.material_id is not None:
+                mat = mat_cache.get(it.material_id)
+                actual_unit = _costo_unit_material(mat) if mat else ZERO
+                nombre = mat.nombre if mat else "(material eliminado)"
+            elif it.receta_id is not None:
+                nombre, actual_unit = receta_cache.get(it.receta_id)
             else:
                 actual_unit = ZERO
                 nombre = it.descripcion or "(item libre)"
@@ -713,15 +848,15 @@ def get_desviacion(cid: int, db: Session = Depends(get_db)) -> DesviacionResumen
                 receta_id=it.receta_id,
                 nombre=nombre,
                 seccion_nombre=s.nombre,
-                cantidad=cant,
+                cantidad=cant_total,
                 costo_snapshot=_q2(snap_unit),
                 costo_actual=_q2(actual_unit),
                 delta_unit=_q2(delta_unit),
-                delta_total=_q2(delta_unit * cant),
+                delta_total=_q2(delta_unit * cant_total),
                 direccion=direccion,
             ))
-            snap_total += snap_unit * cant
-            actual_total += actual_unit * cant
+            snap_total += snap_unit * cant_total
+            actual_total += actual_unit * cant_total
 
     delta_total = actual_total - snap_total
     delta_pct = (delta_total / snap_total * Decimal("100")) if snap_total > 0 else ZERO

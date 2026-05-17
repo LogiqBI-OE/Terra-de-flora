@@ -6,13 +6,22 @@ export type EstadoCotizacion = 'borrador' | 'enviada' | 'aprobada' | 'rechazada'
 export interface CotizacionItem {
   id: number
   seccion_id: number
+  material_id: number | null
   receta_id: number | null
   descripcion: string | null
   cantidad: number | string
+  grupo: string | null
   precio_venta_unit: number | string | null
   orden: number
   notas: string | null
   nombre: string
+  material_familia: string | null
+  material_unidad: string | null
+  material_color_hex: string | null
+  material_proveedor_nombre: string | null
+  material_precio_paquete: number | string | null
+  material_contenido_por_paquete: number | string | null
+  grupo_efectivo: string
   costo_unit: number | string
   precio_venta_calc: number | string
   subtotal_costo: number | string
@@ -25,6 +34,7 @@ export interface CotizacionSeccion {
   cotizacion_id: number
   nombre: string
   orden: number
+  n_arreglos: number
   notas: string | null
   items: CotizacionItem[]
   subtotal_costo: number | string
@@ -85,6 +95,7 @@ export interface CotizacionUpdatePayload {
 export interface SeccionCreatePayload {
   nombre: string
   orden?: number
+  n_arreglos?: number
   notas?: string | null
   items?: ItemCreatePayload[]
 }
@@ -92,13 +103,16 @@ export interface SeccionCreatePayload {
 export interface SeccionUpdatePayload {
   nombre?: string
   orden?: number
+  n_arreglos?: number
   notas?: string | null
 }
 
 export interface ItemCreatePayload {
+  material_id?: number | null
   receta_id?: number | null
   descripcion?: string | null
   cantidad?: number
+  grupo?: string | null
   precio_venta_unit?: number | null
   orden?: number
   notas?: string | null

@@ -87,6 +87,9 @@ class CotizacionSeccion(Base):
     )
     nombre: Mapped[str] = mapped_column(String(160), nullable=False)
     orden: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # N° de arreglos / unidades de esta sección. Multiplica los costos por
+    # item (cantidad × n_arreglos) y los paquetes a comprar. Default = 1.
+    n_arreglos: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     notas: Mapped[str | None] = mapped_column(Text)
 
     items: Mapped[list["CotizacionItem"]] = relationship(
@@ -97,19 +100,32 @@ class CotizacionSeccion(Base):
 
 
 class CotizacionItem(Base):
+    """Item dentro de una sección. Puede ser:
+    - material_id poblado: fila de material directo (caso común; precios vivos
+      desde el catálogo). Soporta grupos visuales (FLORES / MATERIALES BASE / ...).
+    - receta_id poblado (legacy): referencia a una receta del catálogo.
+    - ni uno ni otro: item libre con descripción.
+    """
     __tablename__ = "cotizacion_items"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     seccion_id: Mapped[int] = mapped_column(
         ForeignKey("cotizacion_secciones.id", ondelete="CASCADE"), index=True, nullable=False
     )
-    # Si receta_id está poblado, leemos costo vivo desde Receta; si no, es un
-    # item libre (descripción + costo manual).
+    # ── Fuente del item: material directo (nuevo) o receta (legacy) ──
+    material_id: Mapped[int | None] = mapped_column(
+        ForeignKey("materiales.id", ondelete="SET NULL"), index=True
+    )
     receta_id: Mapped[int | None] = mapped_column(
         ForeignKey("recetas.id", ondelete="SET NULL"), index=True
     )
     descripcion: Mapped[str | None] = mapped_column(String(255))
-    cantidad: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=1)
+    # Cantidad necesaria por 1 unidad de la sección (multiplica × n_arreglos
+    # para totales). Decimal porque admite 0.25m, 0.5kg, etc.
+    cantidad: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False, default=1)
+    # Grupo visual dentro de la sección (FLORES, MATERIALES BASE, etc.).
+    # Si null, se infiere de Material.familia.
+    grupo: Mapped[str | None] = mapped_column(String(60))
     # Override de precio de venta. Si NULL, se calcula como costo_unit * (1 + margen).
     precio_venta_unit: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
     orden: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
